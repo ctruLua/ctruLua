@@ -33,8 +33,9 @@ DATA		:=	data
 INCLUDES	:=	include libs/lua-5.3.1/src
 
 APP_TITLE		:= ctruLua
-APP_DESCRIPTION	:= Lua for the 3DS
-#APP_AUTHOR		:= Thomas99
+APP_DESCRIPTION	:= Lua for the 3DS. Yes, it works.
+APP_AUTHOR		:= Reuh, Firew0lf and NegiAD
+ICON 			:= icon.png
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -52,14 +53,17 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lsftd -lfreetype -lpng -lz -lsf2d -lctru -lm
+LIBS	:= -lsfil -ljpeg -lsftd -lfreetype -lpng -lz -lsf2d -lctru -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= $(CTRULIB) $(PORTLIBS)
-
+LIBDIRS	:= $(CTRULIB) $(PORTLIBS) \
+			$(CURDIR)/libs/3ds_portlibs/build \
+			$(CURDIR)/libs/sf2dlib/libsf2d \
+			$(CURDIR)/libs/sftdlib/libsftd \
+			$(CURDIR)/libs/sf2dlib/libsfil
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -127,13 +131,60 @@ endif
 all: $(BUILD)
 
 $(BUILD):
-	@[ -d $@ ] || mkdir -p $@
+	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+
+build-portlibs:
+	@make -C libs/3ds_portlibs zlib freetype libjpeg-turbo libpng
+
+build-sf2dlib:
+	@make -C libs/sf2dlib/libsf2d build
+
+build-sftdlib:
+	@make -C libs/sftdlib/libsftd build
+
+build-sfillib:
+	@make -C libs/sfillib/libsfil build
+
+build-all:
+	@echo Building 3ds_portlibs...
+	@make build-portlibs
+	@echo Building sf2dlib...
+	@make build-sf2dlib
+	@echo Building sftdlib...
+	@make build-sftdlib
+	@echo Building sfillib...
+	@make build-sfillib
+	@echo Building ctruLua...
+	@make build
 
 #---------------------------------------------------------------------------------
 clean:
-	@echo clean ...
 	@rm -fr $(BUILD) $(TARGET).3dsx $(OUTPUT).smdh $(TARGET).elf
+
+clean-portlibs:
+	@make -C libs/3ds_portlibs clean
+
+clean-sf2dlib:
+	@make -C libs/sf2dlib/libsf2d clean
+
+clean-sftdlib:
+	@make -C libs/sftdlib/libsftd clean
+
+clean-sfillib:
+	@make -C libs/sfillib/libsfil clean
+
+clean-all:
+	@echo Cleaning 3ds_portlibs...
+	@make clean-portlibs
+	@echo Cleaning sf2dlib...
+	@make clean-sf2dlib
+	@echo Cleaning sftdlib...
+	@make clean-sftdlib
+	@echo Cleaning sfillib...
+	@make clean-sfillib
+	@echo Cleaning ctruLua...
+	@make clean
 
 
 #---------------------------------------------------------------------------------
@@ -171,7 +222,7 @@ $(OUTPUT).elf	:	$(OFILES)
 %.vsh.o	:	%.vsh
 #---------------------------------------------------------------------------------
 	@echo $(notdir $<)
-	@python $(AEMSTRO)/aemstro_as.py $< ../$(notdir $<).shbin
+	@python $(CURDIR)/libs/aemstro/aemstro_as.py $< ../$(notdir $<).shbin
 	@bin2s ../$(notdir $<).shbin | $(PREFIX)as -o $@
 	@echo "extern const u8" `(echo $(notdir $<).shbin | sed -e 's/^\([0-9]\)/_\1/' | tr . _)`"_end[];" > `(echo $(notdir $<).shbin | tr . _)`.h
 	@echo "extern const u8" `(echo $(notdir $<).shbin | sed -e 's/^\([0-9]\)/_\1/' | tr . _)`"[];" >> `(echo $(notdir $<).shbin | tr . _)`.h
