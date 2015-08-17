@@ -63,7 +63,7 @@ LIBDIRS	:= $(CTRULIB) $(PORTLIBS) \
 			$(CURDIR)/libs/3ds_portlibs/build \
 			$(CURDIR)/libs/sf2dlib/libsf2d \
 			$(CURDIR)/libs/sftdlib/libsftd \
-			$(CURDIR)/libs/sf2dlib/libsfil
+			$(CURDIR)/libs/sfillib/libsfil
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
