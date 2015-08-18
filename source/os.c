@@ -1,4 +1,5 @@
-#include <3ds.h>
+#include <3ds/types.h>
+#include <3ds/services/apt.h>
 
 #include <lua.h>
 
