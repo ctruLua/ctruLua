@@ -19,46 +19,46 @@ static int ptm_shutdown(lua_State *L) {
 }
 
 static int ptm_getShellState(lua_State *L) {
-	u8 *out = 0;
-	PTMU_GetShellState(ptmHandle, out);
+	u8 out = 0;
+	PTMU_GetShellState(ptmHandle, &out);
 	
-	lua_pushinteger(L, (lua_Integer)out);
+	lua_pushinteger(L, out);
 	
 	return 1;
 }
 
 static int ptm_getBatteryLevel(lua_State *L) {
-	u8 *out = 0;
-	PTMU_GetBatteryLevel(ptmHandle, out);
+	u8 out = 0;
+	PTMU_GetBatteryLevel(ptmHandle, &out);
 	
-	lua_pushinteger(L, (lua_Integer)out);
+	lua_pushinteger(L, out);
 	
 	return 1;
 }
 
 static int ptm_getBatteryChargeState(lua_State *L) {
-	u8 *out = 0;
-	PTMU_GetBatteryChargeState(ptmHandle, out);
+	u8 out = 0;
+	PTMU_GetBatteryChargeState(ptmHandle, &out);
 	
-	lua_pushinteger(L, (lua_Integer)out);
+	lua_pushinteger(L, out);
 	
 	return 1;
 }
 
 static int ptm_getPedometerState(lua_State *L) {
-	u8 *out = 0;
-	PTMU_GetPedometerState(ptmHandle, out);
+	u8 out = 0;
+	PTMU_GetPedometerState(ptmHandle, &out);
 	
-	lua_pushinteger(L, (lua_Integer)out);
+	lua_pushinteger(L, out);
 	
 	return 1;
 }
 
 static int ptm_getTotalStepCount(lua_State *L) {
-	u32 *steps = 0;
-	PTMU_GetTotalStepCount(ptmHandle, steps);
+	u32 steps = 0;
+	PTMU_GetTotalStepCount(ptmHandle, &steps);
 	
-	lua_pushinteger(L, (lua_Integer)steps);
+	lua_pushinteger(L, steps);
 	
 	return 1;
 }
