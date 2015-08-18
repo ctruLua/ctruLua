@@ -89,6 +89,19 @@ static const struct luaL_Reg gfx_lib[] = {
 	{ NULL, NULL }
 };
 
+// constants
+struct { char *name; int value; } gfx_constants[] = {
+	{ "GFX_TOP",       0   },
+	{ "GFX_BOTTOM",    1   },
+	{ "GFX_LEFT",      0   },
+	{ "GFX_RIGHT",     1   },
+	{ "TOP_HEIGHT",    240 },
+	{ "TOP_WIDTH",     400 },
+	{ "BOTTOM_HEIGHT", 240 },
+	{ "BOTTOM_WIDTH",  320 },
+	{ NULL, 0 }
+};
+
 struct { char *name; int (*load)(lua_State *L); } gfx_libs[] = {
 	{ "color", load_color_lib },
 	{ NULL, NULL }
@@ -96,7 +109,12 @@ struct { char *name; int (*load)(lua_State *L); } gfx_libs[] = {
 
 int luaopen_gfx_lib(lua_State *L) {
 	luaL_newlib(L, gfx_lib);
-
+	
+	for (int i = 0; gfx_constants[i].name; i++) {
+		lua_pushinteger(L, gfx_constants[i].value);
+		lua_setfield(L, -2, gfx_constants[i].name);
+	}
+	
 	for (int i = 0; gfx_libs[i].name; i++) {
 		gfx_libs[i].load(L);
 		lua_setfield(L, -2, gfx_libs[i].name);
