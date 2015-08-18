@@ -25,12 +25,36 @@ static int gfx_render(lua_State *L) {
 	return 0;
 }
 
+static int gfx_line(lua_State *L) {
+	int x1 = luaL_checkinteger(L, 1);
+	int y1 = luaL_checkinteger(L, 2);
+	int x2 = luaL_checkinteger(L, 3);
+	int y2 = luaL_checkinteger(L, 4);
+	
+	u32 color = luaL_optinteger(L, 5, color_default);
+	
+	sf2d_draw_line(x1, y1, x2, y2, color);
+
+	return 0;
+}
+
+static int gfx_point(lua_State *L) {
+	int x = luaL_checkinteger(L, 1);
+	int y = luaL_checkinteger(L, 2);
+	
+	u32 color = luaL_optinteger(L, 3, color_default);
+	
+	sf2d_draw_rectangle(x, y, 1, 1, color); // well, it looks like a point
+
+	return 0;
+}
+
 static int gfx_rectangle(lua_State *L) {
 	int x = luaL_checkinteger(L, 1);
 	int y = luaL_checkinteger(L, 2);
 	int width = luaL_checkinteger(L, 3);
 	int height = luaL_checkinteger(L, 4);
-	
+
 	float angle = luaL_optnumber(L, 5, 0);
 	u32 color = luaL_optinteger(L, 6, color_default);
 	
@@ -42,11 +66,26 @@ static int gfx_rectangle(lua_State *L) {
 	return 0;
 }
 
+static int gfx_circle(lua_State *L) {
+	int x = luaL_checkinteger(L, 1);
+	int y = luaL_checkinteger(L, 2);
+	int radius = luaL_checkinteger(L, 3);
+	
+	u32 color = luaL_optinteger(L, 4, color_default);
+	
+	sf2d_draw_fill_circle(x, y, radius, color);
+
+	return 0;
+}
+
 static const struct luaL_Reg gfx_lib[] = {
 	{ "startFrame",  gfx_startFrame},
 	{ "endFrame",    gfx_endFrame  },
 	{ "render",      gfx_render    },
+	{ "line",        gfx_line      },
+	{ "point",       gfx_point     },
 	{ "rectangle",   gfx_rectangle },
+	{ "circle",      gfx_circle    },
 	{ NULL, NULL }
 };
 

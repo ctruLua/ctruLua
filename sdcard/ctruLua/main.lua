@@ -26,6 +26,12 @@ while os.run() do
 		gfx.color.setDefault(0x00FFFFFF)
 		gfx.rectangle(240, 150, 120, 10)
 
+		gfx.line(50, 50, 75, 96, gfx.color.RGBA8(52, 255, 65))
+
+		gfx.point(10, 10, 0xFF0000FF)
+
+		gfx.circle(125, 125, 16)
+
 	gfx.endFrame()
 
 	angle = angle + 0.05
