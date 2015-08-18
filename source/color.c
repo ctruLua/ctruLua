@@ -4,6 +4,7 @@
 #include <lauxlib.h>
 
 u32 color_default = RGBA8(255, 255, 255, 255);
+u32 color_background = RGBA8(0, 0, 0, 255);
 
 static int color_setDefault(lua_State *L) {
 	color_default = luaL_checkinteger(L, 1);
@@ -17,9 +18,36 @@ static int color_getDefault(lua_State *L) {
 	return 1;
 }
 
+static int color_setBackground(lua_State *L) {
+	color_background = luaL_checkinteger(L, 1);
+	sf2d_set_clear_color(color_background);
+
+	return 0;
+}
+
+static int color_getBackground(lua_State *L) {
+	lua_pushinteger(L, color_background);
+
+	return 1;
+}
+
+static int color_RGBA8(lua_State *L) {
+	int r = luaL_checkinteger(L, 1);
+	int g = luaL_checkinteger(L, 2);
+	int b = luaL_checkinteger(L, 3);
+	int a = luaL_optinteger(L, 4, 255);
+
+	lua_pushinteger(L, RGBA8(r, g, b, a));
+
+	return 1;
+}
+
 static const struct luaL_Reg color_lib[] = {
-	{ "setDefault", color_setDefault },
-	{ "getDefault", color_getDefault },
+	{ "setDefault",    color_setDefault    },
+	{ "getDefault",    color_getDefault    },
+	{ "setBackground", color_setBackground },
+	{ "getBackground", color_getBackground },
+	{ "RGBA8",         color_RGBA8         },
 	{ NULL, NULL }
 };
 

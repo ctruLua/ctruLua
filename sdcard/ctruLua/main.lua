@@ -4,6 +4,8 @@ local hid = require("ctr.hid")
 local x = 0
 local y = 0
 
+gfx.color.setBackground(gfx.color.RGBA8(200, 200, 200))
+
 while os.run() do
 	local keys = hid.read()
 
