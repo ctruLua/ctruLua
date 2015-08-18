@@ -74,8 +74,72 @@ static int hid_read(lua_State *L) {
 	return 1;
 }
 
+static int hid_touch(lua_State *L) {
+	hidScanInput();
+	
+	touchPosition pos;
+	hidTouchRead(&pos);
+	
+	lua_pushinteger(L, (lua_Integer)pos.px);
+	lua_pushinteger(L, (lua_Integer)pos.py);
+	
+	return 2;
+}
+
+static int hid_circle(lua_State *L) {
+	hidScanInput();
+	
+	circlePosition pos;
+	hidCircleRead(&pos);
+	
+	lua_pushinteger(L, (lua_Integer)pos.dx);
+	lua_pushinteger(L, (lua_Integer)pos.dy);
+	
+	return 2;
+}
+
+static int hid_accel(lua_State *L) {
+	hidScanInput();
+	
+	accelVector pos;
+	hidAccelRead(&pos);
+	
+	lua_pushinteger(L, (lua_Integer)pos.x);
+	lua_pushinteger(L, (lua_Integer)pos.y);
+	lua_pushinteger(L, (lua_Integer)pos.z);
+	
+	return 3;
+}
+
+static int hid_gyro(lua_State *L) {
+	hidScanInput();
+	
+	angularRate pos;
+	hidGyroRead(&pos);
+	
+	lua_pushinteger(L, (lua_Integer)pos.x);
+	lua_pushinteger(L, (lua_Integer)pos.y);
+	lua_pushinteger(L, (lua_Integer)pos.z);
+	
+	return 3;
+}
+
+static int hid_volume(lua_State *L) {
+	u8 volume = 0;
+	HIDUSER_GetSoundVolume(&volume);
+	
+	lua_pushinteger(L, (lua_Integer)volume);
+	
+	return 1;
+}
+
 static const struct luaL_Reg hid_lib[] = {
-	{ "read", hid_read },
+	{ "read",   hid_read   },
+	{ "touch",  hid_touch  },
+	{ "circle", hid_circle },
+	{ "accel",  hid_accel  },
+	{ "gyro",   hid_gyro   },
+	{ "volume", hid_volume },
 	{ NULL, NULL }
 };
 

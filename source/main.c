@@ -33,6 +33,10 @@ int main() {
 	sf2d_init();
 	sftd_init();
 	//sf2d_set_3d(true);
+	
+	// Init accel/gyro
+	HIDUSER_EnableAccelerometer();
+	HIDUSER_EnableGyroscope();
 
 	// Init Lua
 	lua_State *L = luaL_newstate();
@@ -46,5 +50,8 @@ int main() {
 	// Un-init (?)
 	sftd_fini();
 	sf2d_fini();
+	// Disable needed things
+	HIDUSER_DisableAccelerometer();
+	HIDUSER_DisableGyroscope();
 	return 0;
 }
