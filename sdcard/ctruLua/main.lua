@@ -18,7 +18,7 @@ while os.run() do
 	if keys.held.up then y = y - 1 end
 	if keys.held.down then y = y + 1 end
 
-	gfx.startFrame()
+	gfx.startFrame(gfx.GFX_TOP)
 	
 		gfx.color.setDefault(0xFF0000FF)
 		gfx.rectangle(x, y, 10, 10, angle)

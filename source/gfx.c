@@ -8,7 +8,10 @@ int load_color_lib(lua_State *L);
 u32 color_default;
 
 static int gfx_startFrame(lua_State *L) {
-	sf2d_start_frame(GFX_TOP, GFX_LEFT);
+	u8 screen = luaL_checkinteger(L, 1);
+	u8 eye = luaL_optinteger(L, 2, GFX_LEFT);
+	
+	sf2d_start_frame(screen, eye);
 
 	return 0;
 }
@@ -91,14 +94,14 @@ static const struct luaL_Reg gfx_lib[] = {
 
 // constants
 struct { char *name; int value; } gfx_constants[] = {
-	{ "GFX_TOP",       0   },
-	{ "GFX_BOTTOM",    1   },
-	{ "GFX_LEFT",      0   },
-	{ "GFX_RIGHT",     1   },
-	{ "TOP_HEIGHT",    240 },
-	{ "TOP_WIDTH",     400 },
-	{ "BOTTOM_HEIGHT", 240 },
-	{ "BOTTOM_WIDTH",  320 },
+	{ "GFX_TOP",       GFX_TOP    },
+	{ "GFX_BOTTOM",    GFX_BOTTOM },
+	{ "GFX_LEFT",      GFX_LEFT   },
+	{ "GFX_RIGHT",     GFX_RIGHT  },
+	{ "TOP_HEIGHT",    240        },
+	{ "TOP_WIDTH",     400        },
+	{ "BOTTOM_HEIGHT", 240        },
+	{ "BOTTOM_WIDTH",  320        },
 	{ NULL, 0 }
 };
 
