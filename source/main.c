@@ -1,17 +1,12 @@
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-
 #include <3ds.h>
 #include <sf2d.h>
 #include <sftd.h>
 
 #include <lua.h>
 #include <lauxlib.h>
+#include <lualib.h>
 
 #define BOOT_FILE "/ctruLua/main.lua"
-
-LUALIB_API void luaL_openlibs (lua_State *L);
 
 int load_ctr_lib(lua_State *L);
 
