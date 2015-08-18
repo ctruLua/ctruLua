@@ -11,3 +11,5 @@ Warning: the 'u' in the repo's name is a 'µ', not a 'u'.
 * If you only made changes to ctrµLua, run `make` to rebuild ctµLua without rebuilding all the dependencies.
 
 May not work under Windows.
+
+#### Based on ctrulib by smealum: [https://github.com/smealum/ctrulib](https://github.com/smealum/ctrulib)
