@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-
 #include <3ds.h>
 #include <sf2d.h>
 #include <sftd.h>
