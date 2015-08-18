@@ -45,7 +45,7 @@ int main() {
 	load_ctr_lib(L);
 
 	// Do the actual thing
-	luaL_dofile(L, BOOT_FILE);
+	if(luaL_dofile(L, BOOT_FILE)) error("Can open "BOOT_FILE);
 
 	// Un-init (?)
 	sftd_fini();
