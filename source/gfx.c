@@ -5,10 +5,20 @@
 
 u32 defaultColor = RGBA8(255, 255, 255, 255);
 
-static int gfx_render(lua_State *L) {
-	sf2d_end_frame();
-	sf2d_swapbuffers();
+static int gfx_startFrame(lua_State *L) {
 	sf2d_start_frame(GFX_TOP, GFX_LEFT);
+
+	return 0;
+}
+
+static int gfx_endFrame(lua_State *L) {
+	sf2d_end_frame();
+
+	return 0;
+}
+
+static int gfx_render(lua_State *L) {
+	sf2d_swapbuffers();
 
 	return 0;
 }
@@ -26,6 +36,8 @@ static int gfx_rectangle(lua_State *L) {
 }
 
 static const struct luaL_Reg gfx_lib[] = {
+	{ "startFrame",  gfx_startFrame},
+	{ "endFrame",    gfx_endFrame  },
 	{ "render",      gfx_render    },
 	{ "rectangle",   gfx_rectangle },
 	{ NULL, NULL }

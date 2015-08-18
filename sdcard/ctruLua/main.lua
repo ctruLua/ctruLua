@@ -14,8 +14,10 @@ while os.run() do
 	if keys.held.up then y = y - 1 end
 	if keys.held.down then y = y + 1 end
 
-	gfx.rectangle(x, y, 10, 10)
-	gfx.rectangle(240, 150, 120, 10)
+	gfx.startFrame()
+		gfx.rectangle(x, y, 10, 10)
+		gfx.rectangle(240, 150, 120, 10)
+	gfx.endFrame()
 
 	gfx.render()
 end
