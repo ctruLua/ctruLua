@@ -4,6 +4,10 @@ Everything is in the Wiki.
 
 Warning: the 'u' in the repo's name is a 'µ', not a 'u'.
 
+#### Builds
+
+Most recent working build (Firew0lf): [here](https://www.dropbox.com/s/yd6hza62xd55p3r/ctruLua.3dsx?dl=1)
+
 #### Build instructions
 
 * Setup your environment as shown here : http://3dbrew.org/wiki/Setting_up_Development_Environment
