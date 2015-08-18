@@ -4,7 +4,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-static Handle ptmHandle;
+static Handle *ptmHandle;
 
 static int ptm_init(lua_State *L) {
 	ptmInit();
@@ -22,7 +22,7 @@ static int ptm_getShellState(lua_State *L) {
 	u8 *out = 0;
 	PTMU_GetShellState(ptmHandle, out);
 	
-	lua_pushintegrer(L, (lua_Integrer)out);
+	lua_pushinteger(L, (lua_Integer)out);
 	
 	return 1;
 }
@@ -31,7 +31,7 @@ static int ptm_getBatteryLevel(lua_State *L) {
 	u8 *out = 0;
 	PTMU_GetBatteryLevel(ptmHandle, out);
 	
-	lua_pushintegrer(L, (lua_Integrer)out);
+	lua_pushinteger(L, (lua_Integer)out);
 	
 	return 1;
 }
@@ -40,7 +40,7 @@ static int ptm_getBatteryChargeState(lua_State *L) {
 	u8 *out = 0;
 	PTMU_GetBatteryChargeState(ptmHandle, out);
 	
-	lua_pushintegrer(L, (lua_Integrer)out);
+	lua_pushinteger(L, (lua_Integer)out);
 	
 	return 1;
 }
@@ -49,7 +49,7 @@ static int ptm_getPedometerState(lua_State *L) {
 	u8 *out = 0;
 	PTMU_GetPedometerState(ptmHandle, out);
 	
-	lua_pushintegrer(L, (lua_Integrer)out);
+	lua_pushinteger(L, (lua_Integer)out);
 	
 	return 1;
 }
@@ -58,7 +58,7 @@ static int ptm_getTotalStepCount(lua_State *L) {
 	u32 *steps = 0;
 	PTMU_GetTotalStepCount(ptmHandle, steps);
 	
-	lua_pushintegrer(L, (lua_Integrer)steps);
+	lua_pushinteger(L, (lua_Integer)steps);
 	
 	return 1;
 }
@@ -69,10 +69,10 @@ static const struct luaL_Reg ptm_lib[] = {
 	{"getShellState",         ptm_getShellState        },
 	{"getBatteryLevel",       ptm_getBatteryLevel      },
 	{"getBatteryChargeState", ptm_getBatteryChargeState},
-	{"getPedometer",          ptm_getPedometer         },
+	{"getPedometerState",     ptm_getPedometerState    },
 	{"getTotalStepCount",     ptm_getTotalStepCount    },
 	{NULL, NULL}
-}
+};
 
 int luaopen_ptm_lib(lua_State *L) {
 	luaL_newlib(L, ptm_lib);
