@@ -15,8 +15,13 @@ while os.run() do
 	if keys.held.down then y = y + 1 end
 
 	gfx.startFrame()
+	
+		gfx.color.setDefault(0xFF0000FF)
 		gfx.rectangle(x, y, 10, 10)
+
+		gfx.color.setDefault(0x00FFFFFF)
 		gfx.rectangle(240, 150, 120, 10)
+
 	gfx.endFrame()
 
 	gfx.render()
