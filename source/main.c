@@ -11,6 +11,8 @@
 
 #define BOOT_FILE "/ctruLua/main.lua"
 
+LUALIB_API void luaL_openlibs (lua_State *L);
+
 int load_ctr_lib(lua_State *L);
 
 // Display an error
