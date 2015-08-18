@@ -4,6 +4,8 @@ local hid = require("ctr.hid")
 local x = 0
 local y = 0
 
+local angle = 0
+
 gfx.color.setBackground(gfx.color.RGBA8(200, 200, 200))
 
 while os.run() do
@@ -19,12 +21,15 @@ while os.run() do
 	gfx.startFrame()
 	
 		gfx.color.setDefault(0xFF0000FF)
-		gfx.rectangle(x, y, 10, 10)
+		gfx.rectangle(x, y, 10, 10, angle)
 
 		gfx.color.setDefault(0x00FFFFFF)
 		gfx.rectangle(240, 150, 120, 10)
 
 	gfx.endFrame()
+
+	angle = angle + 0.05
+	if angle > 2*math.pi then angle = angle - 2*math.pi end
 
 	gfx.render()
 end

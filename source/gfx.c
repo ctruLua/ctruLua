@@ -30,9 +30,14 @@ static int gfx_rectangle(lua_State *L) {
 	int y = luaL_checkinteger(L, 2);
 	int width = luaL_checkinteger(L, 3);
 	int height = luaL_checkinteger(L, 4);
-	u32 color = luaL_optinteger(L, 5, color_default);
 	
-	sf2d_draw_rectangle(x, y, width, height, color);
+	float angle = luaL_optnumber(L, 5, 0);
+	u32 color = luaL_optinteger(L, 6, color_default);
+	
+	if (angle == 0)
+		sf2d_draw_rectangle(x, y, width, height, color);
+	else
+		sf2d_draw_rectangle_rotate(x, y, width, height, color, angle);
 
 	return 0;
 }
