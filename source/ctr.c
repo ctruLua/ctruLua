@@ -4,6 +4,7 @@
 int load_gfx_lib(lua_State *L);
 int load_os_lib(lua_State *L);
 int load_news_lib(lua_State *L);
+int load_ptm_lib(lua_State *L);
 
 static const struct luaL_Reg ctr_lib[] = {
 	{ NULL, NULL }
@@ -12,6 +13,7 @@ static const struct luaL_Reg ctr_lib[] = {
 struct { char *name; int (*load)(lua_State *L); } ctr_libs[] = {
 	{ "gfx",  load_gfx_lib },
 	{ "news", load_news_lib },
+	{ "ptm", load_ptm_lib }
 	{ NULL, NULL },
 };
 
