@@ -4,8 +4,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-// key list based on hid.h from the ctrulib by smealum
-struct { PAD_KEY key; char *name; } hid_keys[] = {
+// Key list based on hid.h from the ctrulib by smealum
+struct { PAD_KEY key; char *name; } hid_keys_name[] = {
 	{ KEY_A            , "a"          },
 	{ KEY_B            , "b"          },
 	{ KEY_SELECT       , "select"     },
@@ -34,10 +34,11 @@ struct { PAD_KEY key; char *name; } hid_keys[] = {
 	{ KEY_UP           , "up"         },
 	{ KEY_DOWN         , "down"       },
 	{ KEY_LEFT         , "left"       },
-	{ KEY_RIGHT        , "right"      }
+	{ KEY_RIGHT        , "right"      },
+	{ 0, NULL }
 };
 
-static int hid_read(lua_State *L) {
+static int hid_keys(lua_State *L) {
 	hidScanInput();
 
 	u32 kDown = hidKeysDown();
@@ -49,9 +50,9 @@ static int hid_read(lua_State *L) {
 	lua_newtable(L); // held table
 	lua_newtable(L); // up table
 
-	for (int i = 0; hid_keys[i].key; i++) {
-		PAD_KEY key = hid_keys[i].key;
-		char *name = hid_keys[i].name;
+	for (int i = 0; hid_keys_name[i].key; i++) {
+		PAD_KEY key = hid_keys_name[i].key;
+		char *name = hid_keys_name[i].name;
 		
 		if (kDown & key) {
 			lua_pushboolean(L, true);
@@ -134,7 +135,7 @@ static int hid_volume(lua_State *L) {
 }
 
 static const struct luaL_Reg hid_lib[] = {
-	{ "read",   hid_read   },
+	{ "keys",   hid_keys   },
 	{ "touch",  hid_touch  },
 	{ "circle", hid_circle },
 	{ "accel",  hid_accel  },

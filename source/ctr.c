@@ -7,10 +7,12 @@ int load_news_lib(lua_State *L);
 int load_ptm_lib(lua_State *L);
 int load_hid_lib(lua_State *L);
 
+// Functions
 static const struct luaL_Reg ctr_lib[] = {
 	{ NULL, NULL }
 };
 
+// Subtables
 struct { char *name; int (*load)(lua_State *L); } ctr_libs[] = {
 	{ "gfx",  load_gfx_lib  },
 	{ "news", load_news_lib },

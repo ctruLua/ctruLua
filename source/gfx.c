@@ -31,6 +31,14 @@ static int gfx_render(lua_State *L) {
 	return 0;
 }
 
+static int gfx_getFPS(lua_State *L) {
+	float fps = sf2d_get_fps();
+
+	lua_pushnumber(L, fps);
+
+	return 1;
+}
+
 static int gfx_line(lua_State *L) {
 	int x1 = luaL_checkinteger(L, 1);
 	int y1 = luaL_checkinteger(L, 2);
@@ -98,10 +106,12 @@ static int gfx_text(lua_State *L) {
 	return 0;
 }
 
+// Functions
 static const struct luaL_Reg gfx_lib[] = {
 	{ "startFrame",  gfx_startFrame},
 	{ "endFrame",    gfx_endFrame  },
 	{ "render",      gfx_render    },
+	{ "getFPS",      gfx_getFPS    },
 	{ "line",        gfx_line      },
 	{ "point",       gfx_point     },
 	{ "rectangle",   gfx_rectangle },
@@ -110,7 +120,7 @@ static const struct luaL_Reg gfx_lib[] = {
 	{ NULL, NULL }
 };
 
-// constants
+// Constants
 struct { char *name; int value; } gfx_constants[] = {
 	{ "GFX_TOP",       GFX_TOP    },
 	{ "GFX_BOTTOM",    GFX_BOTTOM },
@@ -123,6 +133,7 @@ struct { char *name; int value; } gfx_constants[] = {
 	{ NULL, 0 }
 };
 
+// Subtables
 struct { char *name; int (*load)(lua_State *L); } gfx_libs[] = {
 	{ "color", load_color_lib },
 	{ "font",  load_font_lib  },

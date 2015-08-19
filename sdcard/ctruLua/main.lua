@@ -9,7 +9,7 @@ local angle = 0
 gfx.color.setBackground(gfx.color.RGBA8(200, 200, 200))
 
 while os.run() do
-	local keys = hid.read()
+	local keys = hid.keys()
 
 	if keys.down.start then return end
 
@@ -37,7 +37,8 @@ while os.run() do
 	gfx.startFrame(gfx.GFX_BOTTOM)
 
 		gfx.color.setDefault(0, 0, 0)
-		gfx.text(5, 10, "Hello world, from Lua !", 15)
+		gfx.text(5, 7, "FPS: "..math.ceil(gfx.getFPS()))
+		gfx.text(5, 20, "Hello world, from Lua !", 20)
 
 	gfx.endFrame()
 

@@ -9,6 +9,7 @@
 #define BOOT_FILE "/ctruLua/main.lua"
 
 int load_ctr_lib(lua_State *L);
+void unload_font_lib();
 
 // Display an error
 void error(char *error) {
@@ -18,7 +19,7 @@ void error(char *error) {
 	printf("------------------ FATAL ERROR -------------------");
 	printf(error);
 	printf("\n--------------------------------------------------");
-	printf("Please exit ctruLua by pressing the home button.");
+	printf("Please exit ctruLua by rebooting the console.");
 
 	while (aptMainLoop()) {
 		gfxFlushBuffers();
@@ -40,12 +41,15 @@ int main() {
 
 	// Init Lua
 	lua_State *L = luaL_newstate();
-	if (L == NULL) error("memory allocation error while creating a new Lua state");
+	if (L == NULL) error("Memory allocation error while creating a new Lua state");
 	luaL_openlibs(L);
 	load_ctr_lib(L);
 
 	// Do the actual thing
-	if(luaL_dofile(L, BOOT_FILE)) error("Can open "BOOT_FILE);
+	if (luaL_dofile(L, BOOT_FILE)) error("Can't open the boot file "BOOT_FILE);
+
+	// Unload current font
+	unload_font_lib();
 
 	// Disable accel/gyro
 	HIDUSER_DisableAccelerometer();

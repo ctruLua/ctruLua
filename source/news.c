@@ -18,8 +18,8 @@ static int news_notification(lua_State *L) {
 	bool jpeg = false;
 	if (lua_isboolean(L, 4))
 		jpeg = lua_toboolean(L, 4);
-  
-  const u16* cTitle = 0;
+
+	const u16* cTitle = 0;
 	const u16* cMessage = 0;
 	u32 titleLength, messageLength, imageDataLength = 0;
 	
