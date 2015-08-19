@@ -48,6 +48,9 @@ int main() {
 	// Do the actual thing
 	if (luaL_dofile(L, BOOT_FILE)) error(luaL_checkstring(L, -1));
 
+	// Unload Lua
+	lua_close(L);
+
 	// Unload current font
 	unload_font_lib();
 
