@@ -12,7 +12,7 @@ int load_ctr_lib(lua_State *L);
 void unload_font_lib();
 
 // Display an error
-void error(char *error) {
+void error(const char *error) {
 	gfxInitDefault();
 
 	consoleInit(GFX_TOP, NULL);
@@ -46,7 +46,7 @@ int main() {
 	load_ctr_lib(L);
 
 	// Do the actual thing
-	if (luaL_dofile(L, BOOT_FILE)) error("Can't open the boot file "BOOT_FILE);
+	if (luaL_dofile(L, BOOT_FILE)) error(luaL_checkstring(L, -1));
 
 	// Unload current font
 	unload_font_lib();
