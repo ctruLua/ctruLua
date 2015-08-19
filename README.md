@@ -4,9 +4,9 @@ Everything is in the Wiki.
 
 Warning: the 'u' in the repo's name is a 'µ', not a 'u'.
 
-#### Builds
+#### Builds ![build status](http://thomas99.no-ip.org:3000/ctrulua.png)
 
-* Most recent working build (Firew0lf): [here](https://www.dropbox.com/s/yd6hza62xd55p3r/ctruLua.3dsx?dl=1) (warning: only tested with Citra, sometimes on real hardware)
+* Most recent working build: [here](thomas99.no-ip.org:3000/ctrulua/builds/latest/artifacts/ctruLua.3dsx) (warning: only tested with Citra, sometimes on real hardware)
 
 #### Build instructions
 
