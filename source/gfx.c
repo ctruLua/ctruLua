@@ -39,6 +39,16 @@ static int gfx_getFPS(lua_State *L) {
 	return 1;
 }
 
+static int gfx_set3D(lua_State *L) {
+  bool enable = false;
+  if (lua_isboolean(L, 1))
+		enable = lua_toboolean(L, 1);
+	
+	gfxSet3D(enable);
+	
+	return 1;
+}
+
 static int gfx_line(lua_State *L) {
 	int x1 = luaL_checkinteger(L, 1);
 	int y1 = luaL_checkinteger(L, 2);
@@ -112,6 +122,7 @@ static const struct luaL_Reg gfx_lib[] = {
 	{ "endFrame",    gfx_endFrame  },
 	{ "render",      gfx_render    },
 	{ "getFPS",      gfx_getFPS    },
+	{ "set3D",       gfx_set3D     },
 	{ "line",        gfx_line      },
 	{ "point",       gfx_point     },
 	{ "rectangle",   gfx_rectangle },
