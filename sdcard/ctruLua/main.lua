@@ -34,6 +34,13 @@ while os.run() do
 
 	gfx.endFrame()
 
+	gfx.startFrame(gfx.GFX_BOTTOM)
+
+		gfx.color.setDefault(0, 0, 0)
+		gfx.text(5, 10, "Hello world, from Lua !", 15)
+
+	gfx.endFrame()
+
 	angle = angle + 0.05
 	if angle > 2*math.pi then angle = angle - 2*math.pi end
 

@@ -1,11 +1,14 @@
 #include <sf2d.h>
+#include <sftd.h>
 
 #include <lua.h>
 #include <lauxlib.h>
 
 int load_color_lib(lua_State *L);
+int load_font_lib(lua_State *L);
 
 u32 color_default;
+sftd_font *font_default;
 
 static int gfx_startFrame(lua_State *L) {
 	u8 screen = luaL_checkinteger(L, 1);
@@ -81,6 +84,20 @@ static int gfx_circle(lua_State *L) {
 	return 0;
 }
 
+static int gfx_text(lua_State *L) {
+	int x = luaL_checkinteger(L, 1);
+	int y = luaL_checkinteger(L, 2);
+	const char *text = luaL_checkstring(L, 3);
+
+	int size = luaL_optinteger(L, 4, 9);
+	u32 color = luaL_optinteger(L, 5, color_default);
+	// todo : font selection
+
+	sftd_draw_text(font_default, x, y, color, size, text);
+
+	return 0;
+}
+
 static const struct luaL_Reg gfx_lib[] = {
 	{ "startFrame",  gfx_startFrame},
 	{ "endFrame",    gfx_endFrame  },
@@ -89,6 +106,7 @@ static const struct luaL_Reg gfx_lib[] = {
 	{ "point",       gfx_point     },
 	{ "rectangle",   gfx_rectangle },
 	{ "circle",      gfx_circle    },
+	{ "text",        gfx_text      },
 	{ NULL, NULL }
 };
 
@@ -107,6 +125,7 @@ struct { char *name; int value; } gfx_constants[] = {
 
 struct { char *name; int (*load)(lua_State *L); } gfx_libs[] = {
 	{ "color", load_color_lib },
+	{ "font",  load_font_lib  },
 	{ NULL, NULL }
 };
 

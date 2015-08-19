@@ -47,11 +47,13 @@ int main() {
 	// Do the actual thing
 	if(luaL_dofile(L, BOOT_FILE)) error("Can open "BOOT_FILE);
 
-	// Un-init (?)
-	sftd_fini();
-	sf2d_fini();
-	// Disable needed things
+	// Disable accel/gyro
 	HIDUSER_DisableAccelerometer();
 	HIDUSER_DisableGyroscope();
+
+	// Uninit GFX
+	sftd_fini();
+	sf2d_fini();
+
 	return 0;
 }
