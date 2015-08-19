@@ -6,7 +6,8 @@ Warning: the 'u' in the repo's name is a 'µ', not a 'u'.
 
 #### Builds ![build status](http://thomas99.no-ip.org:3000/ctrulua.png)
 
-* Most recent working build: [here](http://thomas99.no-ip.org:3000/ctrulua/builds/latest/artifacts/ctruLua.3dsx) (warning: only tested with Citra, sometimes on real hardware)
+* Most recent working build: [here](http://thomas99.no-ip.org:3000/ctrulua/builds/latest/artifacts/ctruLua.3dsx) (warning: only tested with Citra, sometimes on real hardware).
+* See http://thomas99.no-ip.org:3000/ctrulua/ for all the builds.
 
 #### Build instructions
 

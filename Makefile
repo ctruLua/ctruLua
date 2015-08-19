@@ -26,7 +26,7 @@ include $(DEVKITARM)/3ds_rules
 #     - icon.png
 #     - <libctru folder>/default_icon.png
 #---------------------------------------------------------------------------------
-TARGET		:=	$(notdir $(CURDIR))
+TARGET		:=	ctruLua
 BUILD		:=	build
 SOURCES		:=	source libs/lua-5.3.1/src
 DATA		:=	data
