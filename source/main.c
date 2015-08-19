@@ -6,7 +6,7 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-#define BOOT_FILE "/ctruLua/main.lua"
+#define BOOT_FILE "sdmc:/ctruLua/main.lua"
 
 int load_ctr_lib(lua_State *L);
 void unload_font_lib();
