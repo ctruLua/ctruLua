@@ -1,14 +1,20 @@
 #include <3ds/types.h>
+#include <3ds/services/apt.h>
 #include <3ds/os.h>
 
 #include <lua.h>
 #include <lauxlib.h>
 
-int load_os_lib(lua_State *L);
 int load_gfx_lib(lua_State *L);
 int load_news_lib(lua_State *L);
 int load_ptm_lib(lua_State *L);
 int load_hid_lib(lua_State *L);
+
+static int ctr_run(lua_State *L) {
+	lua_pushboolean(L, aptMainLoop());
+
+	return 1;
+}
 
 static int ctr_time(lua_State *L) {
 	lua_pushinteger(L, osGetTime());
@@ -18,6 +24,7 @@ static int ctr_time(lua_State *L) {
 
 // Functions
 static const struct luaL_Reg ctr_lib[] = {
+	{ "run",  ctr_run },
 	{ "time", ctr_time},
 	{ NULL, NULL }
 };
@@ -43,6 +50,5 @@ int luaopen_ctr_lib(lua_State *L) {
 }
 
 void load_ctr_lib(lua_State *L) {
-	load_os_lib(L);
 	luaL_requiref(L, "ctr", luaopen_ctr_lib, 0);
 }

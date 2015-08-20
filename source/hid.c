@@ -38,9 +38,13 @@ struct { PAD_KEY key; char *name; } hid_keys_name[] = {
 	{ 0, NULL }
 };
 
-static int hid_keys(lua_State *L) {
+static int hid_read(lua_State *L) {
 	hidScanInput();
 
+	return 0;
+}
+
+static int hid_keys(lua_State *L) {
 	u32 kDown = hidKeysDown();
 	u32 kHeld = hidKeysHeld();
 	u32 kUp = hidKeysUp();
@@ -76,8 +80,6 @@ static int hid_keys(lua_State *L) {
 }
 
 static int hid_touch(lua_State *L) {
-	hidScanInput();
-	
 	touchPosition pos;
 	hidTouchRead(&pos);
 	
@@ -88,8 +90,6 @@ static int hid_touch(lua_State *L) {
 }
 
 static int hid_circle(lua_State *L) {
-	hidScanInput();
-	
 	circlePosition pos;
 	hidCircleRead(&pos);
 	
@@ -100,8 +100,6 @@ static int hid_circle(lua_State *L) {
 }
 
 static int hid_accel(lua_State *L) {
-	hidScanInput();
-	
 	accelVector pos;
 	hidAccelRead(&pos);
 	
@@ -113,8 +111,6 @@ static int hid_accel(lua_State *L) {
 }
 
 static int hid_gyro(lua_State *L) {
-	hidScanInput();
-	
 	angularRate pos;
 	hidGyroRead(&pos);
 	
@@ -135,6 +131,7 @@ static int hid_volume(lua_State *L) {
 }
 
 static const struct luaL_Reg hid_lib[] = {
+	{ "read",   hid_read   },
 	{ "keys",   hid_keys   },
 	{ "touch",  hid_touch  },
 	{ "circle", hid_circle },

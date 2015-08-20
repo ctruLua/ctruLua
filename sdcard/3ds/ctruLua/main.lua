@@ -30,7 +30,8 @@ local function drawStuffIn3D(depth)
 	gfx.circle(125 - depth*4, 125, 16)
 end
 
-while os.run() do
+while ctr.run() do
+	hid.read()
 	local keys = hid.keys()
 
 	if keys.down.start then return end
