@@ -40,13 +40,11 @@ static int gfx_getFPS(lua_State *L) {
 }
 
 static int gfx_set3D(lua_State *L) {
-  bool enable = false;
-  if (lua_isboolean(L, 1))
-		enable = lua_toboolean(L, 1);
+	bool enable = lua_toboolean(L, 1);
 	
-	gfxSet3D(enable);
+	sf2d_set_3d(enable);
 	
-	return 1;
+	return 0;
 }
 
 static int gfx_line(lua_State *L) {

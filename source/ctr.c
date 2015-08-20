@@ -11,14 +11,14 @@ int load_ptm_lib(lua_State *L);
 int load_hid_lib(lua_State *L);
 
 static int ctr_time(lua_State *L) {
-  lua_pushinteger(L, osGetTime());
-  
-  return 1;
+	lua_pushinteger(L, osGetTime());
+
+	return 1;
 }
 
 // Functions
 static const struct luaL_Reg ctr_lib[] = {
-  { "time", ctr_time},
+	{ "time", ctr_time},
 	{ NULL, NULL }
 };
 

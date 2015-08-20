@@ -52,7 +52,7 @@ int main() {
 	// Init GFX
 	sf2d_init();
 	sftd_init();
-	//sf2d_set_3d(true);
+
 	gfxinit = true;
 	
 	// Init accel/gyro
