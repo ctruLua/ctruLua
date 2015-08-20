@@ -42,7 +42,7 @@ static int gfx_getFPS(lua_State *L) {
 static int gfx_set3D(lua_State *L) {
 	bool enable = lua_toboolean(L, 1);
 	
-	sf2d_set_3d(enable);
+	sf2d_set_3D(enable);
 	
 	return 0;
 }
