@@ -10,6 +10,7 @@ int load_news_lib(lua_State *L);
 int load_ptm_lib(lua_State *L);
 int load_hid_lib(lua_State *L);
 int load_ir_lib(lua_State *L);
+int load_fs_lib(lua_State *L);
 
 static int ctr_run(lua_State *L) {
 	lua_pushboolean(L, aptMainLoop());
@@ -37,6 +38,7 @@ struct { char *name; int (*load)(lua_State *L); } ctr_libs[] = {
 	{ "ptm",  load_ptm_lib  },
 	{ "hid",  load_hid_lib  },
 	{ "ir",   load_ir_lib   },
+	{ "fs",   load_fs_lib   },
 	{ NULL, NULL }
 };
 

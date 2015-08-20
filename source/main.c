@@ -10,6 +10,7 @@
 
 int load_ctr_lib(lua_State *L);
 void unload_font_lib();
+void unload_fs_lib();
 
 bool gfxinit = false;
 
@@ -64,8 +65,9 @@ int main() {
 	// Unload Lua
 	lua_close(L);
 
-	// Unload current font
+	// Unload libs
 	unload_font_lib();
+	unload_fs_lib();
 	
 	// Disable accel/gyro
 	HIDUSER_DisableAccelerometer();

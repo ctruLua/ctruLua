@@ -1,76 +1,50 @@
-local gfx = require("ctr.gfx")
-local hid = require("ctr.hid")
 local ctr = require("ctr")
+local gfx = require("ctr.gfx")
 
-local x = 50
-local y = 50
-local dMul = 1
-
-local angle = 0
-
-gfx.color.setBackground(gfx.color.RGBA8(200, 200, 200))
-gfx.set3D(true)
-
-local function drawStuffIn3D(depth)
-	gfx.text(2, 5, "Depth multiplicator: "..dMul)
-
-	-- 3D stuff
-	local depth = math.floor(depth * dMul)
-
-	gfx.color.setDefault(0x00FFFFFF)
-	gfx.rectangle(240 + depth*5, 150, 120, 10)
-
-	gfx.point(10 + depth*3, 20, 0xFF0000FF)
-
-	gfx.color.setDefault(0xFF0000FF)
-	gfx.rectangle(x + depth*math.ceil(5*math.sin(ctr.time()/500)), y, 20, 20, angle)
-
-	gfx.line(50 - depth*3, 50, 75 + depth*2, 96, gfx.color.RGBA8(52, 10, 65))
-
-	gfx.circle(125 - depth*4, 125, 16)
-end
+local sel = 1
+local curdir = "/"
+local files = ctr.fs.list(curdir)
 
 while ctr.run() do
-	hid.read()
-	local keys = hid.keys()
+	ctr.hid.read()
+	local keys = ctr.hid.keys()
+	if keys.down.start then break end
 
-	if keys.down.start then return end
+	if keys.down.down and sel < #files then sel = sel + 1
+	elseif keys.down.up and sel > 1 then sel = sel - 1 end
 
-	if keys.held.right then x = x + 1 end
-	if keys.held.left then x = x - 1 end
-	if keys.held.up then y = y - 1 end
-	if keys.held.down then y = y + 1 end
-	
-	if keys.held.r then dMul = dMul + 0.05 end
-	if keys.held.l then dMul = dMul - 0.05 end
+	if keys.down.a then
+		local f = files[sel]
 
-	gfx.startFrame(gfx.GFX_TOP, gfx.GFX_LEFT)
+		if f.isDirectory then
+			if f.name == ".." then curdir = curdir:gsub("[^/]+/$", "")
+			else curdir = curdir..f.name.."/" end
 
-		drawStuffIn3D(-1)
+			sel = 1
+			files = ctr.fs.list(curdir)
+
+			if curdir ~= "/" then
+				table.insert(files, 1, { name = "..", isDirectory = true, fileSize = "parent directory" })
+			end
+		else
+			if f.name:match("%..+$") == ".lua" then
+				dofile(curdir..f.name)
+			end
+		end
+	end
+
+	gfx.startFrame(gfx.GFX_TOP)
+
+		gfx.text(3, 9, curdir)
+
+		for i,f in pairs(files) do
+			local name = f.isDirectory and "["..f.name.."]" or f.name.." ("..f.fileSize.."b)"
+			if not f.isHidden then gfx.text(5, 9+i*9, name) end
+		end
+
+		gfx.text(0, 9+sel*9, ">")
 
 	gfx.endFrame()
-	
-	gfx.startFrame(gfx.GFX_TOP, gfx.GFX_RIGHT)
-		
-		drawStuffIn3D(1)
-		
-	gfx.endFrame()
-	
-	gfx.startFrame(gfx.GFX_BOTTOM)
-
-		gfx.color.setDefault(0, 0, 0)
-		gfx.text(5, 7, "FPS: "..math.ceil(gfx.getFPS()))
-		gfx.text(5, 20, "Hello world, from Lua !", 20)
-		gfx.text(5, 30, "Time: "..os.date())
-
-		local cx, cy = hid.circle()
-		gfx.rectangle(40, 90, 60, 60, 0, 0xDDDDDDFF)
-		gfx.circle(70 + math.ceil(cx/156 * 30), 120 - math.ceil(cy/156 * 30), 10, 0x000000FF)
-
-	gfx.endFrame()
-
-	angle = angle + 0.05
-	if angle > 2*math.pi then angle = angle - 2*math.pi end
 
 	gfx.render()
 end
