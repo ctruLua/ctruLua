@@ -11,13 +11,12 @@
 int load_ctr_lib(lua_State *L);
 void unload_font_lib();
 
-bool errored, gfxinit = false;
+bool gfxinit = false;
 
 // Display an error
 void error(const char *error) {
-	if (!gfxinit) {
-		gfxInitDefault();
-	}
+	if (!gfxinit) gfxInitDefault();
+	gfxSet3D(false);
 
 	consoleInit(GFX_TOP, NULL);
 	printf("------------------ FATAL ERROR -------------------");
@@ -25,27 +24,23 @@ void error(const char *error) {
 	printf("\n--------------------------------------------------");
 	printf("Please exit ctruLua by pressing start.");
 	
-	errored = true;
-	
 	while (aptMainLoop()) {
 		hidScanInput();
-		if (hidKeysDown() & KEY_START)
-			break;
+		if (hidKeysDown() & KEY_START) break;
 		gfxFlushBuffers();
 		gfxSwapBuffers();
 		gspWaitForVBlank();
 	}
-	if (!gfxinit) {
-		gfxExit();
-	}
+
+	if (!gfxinit) gfxExit();
 }
 
 // Main loop
 int main() {
 	// Init Lua
 	lua_State *L = luaL_newstate();
-	if (L == NULL) error("Memory allocation error while creating a new Lua state");
-	if (errored) {
+	if (L == NULL) {
+		error("Memory allocation error while creating a new Lua state");
 		return 0;
 	}
 	
@@ -59,7 +54,7 @@ int main() {
 	HIDUSER_EnableAccelerometer();
 	HIDUSER_EnableGyroscope();
 
-	
+	// Load libs
 	luaL_openlibs(L);
 	load_ctr_lib(L);
 
