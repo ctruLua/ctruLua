@@ -9,6 +9,7 @@ local dMul = 1
 local angle = 0
 
 local texture1 = gfx.texture.load("sdmc:/3ds/ctruLua/icon.png", gfx.texture.PLACE_VRAM, gfx.texture.TYPE_PNG);
+if not texture1 then error("Giants ducks came from another planet") end
 
 gfx.color.setBackground(gfx.color.RGBA8(200, 200, 200))
 gfx.set3D(true)
