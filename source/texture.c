@@ -76,6 +76,32 @@ static int texture_drawPart(lua_State *L) {
 	return 0;
 }
 
+static int texture_drawBlend(lua_State *L) {
+	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
+	int x = luaL_checkinteger(L, 2);
+	int y = luaL_checkinteger(L, 3);
+	u32 color = luaL_checkinteger(L, 4);
+	
+	sf2d_draw_texture_blend(texture->texture, x, y, color);
+	
+	return 0;
+}
+
+static int texture_drawPartBlend(lua_State *L) {
+	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
+	int x = luaL_checkinteger(L, 2);
+	int y = luaL_checkinteger(L, 3);
+	int sx = luaL_checkinteger(L, 4);
+	int sy = luaL_checkinteger(L, 5);
+	int w = luaL_checkinteger(L, 6);
+	int h = luaL_checkinteger(L, 7);
+	u32 color = luaL_checkinteger(L, 8);
+	
+	sf2d_draw_texture_part_blend(texture->texture, x, y, sx, sy, w, h, color);
+	
+	return 0;
+}
+
 static int texture_unload(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 	
@@ -96,13 +122,38 @@ static int texture_scale(lua_State *L) {
 	return 0;
 }
 
+static int texture_getPixel(lua_State *L) {
+	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
+	int x = luaL_checkinteger(L, 2);
+	int y = luaL_checkinteger(L, 3);
+	
+	lua_pushinteger(L, sf2d_get_pixel(texture->texture, x, y));
+	
+	return 1;
+}
+
+static int texture_setPixel(lua_State *L) {
+	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
+	int x = luaL_checkinteger(L, 2);
+	int y = luaL_checkinteger(L, 3);
+	u32 color = luaL_checkinteger(L, 4);
+	
+	sf2d_set_pixel(texture->texture, x, y, color);
+	
+	return 0;
+}
+
 // object
 static const struct luaL_Reg texture_methods[] = {
-	{"draw",      texture_draw     },
-	{"drawPart",  texture_drawPart },
-	{"scale",     texture_scale    },
-	{"unload",    texture_unload   },
-	{"__gc",      texture_unload   },
+	{ "draw",          texture_draw          },
+	{ "drawPart",      texture_drawPart      },
+	{ "drawBlend",     texture_drawBlend     },
+	{ "drawPartBlend", texture_drawPartBlend },
+	{ "scale",         texture_scale         },
+	{ "unload",        texture_unload        },
+	{ "getPixel",      texture_getPixel      },
+	{ "setPixel",      texture_setPixel      },
+	{ "__gc",          texture_unload        },
 	{NULL, NULL}
 };
 
