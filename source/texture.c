@@ -6,7 +6,8 @@
 
 typedef struct {
 	sf2d_texture *texture;
-	//u32 blendColor = 0xffffffff;
+	float scaleX;
+	float scaleY;
 } texture_userdata;
 
 u8 getType(const char *name) {
@@ -39,6 +40,9 @@ static int texture_load(lua_State *L) {
 		return 2;
 	}
 	
+	texture->scaleX = 1.0f;
+	texture->scaleY = 1.0f;
+	
 	return 1;
 }
 
@@ -46,8 +50,28 @@ static int texture_draw(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 	int x = luaL_checkinteger(L, 2);
 	int y = luaL_checkinteger(L, 3);
+	float rad = luaL_optnumber(L, 4, 0.0f);
 	
-	sf2d_draw_texture(texture->texture, x, y);
+	if (rad == 0.0f && texture->scaleX == 1.0f && texture->scaleY == 1.0f) {
+		sf2d_draw_texture(texture->texture, x, y);
+	} else {
+		sf2d_draw_texture_rotate_cut_scale(texture->texture, x, y, rad, 0, 0, texture->texture->width, texture->texture->height, texture->scaleX, texture->scaleY);
+	}
+	
+	return 0;
+}
+
+static int texture_drawPart(lua_State *L) {
+	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
+	int x = luaL_checkinteger(L, 2);
+	int y = luaL_checkinteger(L, 3);
+	int sx = luaL_checkinteger(L, 4);
+	int sy = luaL_checkinteger(L, 5);
+	int w = luaL_checkinteger(L, 6);
+	int h = luaL_checkinteger(L, 7);
+	int rad = luaL_optnumber(L, 8, 0.0f);
+	
+	sf2d_draw_texture_rotate_cut_scale(texture->texture, x, y, rad, sx, sy, w, h, texture->scaleX, texture->scaleY);
 	
 	return 0;
 }
@@ -61,11 +85,24 @@ static int texture_unload(lua_State *L) {
 	return 0;
 }
 
+static int texture_scale(lua_State *L) {
+	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
+	float sx = luaL_checknumber(L, 2);
+	float sy = luaL_checknumber(L, 3);
+	
+	texture->scaleX = sx;
+	texture->scaleY = sy;
+	
+	return 0;
+}
+
 // object
 static const struct luaL_Reg texture_methods[] = {
-	{"draw",    texture_draw  },
-	{"unload",  texture_unload},
-	{"__gc",    texture_unload},
+	{"draw",      texture_draw     },
+	{"drawPart",  texture_drawPart },
+	{"scale",     texture_scale    },
+	{"unload",    texture_unload   },
+	{"__gc",      texture_unload   },
 	{NULL, NULL}
 };
 
