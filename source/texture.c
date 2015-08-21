@@ -64,7 +64,7 @@ static int texture_unload(lua_State *L) {
 // object
 static const struct luaL_Reg texture_methods[] = {
 	{"draw",    texture_draw  },
-	{"destroy", texture_unload},
+	{"unload",  texture_unload},
 	{"__gc",    texture_unload},
 	{NULL, NULL}
 };

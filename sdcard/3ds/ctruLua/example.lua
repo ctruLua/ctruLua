@@ -8,6 +8,8 @@ local dMul = 1
 
 local angle = 0
 
+local texture1 = gfx.texture.load("sdmc:/3ds/ctruLua/icon.png", gfx.texture.TYPE_PNG);
+
 gfx.color.setBackground(gfx.color.RGBA8(200, 200, 200))
 gfx.set3D(true)
 
@@ -62,6 +64,8 @@ while ctr.run() do
 		gfx.text(5, 7, "FPS: "..math.ceil(gfx.getFPS()))
 		gfx.text(5, 20, "Hello world, from Lua !", 20)
 		gfx.text(5, 30, "Time: "..os.date())
+		
+		texture1:draw(240, 10);
 
 		local cx, cy = hid.circle()
 		gfx.rectangle(40, 90, 60, 60, 0, 0xDDDDDDFF)
@@ -74,3 +78,5 @@ while ctr.run() do
 
 	gfx.render()
 end
+
+texture1:unload()
