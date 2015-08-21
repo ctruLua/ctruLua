@@ -130,6 +130,14 @@ static int hid_volume(lua_State *L) {
 	return 1;
 }
 
+static int hid_3d(lua_State *L) {
+  float slider = (*(float*)0x1FF81080);
+  
+  lua_pushnumber(L, slider);
+  
+  return 1;
+}
+
 static const struct luaL_Reg hid_lib[] = {
 	{ "read",   hid_read   },
 	{ "keys",   hid_keys   },
@@ -138,6 +146,7 @@ static const struct luaL_Reg hid_lib[] = {
 	{ "accel",  hid_accel  },
 	{ "gyro",   hid_gyro   },
 	{ "volume", hid_volume },
+	{ "pos3d",  hid_3d     },
 	{ NULL, NULL }
 };
 
