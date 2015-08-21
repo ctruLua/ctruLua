@@ -40,6 +40,12 @@ static int texture_load(lua_State *L) {
 		return 2;
 	}
 	
+	if (texture->texture == NULL) {
+	  lua_pushnil(L);
+	  lua_pushstring(L, "No such file");
+	  return 2;
+	}
+	
 	texture->scaleX = 1.0f;
 	texture->scaleY = 1.0f;
 	
