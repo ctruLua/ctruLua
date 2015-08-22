@@ -6,10 +6,14 @@
 #include <lua.h>
 #include <lauxlib.h>
 
-int load_color_lib(lua_State *L);
-int load_font_lib(lua_State *L);
-int load_texture_lib(lua_State *L);
-int load_map_lib(lua_State *L);
+bool isGfxInitialised = false;
+
+void load_color_lib(lua_State *L);
+void load_font_lib(lua_State *L);
+void load_texture_lib(lua_State *L);
+void load_map_lib(lua_State *L);
+
+void unload_font_lib(lua_State *L);
 
 u32 color_default;
 sftd_font *font_default;
@@ -153,11 +157,11 @@ struct { char *name; int value; } gfx_constants[] = {
 };
 
 // Subtables
-struct { char *name; int (*load)(lua_State *L); } gfx_libs[] = {
-	{ "color",   load_color_lib   },
-	{ "font",    load_font_lib    },
-	{ "texture", load_texture_lib },
-	{ "map",     load_map_lib     },
+struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); } gfx_libs[] = {
+	{ "color",   load_color_lib,   NULL            },
+	{ "font",    load_font_lib,    unload_font_lib },
+	{ "texture", load_texture_lib, NULL            },
+	{ "map",     load_map_lib,     NULL            },
 	{ NULL, NULL }
 };
 
@@ -178,5 +182,19 @@ int luaopen_gfx_lib(lua_State *L) {
 }
 
 void load_gfx_lib(lua_State *L) {
+	sf2d_init();
+	sftd_init();
+
+	isGfxInitialised = true;
+
 	luaL_requiref(L, "ctr.gfx", luaopen_gfx_lib, 0);
+}
+
+void unload_gfx_lib(lua_State *L) {
+	for (int i = 0; gfx_libs[i].name; i++) {
+		if (gfx_libs[i].unload) gfx_libs[i].unload(L);
+	}
+
+	sftd_fini();
+	sf2d_fini();
 }

@@ -71,7 +71,7 @@ int luaopen_fs_lib(lua_State *L) {
 	return 1;
 }
 
-int load_fs_lib(lua_State *L) {
+void load_fs_lib(lua_State *L) {
 	fsInit();
 
 	fsuHandle = fsGetSessionHandle();
@@ -81,8 +81,6 @@ int load_fs_lib(lua_State *L) {
 	FSUSER_OpenArchive(fsuHandle, &sdmcArchive);
 
 	luaL_requiref(L, "ctr.fs", luaopen_fs_lib, false);
-
-	return 0;
 }
 
 void unload_fs_lib(lua_State *L) {

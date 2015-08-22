@@ -156,5 +156,13 @@ int luaopen_hid_lib(lua_State *L) {
 }
 
 void load_hid_lib(lua_State *L) {
+	HIDUSER_EnableAccelerometer();
+	HIDUSER_EnableGyroscope();
+
 	luaL_requiref(L, "ctr.hid", luaopen_hid_lib, false);
+}
+
+void unload_hid_lib(lua_State *L) {
+	HIDUSER_DisableAccelerometer();
+	HIDUSER_DisableGyroscope();
 }

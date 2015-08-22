@@ -22,6 +22,6 @@ void load_font_lib(lua_State *L) {
 	luaL_requiref(L, "ctr.gfx.font", luaopen_font_lib, false);
 }
 
-void unload_font_lib() {
+void unload_font_lib(lua_State *L) {
 	sftd_free_font(font_default); // Unload current font
 }
