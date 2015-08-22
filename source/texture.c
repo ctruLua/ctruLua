@@ -59,7 +59,7 @@ static int texture_draw(lua_State *L) {
 	if (rad == 0.0f && texture->scaleX == 1.0f && texture->scaleY == 1.0f) {
 		sf2d_draw_texture(texture->texture, x, y);
 	} else {
-		sf2d_draw_texture_rotate_cut_scale(texture->texture, x, y, rad, 0, 0, texture->texture->width, texture->texture->height, texture->scaleX, texture->scaleY);
+		sf2d_draw_texture_part_rotate_scale(texture->texture, x, y, rad, 0, 0, texture->texture->width, texture->texture->height, texture->scaleX, texture->scaleY);
 	}
 	
 	return 0;
@@ -75,7 +75,7 @@ static int texture_drawPart(lua_State *L) {
 	int h = luaL_checkinteger(L, 7);
 	int rad = luaL_optnumber(L, 8, 0.0f);
 	
-	sf2d_draw_texture_rotate_cut_scale(texture->texture, x, y, rad, sx, sy, w, h, texture->scaleX, texture->scaleY);
+	sf2d_draw_texture_part_rotate_scale(texture->texture, x, y, rad, sx, sy, w, h, texture->scaleX, texture->scaleY);
 	
 	return 0;
 }

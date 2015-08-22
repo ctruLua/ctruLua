@@ -66,7 +66,7 @@ while ctr.run() do
 		gfx.text(5, 17, "Hello world, from Lua ! éàçù", 20, gfx.color.RGBA8(0, 0, 0))
 		gfx.text(5, 50, "Time: "..os.date())
 		
-		texture1:draw(240, 10, angle);
+		texture1:draw(280, 80, angle);
 
 		local cx, cy = hid.circle()
 		gfx.rectangle(40, 90, 60, 60, 0, 0xDDDDDDFF)
