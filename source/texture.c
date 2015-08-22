@@ -46,6 +46,7 @@ static int texture_load(lua_State *L) {
 	
 	texture->scaleX = 1.0f;
 	texture->scaleY = 1.0f;
+	texture->blendColor = 0xffffffff;
 	
 	return 1;
 }
@@ -56,10 +57,10 @@ static int texture_draw(lua_State *L) {
 	int y = luaL_checkinteger(L, 3);
 	float rad = luaL_optnumber(L, 4, 0.0f);
 	
-	if (rad == 0.0f && texture->scaleX == 1.0f && texture->scaleY == 1.0f) {
+	if (rad == 0.0f && texture->scaleX == 1.0f && texture->scaleY == 1.0f && texture->blendColor == 0xffffffff) {
 		sf2d_draw_texture(texture->texture, x, y);
 	} else {
-		sf2d_draw_texture_part_rotate_scale(texture->texture, x, y, rad, 0, 0, texture->texture->width, texture->texture->height, texture->scaleX, texture->scaleY);
+		sf2d_draw_texture_part_rotate_scale_blend(texture->texture, x, y, rad, 0, 0, texture->texture->width, texture->texture->height, texture->scaleX, texture->scaleY, texture->blendColor);
 	}
 	
 	return 0;
@@ -75,33 +76,7 @@ static int texture_drawPart(lua_State *L) {
 	int h = luaL_checkinteger(L, 7);
 	int rad = luaL_optnumber(L, 8, 0.0f);
 	
-	sf2d_draw_texture_part_rotate_scale(texture->texture, x, y, rad, sx, sy, w, h, texture->scaleX, texture->scaleY);
-	
-	return 0;
-}
-
-static int texture_drawBlend(lua_State *L) {
-	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
-	int x = luaL_checkinteger(L, 2);
-	int y = luaL_checkinteger(L, 3);
-	u32 color = luaL_checkinteger(L, 4);
-	
-	sf2d_draw_texture_blend(texture->texture, x, y, color);
-	
-	return 0;
-}
-
-static int texture_drawPartBlend(lua_State *L) {
-	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
-	int x = luaL_checkinteger(L, 2);
-	int y = luaL_checkinteger(L, 3);
-	int sx = luaL_checkinteger(L, 4);
-	int sy = luaL_checkinteger(L, 5);
-	int w = luaL_checkinteger(L, 6);
-	int h = luaL_checkinteger(L, 7);
-	u32 color = luaL_checkinteger(L, 8);
-	
-	sf2d_draw_texture_part_blend(texture->texture, x, y, sx, sy, w, h, color);
+	sf2d_draw_texture_part_rotate_scale_blend(texture->texture, x, y, rad, sx, sy, w, h, texture->scaleX, texture->scaleY, texture->blendColor);
 	
 	return 0;
 }
@@ -149,16 +124,24 @@ static int texture_setPixel(lua_State *L) {
 	return 0;
 }
 
+static int texture_setBlendColor(lua_State *L) {
+  texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
+	u32 color = luaL_checkinteger(L, 2);
+	
+	texture->blendColor = color;
+	
+	return 0;
+}
+
 // object
 static const struct luaL_Reg texture_methods[] = {
 	{ "draw",          texture_draw          },
 	{ "drawPart",      texture_drawPart      },
-	{ "drawBlend",     texture_drawBlend     },
-	{ "drawPartBlend", texture_drawPartBlend },
 	{ "scale",         texture_scale         },
 	{ "unload",        texture_unload        },
 	{ "getPixel",      texture_getPixel      },
 	{ "setPixel",      texture_setPixel      },
+	{ "setBlendColor", texture_setBlendColor },
 	{ "__gc",          texture_unload        },
 	{NULL, NULL}
 };

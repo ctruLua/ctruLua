@@ -11,7 +11,6 @@
 
 typedef struct {
 	texture_userdata *texture;
-	u32 blendColor;
 	u8 tileSizeX;
 	u8 tileSizeY;
 	int tilesetSizeX; // in tiles
@@ -43,7 +42,6 @@ static int map_load(lua_State *L) {
 	lua_setmetatable(L, -2);
 	
 	map->texture = texture;
-	map->blendColor = 0xffffffff;
 	map->tileSizeX = tileSizeX;
 	map->tileSizeY = tileSizeY;
 	map->tilesetSizeX = (map->texture->texture->width/tileSizeX);
@@ -101,7 +99,7 @@ static int map_draw(lua_State *L) {
 	int texY = 0;
 	
 	
-	if (map->blendColor == 0xffffffff) {
+	if (map->texture->blendColor == 0xffffffff) {
 		for (int xp=0; xp<map->width; xp++) {
 			for (int yp=0; yp<map->height; yp++) {
 				u16 tile = getTile(map, xp, yp);
@@ -114,7 +112,7 @@ static int map_draw(lua_State *L) {
 			for (int yp=0; yp<map->height; yp++) {
 				u16 tile = getTile(map, xp, yp);
 				getTilePos(map, tile, &texX, &texY);
-				sf2d_draw_texture_part_blend(map->texture->texture, (x+(map->tileSizeX*xp)), (y+(map->tileSizeY*yp)), texX, texY, map->tileSizeX, map->tileSizeY, map->blendColor);
+				sf2d_draw_texture_part_blend(map->texture->texture, (x+(map->tileSizeX*xp)), (y+(map->tileSizeY*yp)), texX, texY, map->tileSizeX, map->tileSizeY, map->texture->blendColor);
 			}
 		}
 	}
@@ -158,15 +156,6 @@ static int map_setTile(lua_State *L) {
 	return 0;
 }
 
-static int map_setBlendColor(lua_State *L) {
-	map_userdata *map = luaL_checkudata(L, 1, "LMap");
-	u32 color = luaL_checkinteger(L, 2);
-	
-	map->blendColor = color;
-	
-	return 0;
-}
-
 // object
 static const struct luaL_Reg map_methods[] = {
 	{"draw",          map_draw         },
@@ -174,7 +163,6 @@ static const struct luaL_Reg map_methods[] = {
 	{"getSize",       map_getSize      },
 	{"getTile",       map_getTile      },
 	{"setTile",       map_setTile      },
-	{"setBlendColor", map_setBlendColor},
 	{"__gc",          map_unload       },
 	{NULL, NULL}
 };
