@@ -154,12 +154,12 @@ static const struct luaL_Reg texture_functions[] = {
 
 // constants
 struct { char *name; int value; } texture_constants[] = {
-	{"PLACE_RAM",  0},
-	{"PLACE_VRAM", 1},
-	{"PLACE_TEMP", 2},
-	{"TYPE_PNG",   0},
-	{"TYPE_JPEG",  1},
-	{"TYPE_BMP",   2},
+	{"PLACE_RAM",  SF2D_PLACE_RAM },
+	{"PLACE_VRAM", SF2D_PLACE_VRAM},
+	{"PLACE_TEMP", SF2D_PLACE_TEMP},
+	{"TYPE_PNG",   0              },
+	{"TYPE_JPEG",  1              },
+	{"TYPE_BMP",   2              },
 	{NULL, 0}
 };
 
