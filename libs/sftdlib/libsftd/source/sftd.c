@@ -1,9 +1,14 @@
 #include "sftd.h"
+#include "texture_atlas.h"
+#include "bin_packing_2d.h"
 #include <wchar.h>
 #include <sf2d.h>
 #include <ft2build.h>
 #include FT_CACHE_H
 #include FT_FREETYPE_H
+
+#define ATLAS_DEFAULT_W 512
+#define ATLAS_DEFAULT_H 512
 
 static int sftd_initialized = 0;
 static FT_Library ftlibrary;
@@ -25,6 +30,7 @@ struct sftd_font {
 	};
 	FTC_CMapCache cmapcache;
 	FTC_ImageCache imagecache;
+	texture_atlas *tex_atlas;
 };
 
 static FT_Error ftc_face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointer request_data, FT_Face *face)
@@ -106,6 +112,8 @@ sftd_font *sftd_load_font_file(const char *filename)
 	FTC_ImageCache_New(ftcmanager, &font->imagecache);
 
 	font->from = SFTD_LOAD_FROM_FILE;
+	font->tex_atlas = texture_atlas_create(ATLAS_DEFAULT_W, ATLAS_DEFAULT_H,
+		TEXFMT_RGBA8, SF2D_PLACE_RAM);
 
 	return font;
 }
@@ -120,6 +128,8 @@ sftd_font *sftd_load_font_mem(const void *buffer, unsigned int size)
 	FTC_ImageCache_New(ftcmanager, &font->imagecache);
 
 	font->from = SFTD_LOAD_FROM_MEM;
+	font->tex_atlas = texture_atlas_create(ATLAS_DEFAULT_W, ATLAS_DEFAULT_H,
+		TEXFMT_RGBA8, SF2D_PLACE_RAM);
 
 	return font;
 }
@@ -132,25 +142,40 @@ void sftd_free_font(sftd_font *font)
 		if (font->from == SFTD_LOAD_FROM_FILE) {
 			free(font->filename);
 		}
+		texture_atlas_free(font->tex_atlas);
 		free(font);
 	}
 }
 
-static void draw_bitmap(FT_Bitmap *bitmap, int x, int y, unsigned int color)
+static int atlas_add_glyph(texture_atlas *atlas, unsigned int glyph_index, const FT_BitmapGlyph bitmap_glyph)
 {
-	//This is too ugly
-	sf2d_texture *tex = sf2d_create_texture(bitmap->width, bitmap->rows, GPU_RGBA8, SF2D_PLACE_TEMP);
+	const FT_Bitmap *bitmap = &bitmap_glyph->bitmap;
+
+	unsigned int *buffer = malloc(bitmap->width * bitmap->rows * 4);
+	unsigned int w = bitmap->width;
+	unsigned int h = bitmap->rows;
 
 	int j, k;
-	for (j = 0; j < bitmap->rows; j++) {
-		for (k = 0; k < bitmap->width; k++) {
-			((u32 *)tex->data)[j*tex->pow2_w + k] = __builtin_bswap32((color & ~0xFF) | bitmap->buffer[j*bitmap->width + k]);
+	for (j = 0; j < h; j++) {
+		for (k = 0; k < w; k++) {
+			if (bitmap->pixel_mode == FT_PIXEL_MODE_MONO) {
+				buffer[j*w + k] =
+					(bitmap->buffer[j*bitmap->pitch + k/8] & (1 << (7 - k%8)))
+					? 0xFF : 0;
+			} else {
+				buffer[j*w + k] = 0x00FFFFFF | (bitmap->buffer[j*bitmap->pitch + k] << 24);
+			}
 		}
 	}
 
-	sf2d_texture_tile32(tex);
-	sf2d_draw_texture(tex, x, y);
-	sf2d_free_texture(tex);
+	int ret = texture_atlas_insert(atlas, glyph_index, buffer,
+		bitmap->width, bitmap->rows,
+		bitmap_glyph->left, bitmap_glyph->top,
+		bitmap_glyph->root.advance.x, bitmap_glyph->root.advance.y);
+
+	free(buffer);
+
+	return ret;
 }
 
 void sftd_draw_text(sftd_font *font, int x, int y, unsigned int color, unsigned int size, const char *text)
@@ -166,7 +191,7 @@ void sftd_draw_text(sftd_font *font, int x, int y, unsigned int color, unsigned 
 	FT_Bool use_kerning = FT_HAS_KERNING(face);
 	FT_UInt glyph_index, previous = 0;
 	int pen_x = x;
-	int pen_y = y;
+	int pen_y = y + size;
 
 	FTC_ScalerRec scaler;
 	scaler.face_id = face_id;
@@ -185,15 +210,30 @@ void sftd_draw_text(sftd_font *font, int x, int y, unsigned int color, unsigned 
 			pen_x += delta.x >> 6;
 		}
 
-		FTC_ImageCache_LookupScaler(font->imagecache, &scaler, flags, glyph_index, &glyph, NULL);
-		if (glyph->format == FT_GLYPH_FORMAT_BITMAP) {
-			FT_BitmapGlyph bitmap_glyph = (FT_BitmapGlyph)glyph;
+		if (!texture_atlas_exists(font->tex_atlas, glyph_index)) {
+			FTC_ImageCache_LookupScaler(font->imagecache, &scaler, flags, glyph_index, &glyph, NULL);
 
-			draw_bitmap(&bitmap_glyph->bitmap, pen_x + bitmap_glyph->left + x, pen_y - bitmap_glyph->top + y, color);
-
-			pen_x += bitmap_glyph->root.advance.x >> 16;
-			pen_y += bitmap_glyph->root.advance.y >> 16;
+			if (!atlas_add_glyph(font->tex_atlas, glyph_index, (FT_BitmapGlyph)glyph)) {
+				continue;
+			}
 		}
+
+		bp2d_rectangle rect;
+		int bitmap_left, bitmap_top;
+		int advance_x, advance_y;
+
+		texture_atlas_get(font->tex_atlas, glyph_index,
+			&rect, &bitmap_left, &bitmap_top,
+			&advance_x, &advance_y);
+
+		sf2d_draw_texture_part_blend(font->tex_atlas->tex,
+			pen_x + bitmap_left,
+			pen_y - bitmap_top,
+			rect.x, rect.y, rect.w, rect.h,
+			color);
+
+		pen_x += advance_x >> 16;
+		pen_y += advance_y >> 16;
 
 		previous = glyph_index;
 		text++;
@@ -223,7 +263,7 @@ void sftd_draw_wtext(sftd_font *font, int x, int y, unsigned int color, unsigned
 	FT_Bool use_kerning = FT_HAS_KERNING(face);
 	FT_UInt glyph_index, previous = 0;
 	int pen_x = x;
-	int pen_y = y;
+	int pen_y = y + size;
 
 	FTC_ScalerRec scaler;
 	scaler.face_id = face_id;
@@ -242,15 +282,30 @@ void sftd_draw_wtext(sftd_font *font, int x, int y, unsigned int color, unsigned
 			pen_x += delta.x >> 6;
 		}
 
-		FTC_ImageCache_LookupScaler(font->imagecache, &scaler, flags, glyph_index, &glyph, NULL);
-		if (glyph->format == FT_GLYPH_FORMAT_BITMAP) {
-			FT_BitmapGlyph bitmap_glyph = (FT_BitmapGlyph)glyph;
+		if (!texture_atlas_exists(font->tex_atlas, glyph_index)) {
+			FTC_ImageCache_LookupScaler(font->imagecache, &scaler, flags, glyph_index, &glyph, NULL);
 
-			draw_bitmap(&bitmap_glyph->bitmap, pen_x + bitmap_glyph->left + x, pen_y - bitmap_glyph->top + y, color);
-
-			pen_x += bitmap_glyph->root.advance.x >> 16;
-			pen_y += bitmap_glyph->root.advance.y >> 16;
+			if (!atlas_add_glyph(font->tex_atlas, glyph_index, (FT_BitmapGlyph)glyph)) {
+				continue;
+			}
 		}
+
+		bp2d_rectangle rect;
+		int bitmap_left, bitmap_top;
+		int advance_x, advance_y;
+
+		texture_atlas_get(font->tex_atlas, glyph_index,
+			&rect, &bitmap_left, &bitmap_top,
+			&advance_x, &advance_y);
+
+		sf2d_draw_texture_part_blend(font->tex_atlas->tex,
+			pen_x + bitmap_left,
+			pen_y - bitmap_top,
+			rect.x, rect.y, rect.w, rect.h,
+			color);
+
+		pen_x += advance_x >> 16;
+		pen_y += advance_y >> 16;
 
 		previous = glyph_index;
 		text++;

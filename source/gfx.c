@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include <sf2d.h>
 #include <sftd.h>
 
@@ -105,13 +107,19 @@ static int gfx_circle(lua_State *L) {
 static int gfx_text(lua_State *L) {
 	int x = luaL_checkinteger(L, 1);
 	int y = luaL_checkinteger(L, 2);
-	const char *text = luaL_checkstring(L, 3);
+	size_t len;
+	const char *text = luaL_checklstring(L, 3, &len);
 
 	int size = luaL_optinteger(L, 4, 9);
 	u32 color = luaL_optinteger(L, 5, color_default);
 	// todo : font selection
 
-	sftd_draw_text(font_default, x, y, color, size, text);
+	// Wide caracters support. (wchar = UTF32 on 3DS.)
+	wchar_t wtext[len];
+	len = mbstowcs(wtext, text, len);
+	*(wtext+len) = 0x0; // text end
+
+	sftd_draw_wtext(font_default, x, y, color, size, wtext);
 
 	return 0;
 }

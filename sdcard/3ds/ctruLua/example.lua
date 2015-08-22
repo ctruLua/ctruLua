@@ -44,8 +44,7 @@ while ctr.run() do
 	if keys.held.up then y = y - 1 end
 	if keys.held.down then y = y + 1 end
 	
-	if keys.held.r then dMul = dMul + 0.05 end
-	if keys.held.l then dMul = dMul - 0.05 end
+	dMul = hid.pos3d()
 
 	gfx.startFrame(gfx.GFX_TOP, gfx.GFX_LEFT)
 
@@ -61,10 +60,10 @@ while ctr.run() do
 	
 	gfx.startFrame(gfx.GFX_BOTTOM)
 
-		gfx.color.setDefault(0, 0, 0)
-		gfx.text(5, 7, "FPS: "..math.ceil(gfx.getFPS()))
-		gfx.text(5, 20, "Hello world, from Lua !", 20)
-		gfx.text(5, 30, "Time: "..os.date())
+		gfx.color.setDefault(gfx.color.RGBA8(0, 0, 0))
+		gfx.text(5, 5, "FPS: "..math.ceil(gfx.getFPS()))
+		gfx.text(5, 17, "Hello world, from Lua ! éàçù", 20, gfx.color.RGBA8(0, 0, 0))
+		gfx.text(5, 50, "Time: "..os.date())
 		
 		texture1:draw(240, 10, angle);
 
