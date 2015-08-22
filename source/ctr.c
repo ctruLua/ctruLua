@@ -11,6 +11,7 @@ int load_ptm_lib(lua_State *L);
 int load_hid_lib(lua_State *L);
 int load_ir_lib(lua_State *L);
 int load_fs_lib(lua_State *L);
+int load_httpc_lib(lua_State *L);
 
 static int ctr_run(lua_State *L) {
 	lua_pushboolean(L, aptMainLoop());
@@ -33,12 +34,13 @@ static const struct luaL_Reg ctr_lib[] = {
 
 // Subtables
 struct { char *name; int (*load)(lua_State *L); } ctr_libs[] = {
-	{ "gfx",  load_gfx_lib  },
-	{ "news", load_news_lib },
-	{ "ptm",  load_ptm_lib  },
-	{ "hid",  load_hid_lib  },
-	{ "ir",   load_ir_lib   },
-	{ "fs",   load_fs_lib   },
+	{ "gfx",   load_gfx_lib   },
+	{ "news",  load_news_lib  },
+	{ "ptm",   load_ptm_lib   },
+	{ "hid",   load_hid_lib   },
+	{ "ir",    load_ir_lib    },
+	{ "fs",    load_fs_lib    },
+	{ "httpc", load_httpc_lib },
 	{ NULL, NULL }
 };
 
