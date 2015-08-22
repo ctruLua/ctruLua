@@ -4,11 +4,9 @@
 #include <lapi.h>
 #include <lauxlib.h>
 
-typedef struct {
-	sf2d_texture *texture;
-	float scaleX;
-	float scaleY;
-} texture_userdata;
+#include <stdlib.h>
+
+#include "texture.h"
 
 u8 getType(const char *name) {
 	// NYI, always return the PNG type, because PNG is the best type.
@@ -113,6 +111,7 @@ static int texture_unload(lua_State *L) {
 	
 	if (texture->texture != NULL) sf2d_free_texture(texture->texture);
 	texture->texture = NULL;
+	free(texture);
 	
 	return 0;
 }

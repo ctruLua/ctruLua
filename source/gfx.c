@@ -7,6 +7,7 @@
 int load_color_lib(lua_State *L);
 int load_font_lib(lua_State *L);
 int load_texture_lib(lua_State *L);
+int load_map_lib(lua_State *L);
 
 u32 color_default;
 sftd_font *font_default;
@@ -148,6 +149,7 @@ struct { char *name; int (*load)(lua_State *L); } gfx_libs[] = {
 	{ "color",   load_color_lib   },
 	{ "font",    load_font_lib    },
 	{ "texture", load_texture_lib },
+	{ "map",     load_map_lib     },
 	{ NULL, NULL }
 };
 
