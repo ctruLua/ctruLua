@@ -37,6 +37,7 @@ while ctr.run() do
 			if f.name:match("%..+$") == ".lua" then
 				dofile(curdir..f.name)
 				-- reset things the script could have changed
+				gfx.set3D(false)
 				gfx.color.setDefault(0xFFFFFFFF)
 				gfx.color.setBackground(0x000000FF)
 			end

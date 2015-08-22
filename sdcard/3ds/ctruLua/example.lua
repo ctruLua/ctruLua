@@ -8,29 +8,30 @@ local dMul = 1
 
 local angle = 0
 
-local texture1 = gfx.texture.load("sdmc:/3ds/ctruLua/icon.png", gfx.texture.PLACE_VRAM, gfx.texture.TYPE_PNG);
+local texture1 = gfx.texture.load("sdmc:/3ds/ctruLua/icon.png", gfx.texture.PLACE_RAM, gfx.texture.TYPE_PNG);
 if not texture1 then error("Giants ducks came from another planet") end
 
 gfx.color.setBackground(gfx.color.RGBA8(200, 200, 200))
 gfx.set3D(true)
 
-local function drawStuffIn3D(depth)
+-- eye : -1 = left, 1 = right
+local function drawStuffIn3D(eye)
 	gfx.text(2, 5, "Depth multiplicator: "..dMul)
 
 	-- 3D stuff
-	local depth = math.floor(depth * dMul)
+	local function d(depth) return math.ceil(eye * depth * dMul) end
 
 	gfx.color.setDefault(0x00FFFFFF)
-	gfx.rectangle(240 + depth*5, 150, 120, 10)
+	gfx.rectangle(240 + d(10), 150, 120, 10)
 
-	gfx.point(10 + depth*3, 20, 0xFF0000FF)
+	gfx.point(10 + d(6), 20, 0xFF0000FF)
 
 	gfx.color.setDefault(0xFF0000FF)
-	gfx.rectangle(x + depth*math.ceil(5*math.sin(ctr.time()/500)), y, 20, 20, angle)
+	gfx.rectangle(x + d(10*math.sin(ctr.time()/500)), y, 20, 20, angle)
 
-	gfx.line(50 - depth*3, 50, 75 + depth*2, 96, gfx.color.RGBA8(52, 10, 65))
+	gfx.line(50 + d(-6), 50, 75 + d(4), 96, gfx.color.RGBA8(52, 10, 65))
 
-	gfx.circle(125 - depth*4, 125, 16)
+	gfx.circle(125 + d(-8), 125, 16)
 end
 
 while ctr.run() do

@@ -109,9 +109,10 @@ static int texture_drawPartBlend(lua_State *L) {
 static int texture_unload(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 	
-	if (texture->texture != NULL) sf2d_free_texture(texture->texture);
+	if (texture->texture == NULL) return 0;
+
+	sf2d_free_texture(texture->texture);
 	texture->texture = NULL;
-	free(texture);
 	
 	return 0;
 }
