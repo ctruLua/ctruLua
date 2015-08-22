@@ -37,7 +37,7 @@ static const struct luaL_Reg ctr_lib[] = {
 };
 
 // Subtables
-struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L) } ctr_libs[] = {
+struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); } ctr_libs[] = {
 	{ "gfx",   load_gfx_lib,   unload_gfx_lib },
 	{ "news",  load_news_lib,  NULL           },
 	{ "ptm",   load_ptm_lib,   NULL           },
