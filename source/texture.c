@@ -16,7 +16,7 @@ u8 getType(const char *name) {
 // module functions
 static int texture_load(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
-	u8 place = luaL_checkinteger(L, 2);
+	u8 place = luaL_optinteger(L, 2, 0); //place in ram by default
 	u8 type = luaL_optinteger(L, 3, 3); //type 3 is "search at the end of the filename"
 
 	texture_userdata *texture;
