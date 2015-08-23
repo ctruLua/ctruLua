@@ -3,6 +3,8 @@
 #include <sf2d.h>
 #include <sftd.h>
 
+#include <3ds/vram.h>
+
 #include <lua.h>
 #include <lauxlib.h>
 
@@ -53,6 +55,12 @@ static int gfx_set3D(lua_State *L) {
 	sf2d_set_3D(enable);
 	
 	return 0;
+}
+
+static int gfx_vramSpaceFree(lua_State *L) {
+  lua_pushinteger(L, vramSpaceFree());
+  
+  return 1;
 }
 
 static int gfx_line(lua_State *L) {
@@ -130,16 +138,17 @@ static int gfx_text(lua_State *L) {
 
 // Functions
 static const struct luaL_Reg gfx_lib[] = {
-	{ "startFrame",  gfx_startFrame},
-	{ "endFrame",    gfx_endFrame  },
-	{ "render",      gfx_render    },
-	{ "getFPS",      gfx_getFPS    },
-	{ "set3D",       gfx_set3D     },
-	{ "line",        gfx_line      },
-	{ "point",       gfx_point     },
-	{ "rectangle",   gfx_rectangle },
-	{ "circle",      gfx_circle    },
-	{ "text",        gfx_text      },
+	{ "startFrame",    gfx_startFrame    },
+	{ "endFrame",      gfx_endFrame      },
+	{ "render",        gfx_render        },
+	{ "getFPS",        gfx_getFPS        },
+	{ "set3D",         gfx_set3D         },
+	{ "vramSpaceFree", gfx_vramSpaceFree },
+	{ "line",          gfx_line          },
+	{ "point",         gfx_point         },
+	{ "rectangle",     gfx_rectangle     },
+	{ "circle",        gfx_circle        },
+	{ "text",          gfx_text          },
 	{ NULL, NULL }
 };
 
