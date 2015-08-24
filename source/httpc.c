@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include <3ds.h>
 #include <3ds/types.h>
@@ -7,19 +8,31 @@
 #include <lapi.h>
 #include <lauxlib.h>
 
-static int httpc_init(lua_State *L) {
-	httpcInit();
-	return 0;
-}
+/*static int httpc_init(lua_State *L) {
+	Result ret = httpcInit();
+	if (ret != 0) {
+		lua_pushnil(L);
+		lua_pushinteger(L, ret);
+		return 2;
+	}
+	lua_pushboolean(L, true);
+	return 1;
+}*/
 
-static int httpc_shutdown(lua_State *L) {
+/*static int httpc_shutdown(lua_State *L) {
 	httpcExit();
 	return 0;
-}
+}*/
 
 static int httpc_context(lua_State *L) {
-	httpcContext *context;
-	context = (httpcContext*)lua_newuserdata(L, sizeof(*context));
+	httpcContext context;
+	Result ret = httpcOpenContext(&context, "http://google.com/", 0); // Initialization only.
+	if (ret != 0) {
+		lua_pushnil(L);
+		lua_pushinteger(L, ret);
+		return 2;
+	}
+	lua_newuserdata(L, sizeof(&context));
 	luaL_getmetatable(L, "LHTTPC");
 	lua_setmetatable(L, -2);
 
@@ -32,8 +45,12 @@ static int httpc_open(lua_State *L) {
 	Result ret = 0;
 	
 	ret = httpcOpenContext(context, url, 0);
-	
-	lua_pushinteger(L, ret);
+	if (ret != 0) {
+		lua_pushnil(L);
+		lua_pushinteger(L, ret);
+		return 2;
+	}
+	lua_pushboolean(L, true);
 	return 1;
 }
 
@@ -42,8 +59,12 @@ static int httpc_beginRequest(lua_State *L) {
 	Result ret = 0;
 	
 	ret = httpcBeginRequest(context);
-	
-	lua_pushinteger(L, ret);
+	if (ret != 0) {
+		lua_pushnil(L);
+		lua_pushinteger(L, ret);
+		return 2;
+	}
+	lua_pushboolean(L, true);
 	return 1;
 }
 
@@ -73,14 +94,31 @@ static int httpc_getDownloadSize(lua_State *L) {
 
 static int httpc_downloadData(lua_State *L) {
 	httpcContext *context = lua_touserdata(L, 1);
+	u32 status = 0;
+	Result ret = httpcGetResponseStatusCode(context, &status, 0);
+	if (ret != 0) {
+		lua_pushnil(L);
+		lua_pushinteger(L, ret);
+		return 2;
+	}
+	
 	u32 size = 0;
 	httpcGetDownloadSizeState(context, NULL, &size);
 	u8 *buff = (u8*)malloc(size);
+	//memset(buff, 0, size);
 	
-	httpcDownloadData(context, buff, size, NULL);
+	ret = httpcDownloadData(context, buff, size, NULL);
+	if (ret != 0) {
+		lua_pushnil(L);
+		lua_pushinteger(L, ret);
+		return 2;
+	}
+	//strcpy(buff, "loltest");
 	
 	lua_pushstring(L, (char*)buff);
-	return 1;
+	free(buff);
+	lua_pushinteger(L, size); // only for test purposes.
+	return 2;
 }
 
 static int httpc_close(lua_State *L) {
@@ -104,8 +142,8 @@ static const struct luaL_Reg httpc_methods[] = {
 
 // module
 static const struct luaL_Reg httpc_functions[] = {
-	{"init",     httpc_init    },
-	{"shutdown", httpc_shutdown},
+//	{"init",     httpc_init    },
+//	{"shutdown", httpc_shutdown},
 	{"context",  httpc_context },
 	{NULL, NULL}
 };
@@ -122,6 +160,12 @@ int luaopen_httpc_lib(lua_State *L) {
 }
 
 void load_httpc_lib(lua_State *L) {
+	httpcInit();
+	
 	luaL_requiref(L, "ctr.httpc", luaopen_httpc_lib, false);
+}
+
+void unload_httpc_lib(lua_State *L) {
+	httpcExit();
 }
 

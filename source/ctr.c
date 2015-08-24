@@ -12,10 +12,12 @@ void load_hid_lib(lua_State *L);
 void load_ir_lib(lua_State *L);
 void load_fs_lib(lua_State *L);
 void load_httpc_lib(lua_State *L);
+void load_qtm_lib(lua_State *L);
 
 void unload_gfx_lib(lua_State *L);
 void unload_hid_lib(lua_State *L);
 void unload_fs_lib(lua_State *L);
+void unload_httpc_lib(lua_State *L);
 
 static int ctr_run(lua_State *L) {
 	lua_pushboolean(L, aptMainLoop());
@@ -38,13 +40,14 @@ static const struct luaL_Reg ctr_lib[] = {
 
 // Subtables
 struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); } ctr_libs[] = {
-	{ "gfx",   load_gfx_lib,   unload_gfx_lib },
-	{ "news",  load_news_lib,  NULL           },
-	{ "ptm",   load_ptm_lib,   NULL           },
-	{ "hid",   load_hid_lib,   unload_hid_lib },
-	{ "ir",    load_ir_lib,    NULL           },
-	{ "fs",    load_fs_lib,    unload_fs_lib  },
-	{ "httpc", load_httpc_lib, NULL           },
+	{ "gfx",   load_gfx_lib,   unload_gfx_lib   },
+	{ "news",  load_news_lib,  NULL             },
+	{ "ptm",   load_ptm_lib,   NULL             },
+	{ "hid",   load_hid_lib,   unload_hid_lib   },
+	{ "ir",    load_ir_lib,    NULL             },
+	{ "fs",    load_fs_lib,    unload_fs_lib    },
+	{ "httpc", load_httpc_lib, unload_httpc_lib },
+	{ "qtm",   load_qtm_lib,   NULL             },
 	{ NULL, NULL }
 };
 
