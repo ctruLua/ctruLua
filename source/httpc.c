@@ -8,22 +8,6 @@
 #include <lapi.h>
 #include <lauxlib.h>
 
-/*static int httpc_init(lua_State *L) {
-	Result ret = httpcInit();
-	if (ret != 0) {
-		lua_pushnil(L);
-		lua_pushinteger(L, ret);
-		return 2;
-	}
-	lua_pushboolean(L, true);
-	return 1;
-}*/
-
-/*static int httpc_shutdown(lua_State *L) {
-	httpcExit();
-	return 0;
-}*/
-
 static int httpc_context(lua_State *L) {
 	httpcContext context;
 	Result ret = httpcOpenContext(&context, "http://google.com/", 0); // Initialization only.
@@ -105,7 +89,6 @@ static int httpc_downloadData(lua_State *L) {
 	u32 size = 0;
 	httpcGetDownloadSizeState(context, NULL, &size);
 	u8 *buff = (u8*)malloc(size);
-	//memset(buff, 0, size);
 	
 	ret = httpcDownloadData(context, buff, size, NULL);
 	if (ret != 0) {
@@ -113,7 +96,6 @@ static int httpc_downloadData(lua_State *L) {
 		lua_pushinteger(L, ret);
 		return 2;
 	}
-	//strcpy(buff, "loltest");
 	
 	lua_pushstring(L, (char*)buff);
 	free(buff);
@@ -142,8 +124,6 @@ static const struct luaL_Reg httpc_methods[] = {
 
 // module
 static const struct luaL_Reg httpc_functions[] = {
-//	{"init",     httpc_init    },
-//	{"shutdown", httpc_shutdown},
 	{"context",  httpc_context },
 	{NULL, NULL}
 };
