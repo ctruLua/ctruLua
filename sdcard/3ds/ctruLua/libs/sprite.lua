@@ -4,31 +4,30 @@ local mod = {}
 
 -- Module functions
 local function getBox(tx, ty, i, sx, sy)
-  --i = i - 1
-  x = (i%tx)
-  y = math.floor(i/tx)
-  
+	x = (i%tx)
+	y = math.floor(i/tx)
+
 	return (x*sx), (y*sy)
 end
 
 -- Sprite object methods
 local function draw(self, x, y, rad)
-  if not self.animations[self.currentAnimation] then return 0 end
-  local frame = self.animations[self.currentAnimation].animation[self.currentFrame]
-  local tsx, tsy = self.texture:getSize()
-  
-  local sx, sy = getBox(tsx, tsy, frame, self.frameSizeX, self.frameSizeY)
-  gfx.text(200, 200, sx.."/"..sy)
-	self.texture:drawPart(x, y, sx, sy, self.frameSizeX, self.frameSizeY, rad)
-	
+	if not self.animations[self.currentAnimation] then return 0 end
+
 	if (ctr.time()-self.frameTimer) >= self.animations[self.currentAnimation].delay then
-	  self.currentFrame = (self.currentFrame+1)
-	  self.frameTimer = ctr.time()
-	  if self.currentFrame > #self.animations[self.currentAnimation].animation then
-	    self.currentFrame = 1
-	  end
+		self.currentFrame = (self.currentFrame+1)
+		self.frameTimer = ctr.time()
+		if self.currentFrame > #self.animations[self.currentAnimation].animation then
+			self.currentFrame = 1
+		end
 	end
-	
+
+	local frame = self.animations[self.currentAnimation].animation[self.currentFrame]
+	local tsx, tsy = self.texture:getSize()
+
+	local sx, sy = getBox(tsx, tsy, frame, self.frameSizeX, self.frameSizeY)
+	self.texture:drawPart(x, y, sx, sy, self.frameSizeX, self.frameSizeY, rad)
+
 	return frame
 end
 
@@ -61,7 +60,7 @@ function mod.new(texture, fsx, fsy)
 		currentAnimation = 0,
 		currentFrame = 1,
 		frameTimer = 0,
-		
+
 		draw = draw,
 		addAnimation = addAnimation,
 		setAnimation = setAnimation,
