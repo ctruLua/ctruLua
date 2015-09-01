@@ -81,6 +81,15 @@ static int texture_drawPart(lua_State *L) {
 	return 0;
 }
 
+static int texture_getSize(lua_State *L) {
+	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
+
+	lua_pushinteger(L, texture->texture->width);
+	lua_pushinteger(L, texture->texture->height);
+
+	return 2;
+}
+
 static int texture_unload(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 	
@@ -138,6 +147,7 @@ static const struct luaL_Reg texture_methods[] = {
 	{ "draw",          texture_draw          },
 	{ "drawPart",      texture_drawPart      },
 	{ "scale",         texture_scale         },
+	{ "getSize",       texture_getSize       },
 	{ "unload",        texture_unload        },
 	{ "getPixel",      texture_getPixel      },
 	{ "setPixel",      texture_setPixel      },
