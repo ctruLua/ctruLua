@@ -4,10 +4,12 @@ local mod = {}
 
 -- Module functions
 local function getBox(tx, ty, i, sx, sy)
-	x = (i%tx)
-	y = math.floor(i/tx)
+	x = ((i*sx)%tx)
+	y = math.floor((i*sx)/tx)*sy
+	
+	gfx.text(150, 150, tx.."/"..ty.." -> "..x.."/"..y)
 
-	return (x*sx), (y*sy)
+	return x, y
 end
 
 -- Sprite object methods
@@ -39,9 +41,11 @@ end
 -- Set to 0 to hide the sprite
 local function setAnimation(self, anim)
 	self.currentAnimation = anim
-	self.currentFrame = 1
 	if not self.animations[anim] then
 		return false
+	end
+	if not self.animations[anim].animation[self.currentFrame] then
+		self.currentFrame = 1
 	end
 	return true
 end
