@@ -6,8 +6,6 @@ local mod = {}
 local function getBox(tx, ty, i, sx, sy)
 	x = ((i*sx)%tx)
 	y = math.floor((i*sx)/tx)*sy
-	
-	gfx.text(150, 150, tx.."/"..ty.." -> "..x.."/"..y)
 
 	return x, y
 end
