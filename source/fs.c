@@ -1,3 +1,5 @@
+#include <unistd.h>
+
 #include <3ds/types.h>
 #include <3ds/util/utf.h>
 #include <3ds/services/fs.h>
@@ -8,7 +10,7 @@
 Handle *fsuHandle;
 FS_archive sdmcArchive;
 
-int fs_list(lua_State *L) {
+static int fs_list(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
 
 	lua_newtable(L);
@@ -60,8 +62,40 @@ int fs_list(lua_State *L) {
 	return 1;
 }
 
+static int fs_exists(lua_State *L) {
+	const char *path = luaL_checkstring(L, 1);
+	
+	lua_pushboolean(L, access(path, F_OK) == 0);
+
+	return 1;
+}
+
+static int fs_getDirectory(lua_State *L) {
+	char cwd[256];
+
+	lua_pushstring(L, getcwd(cwd, 256));
+
+	return 1;
+}
+
+static int fs_setDirectory(lua_State *L) {
+	const char *path = luaL_checkstring(L, 1);
+
+	int result = chdir(path);
+
+	if (result == 0)
+		lua_pushboolean(L, true);
+	else
+		lua_pushboolean(L, false);
+
+	return 1;
+}
+
 static const struct luaL_Reg fs_lib[] = {
-	{ "list", fs_list },
+	{ "list",         fs_list         },
+	{ "exists",       fs_exists       },
+	{ "getDirectory", fs_getDirectory },
+	{ "setDirectory", fs_setDirectory },
 	{ NULL, NULL }
 };
 

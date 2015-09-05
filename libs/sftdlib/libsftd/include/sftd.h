@@ -105,6 +105,8 @@ void sftd_draw_wtext(sftd_font *font, int x, int y, unsigned int color, unsigned
  */
 void sftd_draw_wtextf(sftd_font *font, int x, int y, unsigned int color, unsigned int size, const wchar_t *text, ...);
 
+// (ctruLua addition) Based on sftd_draw_wtext, returns the width of the text drawn.
+int sftd_width_wtext(sftd_font *font, unsigned int size, const wchar_t *text);
 
 #ifdef __cplusplus
 }

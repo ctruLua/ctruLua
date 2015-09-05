@@ -29,9 +29,11 @@ return function(title, curdir, exts, type)
 	--local was3D = gfx.get3D() TODO: implement this thing in ctruLua
 	local wasDefault = gfx.color.getDefault()
 	local wasBackground = gfx.color.getBackground()
+	local wasFont = gfx.font.getDefault()
 	gfx.set3D(false)
 	gfx.color.setDefault(0xFFFFFFFF)
 	gfx.color.setBackground(0x000000FF)
+	gfx.font.setDefault()
 
 	while ctr.run() do
 		ctr.hid.read()
@@ -130,6 +132,7 @@ return function(title, curdir, exts, type)
 	--gfx.set3D(was3D)
 	gfx.color.setDefault(wasDefault)
 	gfx.color.setBackground(wasBackground)
+	gfx.font.setDefault(wasFont)
 	
 	if ret then
 		return table.unpack(ret)

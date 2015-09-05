@@ -5,27 +5,45 @@ local gfx = require("ctr.gfx")
 -- Open libs
 local keyboard = dofile("sdmc:/3ds/ctruLua/keyboard.lua")
 local openfile = dofile("sdmc:/3ds/ctruLua/openfile.lua")
-local color = dofile("sdmc:/3ds/ctruLua/editor/color.lua")
+local color = dofile("color.lua")
+local syntax = dofile("syntax.lua")
+
+-- Load data
+local font = gfx.font.load("VeraMono.ttf")
 
 -- Open file
 local path, status = openfile("Choose a file to edit", "/3ds/ctruLua/", nil, "any")
 if not path then return end
+local lineEnding
 local lines = {}
 if status == "exist" then
-	for line in io.lines(path) do table.insert(lines, line) end
+	for line in io.lines(path, "L") do
+		if not lineEnding then lineEnding = line:match("([\n\r]+)$") end
+		table.insert(lines, line:match("^(.-)[\n\r]*$"))
+	end
 else
+	lineEnding = "\n"
 	lines = { "" }
 end
+
+-- Syntax coloring
+local coloredLines = syntax(lines, color)
 
 -- Variables
 local lineHeight = 10
 local cursorX, cursorY = 1, 1
 local scrollX, scrollY = 0, 0
 
+-- Helper functions
+local function displayedText(text)
+	return text:gsub("\t", "    ")
+end
+
 -- Set defaults
 gfx.set3D(false)
 gfx.color.setDefault(color.default)
 gfx.color.setBackground(color.background)
+gfx.font.setDefault(font)
 
 while ctr.run() do
 	hid.read()
@@ -75,10 +93,10 @@ while ctr.run() do
 			until t + 5 < os.time()
 		else
 			for i = 1, #lines, 1 do
-				file:write(lines[i].."\n")
+				file:write(lines[i]..lineEnding)
 				gfx.startFrame(gfx.GFX_TOP)
 				gfx.rectangle(0, 0, math.ceil(i/#lines*gfx.TOP_WIDTH), gfx.TOP_HEIGHT, 0, 0xFFFFFFFF)
-				gfx.color.setDefault(0x000000FF)
+				gfx.color.setDefault(color.background)
 				gfx.text(gfx.TOP_WIDTH/2, gfx.TOP_HEIGHT/2, math.ceil(i/#lines*100).."%")
 				gfx.color.setDefault(color.default)
 				gfx.endFrame()
@@ -122,6 +140,7 @@ while ctr.run() do
 	-- Draw
 	gfx.startFrame(gfx.GFX_TOP)
 
+		-- Lines
 		local sI = math.floor(scrollY / lineHeight)
 		if sI < 1 then sI = 1 end
 		
@@ -129,21 +148,30 @@ while ctr.run() do
 		if eI > #lines then eI = #lines end
 		
 		for i = sI, eI, 1 do
-			local line = lines[i]
+			local x = -scrollX
 			local y = -scrollY+ (i-1)*lineHeight
-			
-			if cursorY == i then
-				gfx.color.setDefault(color.cursor)
-				gfx.text(-scrollX, y, line:sub(1, (utf8.offset(line, cursorX) or 0)-1):gsub("\t", "    ").."|", nil) -- TODO: color doesn't work
+
+			for _,colored in ipairs(coloredLines[i]) do
+				local str = displayedText(colored[1])
+
+				gfx.color.setDefault(colored[2])
+				gfx.text(x, y, str)
 				gfx.color.setDefault(color.default)
+
+				x = x + font:width(str)
 			end
-			
-			gfx.text(-scrollX, y, line:gsub("\t", "    "), nil)
 		end
+
+		-- Cursor
+		local curline = lines[cursorY]
+		gfx.rectangle(-scrollX+ font:width(displayedText(curline:sub(1, (utf8.offset(curline, cursorX) or 0)-1))), 
+		              -scrollY+ (cursorY-1)*lineHeight, 1, lineHeight, 0, color.cursor)
 
 	gfx.endFrame()
 	
 	gfx.startFrame(gfx.GFX_BOTTOM)
+
+		gfx.text(3, 3, "FPS: "..math.ceil(gfx.getFPS()))
 		
 		keyboard.draw(5, 115)
 		
@@ -151,3 +179,5 @@ while ctr.run() do
 
 	gfx.render()
 end
+
+font:unload()

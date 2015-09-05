@@ -8,6 +8,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+#include "font.h"
+
 bool isGfxInitialised = false;
 
 void load_color_lib(lua_State *L);
@@ -18,7 +20,6 @@ void load_map_lib(lua_State *L);
 void unload_font_lib(lua_State *L);
 
 u32 color_default;
-sftd_font *font_default;
 
 static int gfx_startFrame(lua_State *L) {
 	u8 screen = luaL_checkinteger(L, 1);
@@ -124,14 +125,20 @@ static int gfx_text(lua_State *L) {
 
 	int size = luaL_optinteger(L, 4, 9);
 	u32 color = luaL_optinteger(L, 5, color_default);
-	// todo : font selection
+	font_userdata *font = luaL_testudata(L, 6, "LFont");
+	if (font == NULL) {
+		lua_getfield(L, LUA_REGISTRYINDEX, "LFontDefault");
+		font = luaL_testudata(L, -1, "LFont");
+		if (font == NULL) luaL_error(L, "No default font set and no font object passed");
+	}
+	if (font->font == NULL) luaL_error(L, "The font object was unloaded");
 
 	// Wide caracters support. (wchar = UTF32 on 3DS.)
 	wchar_t wtext[len];
 	len = mbstowcs(wtext, text, len);
 	*(wtext+len) = 0x0; // text end
 
-	sftd_draw_wtext(font_default, x, y, color, size, wtext);
+	sftd_draw_wtext(font->font, x, y, color, size, wtext);
 
 	return 0;
 }
