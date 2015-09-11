@@ -13,6 +13,7 @@ void load_ir_lib(lua_State *L);
 void load_fs_lib(lua_State *L);
 void load_httpc_lib(lua_State *L);
 void load_qtm_lib(lua_State *L);
+//void load_cam_lib(lua_State *L);
 
 void unload_gfx_lib(lua_State *L);
 void unload_hid_lib(lua_State *L);
@@ -48,6 +49,7 @@ struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); }
 	{ "fs",    load_fs_lib,    unload_fs_lib    },
 	{ "httpc", load_httpc_lib, unload_httpc_lib },
 	{ "qtm",   load_qtm_lib,   NULL             },
+//	{ "cam",   load_cam_lib,   NULL             },
 	{ NULL, NULL }
 };
 
