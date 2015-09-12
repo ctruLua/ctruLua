@@ -5,9 +5,13 @@
 #include <lapi.h>
 #include <lauxlib.h>
 
+#include <string.h>
+
 typedef struct {
 	qtmHeadtrackingInfo *info;
 } qtm_userdata;
+
+static const struct luaL_Reg qtm_methods[];
 
 static int qtm_init(lua_State *L) {
 	Result ret = qtmInit();
@@ -54,18 +58,30 @@ static int qtm_checkHeadFullyDetected(lua_State *L) {
 
 static int qtm___index(lua_State *L) {
 	qtm_userdata *info = luaL_checkudata(L, 1, "LQTM");
-	lua_Integer index = luaL_checkinteger(L, 2);
-	index = index - 1; // Lua index begins at 1
-	if (index > 3 || index < 0) {
-		lua_pushnil(L);
-		lua_pushnil(L);
+	if (lua_isinteger(L, 2)) { // index
+		lua_Integer index = luaL_checkinteger(L, 2);
+		index = index - 1; // Lua index begins at 1
+		if (index > 3 || index < 0) {
+			lua_pushnil(L);
+			lua_pushnil(L);
+			return 2;
+		}
+	
+		lua_pushnumber(L, info->info->coords0[index].x);
+		lua_pushnumber(L, info->info->coords0[index].y);
 		return 2;
+		
+	} else if (lua_isstring(L, 2)) { //method
+		const char *mname = luaL_checkstring(L, 2);
+		for (u8 i=0;qtm_methods[i].name;i++) {
+			if (strcmp(qtm_methods[i].name, mname) == 0) {
+				lua_pushcfunction(L, qtm_methods[i].func);
+				return 1;
+			}
+		}
 	}
-	
-	lua_pushnumber(L, info->info->coords0[index].x);
-	lua_pushnumber(L, info->info->coords0[index].y);
-	
-	return 2;
+	lua_pushnil(L);
+	return 1;
 }
 
 static int qtm_convertCoordToScreen(lua_State *L) {
