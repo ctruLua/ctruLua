@@ -1,3 +1,9 @@
+/***
+The `map` module.
+@module ctr.gfx.map
+@usage local map = require("ctr.gfx.map")
+*/
+
 #include <sf2d.h>
 
 #include <lapi.h>
@@ -30,6 +36,16 @@ u16 getTile(map_userdata *map, int x, int y) {
 }
 
 // module functions
+
+/***
+Load a map from a file.
+@function load
+@tparam string path path to the .map
+@tparam texture tileset containing the tileset
+@tparam number tileWidth tile width
+@tparam number tileHeight tile height
+@treturn map loaded map object
+*/
 static int map_load(lua_State *L) {
 	const char *mapPath = luaL_checkstring(L, 1);
 	texture_userdata *texture = luaL_checkudata(L, 2, "LTexture");
@@ -91,6 +107,18 @@ static int map_load(lua_State *L) {
 	return 1;
 }
 
+/***
+Map object
+@section Methods
+*/
+
+/***
+Draw a map.
+@function :draw
+@tparam number x X position
+@tparam number y Y position
+@within Methods
+*/
 static int map_draw(lua_State *L) {
 	map_userdata *map = luaL_checkudata(L, 1, "LMap");
 	int x = luaL_checkinteger(L, 2);
@@ -120,6 +148,11 @@ static int map_draw(lua_State *L) {
 	return 0;
 }
 
+/***
+Unload a map.
+@function :unload
+@within Methods
+*/
 static int map_unload(lua_State *L) {
 	map_userdata *map = luaL_checkudata(L, 1, "LMap");
 	free(map->data);
@@ -127,6 +160,13 @@ static int map_unload(lua_State *L) {
 	return 0;
 }
 
+/***
+Return the size of a map.
+@function :getSize
+@treturn number width of the map, in tiles
+@treturn number height of the map, in tiles
+@within Methods
+*/
 static int map_getSize(lua_State *L) {
 	map_userdata *map = luaL_checkudata(L, 1, "LMap");
 	
@@ -136,6 +176,14 @@ static int map_getSize(lua_State *L) {
 	return 2;
 }
 
+/***
+Return the value of a tile.
+@function :getTile
+@tparam number x X position of the tile
+@tparam number y Y position of the tile
+@treturn number value of the tile
+@within Methods
+*/
 static int map_getTile(lua_State *L) {
 	map_userdata *map = luaL_checkudata(L, 1, "LMap");
 	int x = luaL_checkinteger(L, 2);
@@ -145,6 +193,14 @@ static int map_getTile(lua_State *L) {
 	return 1;
 }
 
+/***
+Set the value of a tile.
+@function :setTile
+@tparam number x X position of the tile
+@tparam number y Y position of the tile
+@tparam number value New value for the tile
+@within Methods
+*/
 static int map_setTile(lua_State *L) {
 	map_userdata *map = luaL_checkudata(L, 1, "LMap");
 	int x = luaL_checkinteger(L, 2);

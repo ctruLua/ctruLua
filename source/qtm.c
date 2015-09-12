@@ -1,3 +1,9 @@
+/***
+The `qtm` module, for headtracking. New3ds only.
+@module ctr.qtm
+@usage local qtm = require("ctr.qtm")
+@newonly
+*/
 #include <3ds.h>
 #include <3ds/types.h>
 #include <3ds/services/qtm.h>
@@ -13,6 +19,10 @@ typedef struct {
 
 static const struct luaL_Reg qtm_methods[];
 
+/***
+Initialize the QTM module.
+@function init
+*/
 static int qtm_init(lua_State *L) {
 	Result ret = qtmInit();
 	if (ret) {
@@ -25,12 +35,21 @@ static int qtm_init(lua_State *L) {
 	return 1;
 }
 
+/***
+Disable the QTM module.
+@function shutdown
+*/
 static int qtm_shutdown(lua_State *L) {
 	qtmExit();
 
 	return 0;
 }
 
+/***
+Check if the module is initialized.
+@function checkInitialized
+@treturn boolean `true` if initialized.
+*/
 static int qtm_checkInitialized(lua_State *L) {
 	bool isInit = qtmCheckInitialized();
 
@@ -38,6 +57,11 @@ static int qtm_checkInitialized(lua_State *L) {
 	return 1;
 }
 
+/***
+Return informations about the headtracking
+@function getHeadTrackingInfo
+@treturn qtmInfos QTM informations
+*/
 static int qtm_getHeadtrackingInfo(lua_State *L) {
 	qtm_userdata *data = lua_newuserdata(L, sizeof(*data));
 	luaL_getmetatable(L, "LQTM");
@@ -50,6 +74,12 @@ static int qtm_getHeadtrackingInfo(lua_State *L) {
 	return 1;
 }
 
+/***
+Check if the head is fully detected
+@function checkHeadFullyDetected
+@tparam qtmInfos qtmInfos QTM informations
+@treturn boolean `true` if fully detected
+*/
 static int qtm_checkHeadFullyDetected(lua_State *L) {
 	qtm_userdata *info = luaL_checkudata(L, 1, "LQTM");
 	lua_pushboolean(L, qtmCheckHeadFullyDetected(info->info));
@@ -84,6 +114,16 @@ static int qtm___index(lua_State *L) {
 	return 1;
 }
 
+/***
+Convert QTM coordinates to screen coordinates
+@function convertCoordToScreen
+@tparam qtmInfos qtmInfos QTM informations
+@tparam number coordinates index
+@tparam number [screenWidth] specify a screen width (default `400`)
+@tparam number [screenHeight] specify a screen height (default `320`)
+@treturn number screen X coordinate
+@treturn number screen Y coordinate
+*/
 static int qtm_convertCoordToScreen(lua_State *L) {
 	qtm_userdata *info = luaL_checkudata(L, 1, "LQTM");
 	lua_Integer index = luaL_checkinteger(L, 2);
@@ -104,6 +144,33 @@ static int qtm_convertCoordToScreen(lua_State *L) {
 	
 	return 2;
 }
+
+/***
+qtmInfos object
+@section Methods
+*/
+
+/***
+Check if the head is fully detected
+@function :checkHeadFullyDetected
+@treturn boolean `true` if fully detected
+*/
+
+/***
+Convert QTM coordinates to screen coordinates
+@function :convertCoordToScreen
+@tparam number coordinates index
+@tparam number [screenWidth] specify a screen width (default `400`)
+@tparam number [screenHeight] specify a screen height (default `320`)
+@treturn number screen X coordinate
+@treturn number screen Y coordinate
+*/
+
+/***
+When the object is indexed with a number from 1 to 4, it returns a coordinate
+of one of the headtracker point.
+@tfield number index coordinates, as two numbers (not a table)
+*/
 
 // object
 static const struct luaL_Reg qtm_methods[] = {
