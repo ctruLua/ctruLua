@@ -119,8 +119,8 @@ Convert QTM coordinates to screen coordinates
 @function convertCoordToScreen
 @tparam qtmInfos qtmInfos QTM informations
 @tparam number coordinates index
-@tparam number [screenWidth] specify a screen width (default `400`)
-@tparam number [screenHeight] specify a screen height (default `320`)
+@tparam[opt=400] number screenWidth specify a screen width
+@tparam[opt=320] number screenHeight specify a screen height
 @treturn number screen X coordinate
 @treturn number screen Y coordinate
 */
@@ -160,16 +160,17 @@ Check if the head is fully detected
 Convert QTM coordinates to screen coordinates
 @function :convertCoordToScreen
 @tparam number coordinates index
-@tparam number [screenWidth] specify a screen width (default `400`)
-@tparam number [screenHeight] specify a screen height (default `320`)
+@tparam[opt=400] number screenWidth specify a screen width
+@tparam[opt=320] number screenHeight specify a screen height
 @treturn number screen X coordinate
 @treturn number screen Y coordinate
 */
 
 /***
-When the object is indexed with a number from 1 to 4, it returns a coordinate
-of one of the headtracker point.
+When the object is indexed with a number from 1 to 4, it returns the coordinates
+of one of the headtracker points.
 @tfield number index coordinates, as two numbers (not a table)
+@usage coordX, coordY = qtmInfos[index]
 */
 
 // object
