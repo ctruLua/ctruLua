@@ -15,6 +15,8 @@ Warning: the 'u' in the repo's name is a 'µ', not a 'u'.
 * Clone this repository and run the command `make build-all` to build all the dependencies.
 * If you only made changes to ctrµLua, run `make` to rebuild ctµLua without rebuilding all the dependencies.
 
+To build the documentation, run `make build-doc` (requires [https://github.com/stevedonovan/LDoc](LDoc)).
+
 May not work under Windows.
 
 #### Based on ctrulib by smealum: [https://github.com/smealum/ctrulib](https://github.com/smealum/ctrulib)

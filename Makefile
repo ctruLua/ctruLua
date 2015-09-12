@@ -158,6 +158,9 @@ build-all:
 	@echo Building ctruLua...
 	@make build
 
+build-doc:
+	@cd doc/ && ldoc . && cd ..
+
 #---------------------------------------------------------------------------------
 clean:
 	@rm -fr $(BUILD) $(TARGET).3dsx $(OUTPUT).smdh $(TARGET).elf
@@ -185,6 +188,9 @@ clean-all:
 	@make clean-sfillib
 	@echo Cleaning ctruLua...
 	@make clean
+
+clean-doc:
+	@rm -rf doc/html
 
 
 #---------------------------------------------------------------------------------

@@ -1,3 +1,8 @@
+/***
+The `gfx` module.
+@module ctr.gfx
+@usage local gfx = require("ctr.gfx")
+*/
 #include <stdlib.h>
 
 #include <sf2d.h>
@@ -12,15 +17,43 @@
 
 bool isGfxInitialised = false;
 
+/***
+The `ctr.gfx.color` module.
+@table color
+@see ctr.gfx.color
+*/
 void load_color_lib(lua_State *L);
-void load_font_lib(lua_State *L);
-void load_texture_lib(lua_State *L);
-void load_map_lib(lua_State *L);
-
-void unload_font_lib(lua_State *L);
-
 u32 color_default;
 
+/***
+The `ctr.gfx.font` module.
+@table font
+@see ctr.gfx.font
+*/
+void load_font_lib(lua_State *L);
+void unload_font_lib(lua_State *L);
+
+/***
+The `ctr.gfx.texture` module.
+@table texture
+@see ctr.gfx.texture
+*/
+void load_texture_lib(lua_State *L);
+
+/***
+The `ctr.gfx.map` module.
+@table map
+@see ctr.gfx.map
+*/
+void load_map_lib(lua_State *L);
+
+/***
+Start drawing to a screen.
+Must be called before any draw operation.
+@function startFrame
+@tparam number screen the screen to draw to (`GFX_TOP` or `GFX_BOTTOM`)
+@tparam[opt=GFX_LEFT] number eye the eye to draw to (`GFX_LEFT` or `GFX_RIGHT`)
+*/
 static int gfx_startFrame(lua_State *L) {
 	u8 screen = luaL_checkinteger(L, 1);
 	u8 eye = luaL_optinteger(L, 2, GFX_LEFT);
@@ -30,18 +63,32 @@ static int gfx_startFrame(lua_State *L) {
 	return 0;
 }
 
+/***
+End drawing to a screen.
+Must be called after your draw operations.
+@function endFrame
+*/
 static int gfx_endFrame(lua_State *L) {
 	sf2d_end_frame();
 
 	return 0;
 }
 
+/***
+Display any drawn pixel.
+@function render
+*/
 static int gfx_render(lua_State *L) {
 	sf2d_swapbuffers();
 
 	return 0;
 }
 
+/***
+Get the current number of frame per second.
+@function getFPS
+@treturn number number of frame per seconds
+*/
 static int gfx_getFPS(lua_State *L) {
 	float fps = sf2d_get_fps();
 
@@ -50,6 +97,11 @@ static int gfx_getFPS(lua_State *L) {
 	return 1;
 }
 
+/***
+Enable or disable the stereoscopic 3D on the top screen.
+@function set3D
+@tparam boolean enable true to enable, false to disable
+*/
 static int gfx_set3D(lua_State *L) {
 	bool enable = lua_toboolean(L, 1);
 	
@@ -58,12 +110,26 @@ static int gfx_set3D(lua_State *L) {
 	return 0;
 }
 
+/***
+Get free VRAM space.
+@function vramSpaceFree
+@treturn integer free VRAM in bytes
+*/
 static int gfx_vramSpaceFree(lua_State *L) {
   lua_pushinteger(L, vramSpaceFree());
   
   return 1;
 }
 
+/***
+Draw a line on the current screen.
+@function line
+@tparam integer x1 line's starting point horizontal coordinate, in pixels
+@tparam integer y1 line's starting point vertical coordinate, in pixels
+@tparam integer x2 line's endpoint horizontal coordinate, in pixels
+@tparam integer y2 line's endpoint vertical coordinate, in pixels
+@tparam[opt=default color] integer color drawing color
+*/
 static int gfx_line(lua_State *L) {
 	int x1 = luaL_checkinteger(L, 1);
 	int y1 = luaL_checkinteger(L, 2);
@@ -77,6 +143,13 @@ static int gfx_line(lua_State *L) {
 	return 0;
 }
 
+/***
+Draw a point, a single pixel, on the current screen.
+@function point
+@tparam integer x point horizontal coordinate, in pixels
+@tparam integer y point vertical coordinate, in pixels
+@tparam[opt=default color] integer color drawing color
+*/
 static int gfx_point(lua_State *L) {
 	int x = luaL_checkinteger(L, 1);
 	int y = luaL_checkinteger(L, 2);
@@ -88,6 +161,16 @@ static int gfx_point(lua_State *L) {
 	return 0;
 }
 
+/***
+Draw a rectangle on the current screen.
+@function rectangle
+@tparam integer x rectangle origin horizontal coordinate, in pixels
+@tparam integer y rectangle origin vertical coordinate, in pixels
+@tparam integer width rectangle width, in pixels
+@tparam integer height rectangle height, in pixels
+@tparam[opt=0] number angle rectangle rotation, in radians
+@tparam[opt=default color] integer color drawing color
+*/
 static int gfx_rectangle(lua_State *L) {
 	int x = luaL_checkinteger(L, 1);
 	int y = luaL_checkinteger(L, 2);
@@ -105,6 +188,14 @@ static int gfx_rectangle(lua_State *L) {
 	return 0;
 }
 
+/***
+Draw a circle on the current screen.
+@function circle
+@tparam integer x circle center horizontal coordinate, in pixels
+@tparam integer y circle center vertical coordinate, in pixels
+@tparam integer radius circle radius, in pixels
+@tparam[opt=default color] integer color drawing color
+*/
 static int gfx_circle(lua_State *L) {
 	int x = luaL_checkinteger(L, 1);
 	int y = luaL_checkinteger(L, 2);
@@ -117,6 +208,16 @@ static int gfx_circle(lua_State *L) {
 	return 0;
 }
 
+/***
+Draw a text on the current screen.
+@function text
+@tparam integer x text drawing origin horizontal coordinate, in pixels
+@tparam integer y text drawing origin vertical coordinate, in pixels
+@tparam string text the text to draw
+@tparam[opt=9] integer size drawing size, in pixels
+@tparam[opt=default color] integer color drawing color
+@tparam[opt=default font] font font to use
+*/
 static int gfx_text(lua_State *L) {
 	int x = luaL_checkinteger(L, 1);
 	int y = luaL_checkinteger(L, 2);
@@ -161,13 +262,53 @@ static const struct luaL_Reg gfx_lib[] = {
 
 // Constants
 struct { char *name; int value; } gfx_constants[] = {
+	/***
+	Constant used to select the top screen.
+	It is equal to `0`.
+	@field GFX_TOP
+	*/
 	{ "GFX_TOP",       GFX_TOP    },
+	/***
+	Constant used to select the bottom screen.
+	It is equal to `1`.
+	@field GFX_BOTTOM
+	*/
 	{ "GFX_BOTTOM",    GFX_BOTTOM },
+	/***
+	Constant used to select the left eye.
+	It is equal to `0`.
+	@field GFX_LEFT
+	*/
 	{ "GFX_LEFT",      GFX_LEFT   },
+	/***
+	Constant used to select the right eye.
+	It is equal to `1`.
+	@field GFX_RIGHT
+	*/
 	{ "GFX_RIGHT",     GFX_RIGHT  },
+	/***
+	The top screen height, in pixels.
+	It is equal to `240`.
+	@field TOP_HEIGHT
+	*/
 	{ "TOP_HEIGHT",    240        },
+	/***
+	The top screen width, in pixels.
+	It is equal to `400`.
+	@field TOP_WIDTH
+	*/
 	{ "TOP_WIDTH",     400        },
+	/***
+	The bottom screen height, in pixels.
+	It is equal to `240`.
+	@field BOTTOM_HEIGHT
+	*/
 	{ "BOTTOM_HEIGHT", 240        },
+	/***
+	The bottom screen width, in pixels.
+	It is equal to `320`.
+	@field BOTTOM_WIDTH
+	*/
 	{ "BOTTOM_WIDTH",  320        },
 	{ NULL, 0 }
 };

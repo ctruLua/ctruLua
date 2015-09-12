@@ -1,3 +1,8 @@
+/***
+The `ctr` module.
+@module ctr
+@usage local ctr = require("ctr")
+*/
 #include <3ds/types.h>
 #include <3ds/services/apt.h>
 #include <3ds/os.h>
@@ -5,27 +10,84 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+/***
+The `ctr.gfx` module.
+@table gfx
+@see ctr.gfx
+*/
 void load_gfx_lib(lua_State *L);
-void load_news_lib(lua_State *L);
-void load_ptm_lib(lua_State *L);
-void load_hid_lib(lua_State *L);
-void load_ir_lib(lua_State *L);
-void load_fs_lib(lua_State *L);
-void load_httpc_lib(lua_State *L);
-void load_qtm_lib(lua_State *L);
-//void load_cam_lib(lua_State *L);
-
 void unload_gfx_lib(lua_State *L);
+
+/***
+The `ctr.news` module.
+@table news
+@see ctr.news
+*/
+void load_news_lib(lua_State *L);
+
+/***
+The `ctr.ptm` module.
+@table ptm
+@see ctr.ptm
+*/
+void load_ptm_lib(lua_State *L);
+
+/***
+The `ctr.hid` module.
+@table hid
+@see ctr.hid
+*/
+void load_hid_lib(lua_State *L);
 void unload_hid_lib(lua_State *L);
+
+/***
+The `ctr.ir` module.
+@table ir
+@see ctr.ir
+*/
+void load_ir_lib(lua_State *L);
+
+/***
+The `ctr.fs` module.
+@table fs
+@see ctr.fs
+*/
+void load_fs_lib(lua_State *L);
 void unload_fs_lib(lua_State *L);
+
+/***
+The `ctr.httpc` module.
+@table httpc
+@see ctr.httpc
+*/
+void load_httpc_lib(lua_State *L);
 void unload_httpc_lib(lua_State *L);
 
+/***
+The `ctr.qtm` module.
+@table qtm
+@see ctr.qtm
+*/
+void load_qtm_lib(lua_State *L);
+
+//void load_cam_lib(lua_State *L);
+
+/***
+Return whether or not the program should continue.
+@function run
+@treturn boolean `false` if the program should exist or `true` if it can continue
+*/
 static int ctr_run(lua_State *L) {
 	lua_pushboolean(L, aptMainLoop());
 
 	return 1;
 }
 
+/***
+Return the number of milliseconds since 1st Jan 1900 00:00.
+@function time
+@treturn number milliseconds
+*/
 static int ctr_time(lua_State *L) {
 	lua_pushinteger(L, osGetTime());
 
