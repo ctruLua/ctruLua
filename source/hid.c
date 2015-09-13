@@ -1,8 +1,54 @@
+/***
+The `hid` module.
+The circle pad pro is supported, it's keys replace de "3ds only" keys
+@module ctr.hid
+@usage local hid = require("ctr.hid")
+*/
 #include <3ds/types.h>
 #include <3ds/services/hid.h>
 
 #include <lua.h>
 #include <lauxlib.h>
+
+/***
+Keys list
+@table keys
+@field a A
+@field b B
+@field select Select
+@field start Start
+@field dRight D-Pad right
+@field dLeft D-Pad Left
+@field dUp D-Pad Up
+@field dDown D-Pad Down
+@field r R trigger
+@field l L trigger
+@field x X
+@field y Y
+@field zl ZL trigger (new3ds only)
+@field zr ZR trigger (new3ds only)
+@field touch
+@field cstickRight C-Stick right (new3ds only)
+@field cstickLeft C-Stick left (new3ds only)
+@field cstickUp C-Stick up (new3ds only)
+@field cstickDown C-Stick down (new3ds only)
+@field cpadRight Circle pad right
+@field cpadLeft Circle pad left
+@field cpadUp Circle pad up
+@field cpadDown Circle pad down
+@field up Generic up
+@field down Generic down
+@field left Generic left
+@field right Generic right
+*/
+
+/***
+Keys states
+@table states
+@field down keys which have been just pressed
+@field held keys which are held down
+@field up keys whick are been just released
+*/
 
 // Key list based on hid.h from the ctrulib by smealum
 struct { PAD_KEY key; char *name; } hid_keys_name[] = {
@@ -38,12 +84,28 @@ struct { PAD_KEY key; char *name; } hid_keys_name[] = {
 	{ 0, NULL }
 };
 
+/***
+Refresh the HID state.
+@function read
+*/
 static int hid_read(lua_State *L) {
 	hidScanInput();
 
 	return 0;
 }
 
+/***
+Return the keys states as `state.key` in a table.
+@function keys
+@treturn table keys states
+@usage
+-- Just an example
+hid.read()
+local keys = hid.keys()
+if keys.held.a then
+	-- do stuff
+end
+*/
 static int hid_keys(lua_State *L) {
 	u32 kDown = hidKeysDown();
 	u32 kHeld = hidKeysHeld();
@@ -79,6 +141,13 @@ static int hid_keys(lua_State *L) {
 	return 1;
 }
 
+/***
+Return the touch position on the touch screen.
+`0,0` is the top-left corner.
+@function touch
+@treturn number X position
+@treturn number Y position
+*/
 static int hid_touch(lua_State *L) {
 	touchPosition pos;
 	hidTouchRead(&pos);
@@ -89,6 +158,13 @@ static int hid_touch(lua_State *L) {
 	return 2;
 }
 
+/***
+Return the circle pad position.
+`0,0` is the center position. Warning: the circle pad doesn't always go back to `0,0`.
+@function circle
+@treturn number X position
+@treturn number Y position
+*/
 static int hid_circle(lua_State *L) {
 	circlePosition pos;
 	hidCircleRead(&pos);
@@ -99,6 +175,13 @@ static int hid_circle(lua_State *L) {
 	return 2;
 }
 
+/***
+Return the accelerometer vector
+@function accel
+@treturn number X acceleration
+@treturn number Y acceleration
+@treturn number Z acceleration
+*/
 static int hid_accel(lua_State *L) {
 	accelVector pos;
 	hidAccelRead(&pos);
@@ -110,6 +193,13 @@ static int hid_accel(lua_State *L) {
 	return 3;
 }
 
+/***
+Return the gyroscope rate.
+@function gyro
+@treturn number roll
+@treturn number pitch
+@treturn number yaw
+*/
 static int hid_gyro(lua_State *L) {
 	angularRate pos;
 	hidGyroRead(&pos);
@@ -121,6 +211,11 @@ static int hid_gyro(lua_State *L) {
 	return 3;
 }
 
+/***
+Return the sound volume.
+@function volume
+@treturn number volume (`0` to `63`)
+*/
 static int hid_volume(lua_State *L) {
 	u8 volume = 0;
 	HIDUSER_GetSoundVolume(&volume);
@@ -130,6 +225,11 @@ static int hid_volume(lua_State *L) {
 	return 1;
 }
 
+/***
+Return the 3D cursor position.
+@function pos3d
+@treturn number 3d cursor position (`0` to `1`)
+*/
 static int hid_3d(lua_State *L) {
   float slider = (*(float*)0x1FF81080);
   

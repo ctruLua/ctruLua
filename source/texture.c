@@ -1,3 +1,8 @@
+/***
+The `gfx.texture` module.
+@module ctr.gfx.texture
+@usage local texture = require("ctr.gfx.texture")
+*/
 #include <sf2d.h>
 #include <sfil.h>
 
@@ -14,6 +19,15 @@ u8 getType(const char *name) {
 }
 
 // module functions
+
+/***
+Load a texture from a file. Supported formats: PNG, JPEG, BMP.
+@function load
+@tparam string path path to the image file
+@tparam[opt=PLACE_RAM] number place where to put the loaded texture
+@tparam[opt=auto] number type type of the image
+@treturn texture the loaded texture object
+*/
 static int texture_load(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
 	u8 place = luaL_optinteger(L, 2, SF2D_PLACE_RAM); //place in ram by default
@@ -51,6 +65,18 @@ static int texture_load(lua_State *L) {
 	return 1;
 }
 
+/***
+Texture object
+@section Methods
+*/
+
+/***
+Draw a texture.
+@function :draw
+@tparam number x X position
+@tparam number y Y position
+@tparam[opt=0.0] number rad rotation of the texture (in radians)
+*/
 static int texture_draw(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 	int x = luaL_checkinteger(L, 2);
@@ -66,6 +92,17 @@ static int texture_draw(lua_State *L) {
 	return 0;
 }
 
+/***
+Draw a part of the texture
+@function :drawPart
+@tparam number x X position
+@tparam number y Y position
+@tparam number sx X position of the beginning of the part
+@tparam number sy Y position of the beginning of the part
+@tparam number w width of the part
+@tparam number h height of the part
+@tparam[opt=0.0] number rad rotation of the part (in radians)
+*/
 static int texture_drawPart(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 	int x = luaL_checkinteger(L, 2);
@@ -81,6 +118,12 @@ static int texture_drawPart(lua_State *L) {
 	return 0;
 }
 
+/***
+Return the size of the texture.
+@function :getSize
+@treturn number width of the texture
+@treturn number height of the texture
+*/
 static int texture_getSize(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 
@@ -90,6 +133,10 @@ static int texture_getSize(lua_State *L) {
 	return 2;
 }
 
+/***
+Unload a texture.
+@function :unload
+*/
 static int texture_unload(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 	
@@ -101,6 +148,12 @@ static int texture_unload(lua_State *L) {
 	return 0;
 }
 
+/***
+Rescale the texture. The default scale is `1.0`.
+@function :scale
+@tparam number scaleX new scale of the width
+@tparam number scaleY new scale of the height
+*/
 static int texture_scale(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 	float sx = luaL_checknumber(L, 2);
@@ -112,6 +165,13 @@ static int texture_scale(lua_State *L) {
 	return 0;
 }
 
+/***
+Return the color of a pixel.
+@function :getPixel
+@tparam number x X position of the pixel
+@tparam number y Y position of the pixel
+@treturn number color of the pixel.
+*/
 static int texture_getPixel(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 	int x = luaL_checkinteger(L, 2);
@@ -122,6 +182,13 @@ static int texture_getPixel(lua_State *L) {
 	return 1;
 }
 
+/***
+Set the color of a pixel.
+@function :setPixel
+@tparam number x X position of the pixel
+@tparam number y Y position of the pixel
+@tparam number color New color of the pixel
+*/
 static int texture_setPixel(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 	int x = luaL_checkinteger(L, 2);
@@ -133,6 +200,11 @@ static int texture_setPixel(lua_State *L) {
 	return 0;
 }
 
+/***
+Set the blend color of the texture.
+@function :setBlendColor
+@tparam number color new blend color
+*/
 static int texture_setBlendColor(lua_State *L) {
   texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 	u32 color = luaL_checkinteger(L, 2);
@@ -162,13 +234,42 @@ static const struct luaL_Reg texture_functions[] = {
 	{NULL, NULL}
 };
 
+/***
+Fields
+@section Fields
+*/
+
 // constants
 struct { char *name; int value; } texture_constants[] = {
+	/***
+	Constant used to select the RAM.
+	@field PLACE_RAM
+	*/
 	{"PLACE_RAM",  SF2D_PLACE_RAM },
+	/***
+	Constant used to select the VRAM.
+	@field PLACE_VRAM
+	*/
 	{"PLACE_VRAM", SF2D_PLACE_VRAM},
+	/***
+	Constant used to select a temporary RAM pool. Don't use it.
+	@field PLACE_TEMP
+	*/
 	{"PLACE_TEMP", SF2D_PLACE_TEMP},
+	/***
+	Constant used to select the PNG type.
+	@field TYPE_PNG
+	*/
 	{"TYPE_PNG",   0              },
+	/***
+	Constant used to select the JPEG type.
+	@field TYPE_JPEG
+	*/
 	{"TYPE_JPEG",  1              },
+	/***
+	Constant used to select the BMP type.
+	@field TYPE_BMP
+	*/
 	{"TYPE_BMP",   2              },
 	{NULL, 0}
 };
