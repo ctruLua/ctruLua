@@ -10,6 +10,8 @@
 Handle *fsuHandle;
 FS_archive sdmcArchive;
 
+void load_lzlib(lua_State *L);
+
 static int fs_list(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
 
@@ -99,9 +101,20 @@ static const struct luaL_Reg fs_lib[] = {
 	{ NULL, NULL }
 };
 
+// submodules
+struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); } fs_libs[] = {
+	{"zip", load_lzlib, NULL},
+	{NULL, NULL}
+};
+
 int luaopen_fs_lib(lua_State *L) {
 	luaL_newlib(L, fs_lib);
-
+	
+	for (int i = 0; fs_libs[i].name; i++) {
+		fs_libs[i].load(L);
+		lua_setfield(L, -2, fs_libs[i].name);
+	}
+	
 	return 1;
 }
 
