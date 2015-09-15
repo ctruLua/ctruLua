@@ -16,6 +16,7 @@ The `gfx` module.
 #include "font.h"
 
 bool isGfxInitialised = false;
+bool is3DEnabled = false; //TODO: add a function for this in the ctrulib/sf2dlib.
 
 /***
 The `ctr.gfx.color` module.
@@ -103,11 +104,21 @@ Enable or disable the stereoscopic 3D on the top screen.
 @tparam boolean enable true to enable, false to disable
 */
 static int gfx_set3D(lua_State *L) {
-	bool enable = lua_toboolean(L, 1);
+	is3DEnabled = lua_toboolean(L, 1);
 	
-	sf2d_set_3D(enable);
+	sf2d_set_3D(is3DEnabled);
 	
 	return 0;
+}
+
+/***
+Check whether or not the stereoscopic 3D is enabled.
+@function get3D
+@treturn boolean true if enabled, false if disabled
+*/
+static int gfx_get3D(lua_State *L) {
+  lua_pushboolean(L, is3DEnabled);
+  return 1;
 }
 
 /***
@@ -251,6 +262,7 @@ static const struct luaL_Reg gfx_lib[] = {
 	{ "render",        gfx_render        },
 	{ "getFPS",        gfx_getFPS        },
 	{ "set3D",         gfx_set3D         },
+	{ "get3D",         gfx_get3D         },
 	{ "vramSpaceFree", gfx_vramSpaceFree },
 	{ "line",          gfx_line          },
 	{ "point",         gfx_point         },

@@ -43,6 +43,11 @@ Initialize the IR module.
 static int ir_init(lua_State *L) {
 	u8 bitrate = luaL_optinteger(L, 1, 6);
 	bufferSize = luaL_optinteger(L, 2, 2048); //default: 2Kio
+	if (bufferSize > 2048) {
+		lua_pushboolean(L, false);
+		lua_pushstring(L, "the buffer can't be larger than 2048 bytes.");
+		return 2;
+	}
 	buffer = linearAlloc(bufferSize);
 	
 	Result ret = IRU_Initialize(buffer, bufferSize);
@@ -62,9 +67,15 @@ Disable the IR module.
 @function shutdown
 */
 static int ir_shutdown(lua_State *L) {
-	IRU_Shutdown();
+	Result ret = IRU_Shutdown();
+	if (ret) {
+		lua_pushboolean(L, false);
+		lua_pushinteger(L, ret);
+		return 2;
+	}
 	
-	return 0;
+	lua_pushboolean(L, true);
+	return 1;
 }
 
 /***
@@ -77,7 +88,12 @@ static int ir_send(lua_State *L) {
 	u8 *data = (u8*)luaL_checkstring(L, 1);
 	u32 wait = lua_toboolean(L, 2);
 	
-	IRU_SendData(data, sizeof(data), wait);
+	Result ret = IRU_SendData(data, sizeof(data), wait);
+	if (ret) {
+		lua_pushboolean(L, false);
+		lua_pushinteger(L, ret);
+		return 2;
+	}
 	
 	return 0;
 }
@@ -89,12 +105,17 @@ Receive some data from the IR module.
 @tparam[opt=false] boolean wait wait until the data is received
 */
 static int ir_receive(lua_State *L) {
-	u32 size = luaL_optinteger(L, 1, 0x800);
+	u32 size = luaL_optinteger(L, 1, bufferSize);
 	u32 wait = lua_toboolean(L, 2);
 	u8 *data = 0;
 	u32 *transfercount = 0;
 	
-	IRU_RecvData(data, size, 0x00, transfercount, wait);
+	Result ret = IRU_RecvData(data, size, 0x00, transfercount, wait);
+	if (ret) {
+		lua_pushboolean(L, false);
+		lua_pushinteger(L, ret);
+		return 2;
+	}
 	
 	lua_pushstring(L, (const char *)data);
 	
@@ -109,7 +130,12 @@ Set the bitrate of the communication.
 static int ir_setBitRate(lua_State *L) {
 	u8 bitrate = luaL_checkinteger(L, 1);
 	
-	IRU_SetBitRate(bitrate);
+	Result ret = IRU_SetBitRate(bitrate);
+	if (ret) {
+		lua_pushboolean(L, false);
+		lua_pushinteger(L, ret);
+		return 2;
+	}
 	
 	return 0;
 }
@@ -122,7 +148,12 @@ Return the actual bitrate of the communication.
 static int ir_getBitRate(lua_State *L) {
 	u8 bitrate = 0;
 	
-	IRU_GetBitRate(&bitrate);
+	Result ret = IRU_GetBitRate(&bitrate);
+	if (ret) {
+		lua_pushboolean(L, false);
+		lua_pushinteger(L, ret);
+		return 2;
+	}
 	
 	lua_pushinteger(L, bitrate);
 	

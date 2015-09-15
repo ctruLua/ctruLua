@@ -1,3 +1,9 @@
+/***
+The `fs.lzlib` module. See https://github.com/LuaDist/lzlib for informations and documentation.
+@module ctr.fs.lzlib
+@usage local lzlib = require("ctr.fs.lzlib")
+*/
+
 /************************************************************************
 * Author    : Tiago Dionizio <tiago.dionizio@gmail.com>                 *
 * Library   : lzlib - Lua 5 interface to access zlib library functions  *
