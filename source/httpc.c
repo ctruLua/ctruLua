@@ -1,3 +1,8 @@
+/***
+The `httpc` module.
+@module ctr.httpc
+@usage local httpc = require("ctr.httpc")
+*/
 #include <stdlib.h>
 #include <string.h>
 
@@ -8,6 +13,11 @@
 #include <lapi.h>
 #include <lauxlib.h>
 
+/***
+Create a HTTP Context.
+@function context
+@treturn context a new http context
+*/
 static int httpc_context(lua_State *L) {
 	httpcContext context;
 	Result ret = httpcOpenContext(&context, "http://google.com/", 0); // Initialization only.
@@ -23,6 +33,16 @@ static int httpc_context(lua_State *L) {
 	return 1;
 }
 
+/***
+context object
+@section Methods
+*/
+
+/***
+Open an url in the context.
+@function :open
+@tparam string url the url to open
+*/
 static int httpc_open(lua_State *L) {
 	httpcContext *context = lua_touserdata(L, 1);
 	char *url = (char*)luaL_checkstring(L, 2);
@@ -38,6 +58,10 @@ static int httpc_open(lua_State *L) {
 	return 1;
 }
 
+/***
+Begin a request to get the content at the URL.
+@function :beginRequest
+*/
 static int httpc_beginRequest(lua_State *L) {
 	httpcContext *context = lua_touserdata(L, 1);
 	Result ret = 0;
@@ -52,6 +76,11 @@ static int httpc_beginRequest(lua_State *L) {
 	return 1;
 }
 
+/***
+Return the status code returned by the request.
+@function :getStatusCode
+@treturn number the status code
+*/
 static int httpc_getStatusCode(lua_State *L) {
 	httpcContext *context = lua_touserdata(L, 1);
 	u32 statusCode = 0;
@@ -66,6 +95,11 @@ static int httpc_getStatusCode(lua_State *L) {
 	return 1;
 }
 
+/***
+Return the amount of data to download.
+@function :getDownloadSize
+@treturn number size in (bytes)
+*/
 static int httpc_getDownloadSize(lua_State *L) {
 	httpcContext *context = lua_touserdata(L, 1);
 	u32 contentSize = 0;
@@ -76,6 +110,11 @@ static int httpc_getDownloadSize(lua_State *L) {
 	return 1;
 }
 
+/***
+Download and return the data of the context.
+@function :downloadData
+@treturn string data
+*/
 static int httpc_downloadData(lua_State *L) {
 	httpcContext *context = lua_touserdata(L, 1);
 	u32 status = 0;
@@ -98,11 +137,15 @@ static int httpc_downloadData(lua_State *L) {
 	}
 	
 	lua_pushstring(L, (char*)buff);
-	free(buff);
+	//free(buff);
 	lua_pushinteger(L, size); // only for test purposes.
 	return 2;
 }
 
+/***
+Close the context.
+@function :close
+*/
 static int httpc_close(lua_State *L) {
 	httpcContext *context = lua_touserdata(L, 1);
 	
