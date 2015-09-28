@@ -77,7 +77,7 @@ font object
 
 /***
 Return the width of a string with a font.
-@function :object_width
+@function :width
 @tparam string text the text to test
 @treturn number the width of the text (in pixels)
 */
