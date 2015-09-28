@@ -1,3 +1,9 @@
+/***
+The `font` module
+@module ctr.gfx.font
+@usage local font = require("ctr.gfx.font")
+*/
+
 #include <unistd.h>
 #include <stdlib.h>
 
@@ -9,6 +15,12 @@
 
 #include "font.h"
 
+/***
+Load a TTF font.
+@function load
+@tparam string path path to the file
+@treturn font the loaded font.
+*/
 static int font_load(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
 
@@ -28,6 +40,11 @@ static int font_load(lua_State *L) {
 	return 1;
 }
 
+/***
+Set a font as the default one.
+@function setDefault
+@tparam font font the font to set as the default one.
+*/
 static int font_setDefault(lua_State *L) {
 	if (luaL_testudata(L, 1, "LFont") == NULL) {
 		font_userdata *font = lua_newuserdata(L, sizeof(*font));
@@ -42,12 +59,28 @@ static int font_setDefault(lua_State *L) {
 	return 0;
 }
 
+/***
+Return the default font.
+@function getDefault
+@treturn font default font
+*/
 static int font_getDefault(lua_State *L) {
 	lua_getfield(L, LUA_REGISTRYINDEX, "LFontDefault");
 
 	return 1;
 }
 
+/***
+font object
+@section Methods
+*/
+
+/***
+Return the width of a string with a font.
+@function :object_width
+@tparam string text the text to test
+@treturn number the width of the text (in pixels)
+*/
 static int font_object_width(lua_State *L) {
 	font_userdata *font = luaL_checkudata(L, 1, "LFont");
 	if (font->font == NULL) luaL_error(L, "The font object was unloaded");
@@ -67,6 +100,10 @@ static int font_object_width(lua_State *L) {
 	return 1;
 }
 
+/***
+Unload a font.
+@function :unload
+*/
 static int font_object_unload(lua_State *L) {
 	font_userdata *font = luaL_checkudata(L, 1, "LFont");
 	if (font->font == NULL) return 0;

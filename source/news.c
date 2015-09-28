@@ -10,6 +10,8 @@ The `news` module.
 #include <lua.h>
 #include <lauxlib.h>
 
+#include <string.h>
+
 /***
 Initialize the news module.
 @function init
@@ -31,19 +33,23 @@ Send a notification to the user. WIP, do not use !!!
 static int news_notification(lua_State *L) {
 	const char *title = luaL_checkstring(L, 1);
 	const char *message = luaL_checkstring(L, 2);
-	const void *imageData = luaL_checkstring(L, 3);
+	const void *imageData = luaL_optstring(L, 3, NULL);
 	bool jpeg = false;
 	if (lua_isboolean(L, 4))
 		jpeg = lua_toboolean(L, 4);
-	lua_len(L, 3);
-	u32 imageDataLength = luaL_checkinteger(L, -1);
-  
+	
+	u32 imageDataLength = 0;
+	if (imageData) {
+		lua_len(L, 3);
+		luaL_checkinteger(L, -1);
+	}
+	
 	const u16* cTitle = 0;
 	const u16* cMessage = 0;
 	u32 titleLength, messageLength;
 	
-	titleLength = (u32) utf8_to_utf16((uint16_t*)cTitle, (uint8_t*)title, sizeof(title));
-	messageLength = (u32) utf8_to_utf16((uint16_t*)cMessage, (uint8_t*)message, sizeof(message));
+	titleLength = (u32) utf8_to_utf16((uint16_t*)cTitle, (uint8_t*)title, strlen(title));
+	messageLength = (u32) utf8_to_utf16((uint16_t*)cMessage, (uint8_t*)message, strlen(message));
 	
 	NEWSU_AddNotification(cTitle, titleLength, cMessage, messageLength, imageData, imageDataLength, jpeg);
 	
