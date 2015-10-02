@@ -13,9 +13,19 @@ The `gfx.texture` module.
 
 #include "texture.h"
 
-u8 getType(const char *name) {
-	// NYI, always return the PNG type, because PNG is the best type.
-	return 0;
+int getType(const char *name) {
+	const char *dot = strrchr(name, '.');
+	if(!dot || dot == name) dot = "";
+	const char *ext = dot + 1;
+	if (strncmp(ext, "png", 3) == 0) {
+		return 0;
+	} else if (strncmp(ext, "jpeg", 4) == 0 || strncmp(ext, "jpg", 3) == 0) {
+		return 1;
+	} else if (strncmp(ext, "bmp", 3) == 0) {
+		return 2;
+	} else {
+		return 4;
+	}
 }
 
 // module functions
@@ -45,7 +55,7 @@ static int texture_load(lua_State *L) {
 	} else if (type==1) { //JPEG
 		texture->texture = sfil_load_JPEG_file(path, place);
 	} else if (type==2) { //BMP
-		texture->texture = sfil_load_BMP_file(path, place);
+		texture->texture = sfil_load_BMP_file(path, place); //appears to be broken right now.
 	} else {
 		lua_pushnil(L);
 		lua_pushstring(L, "Bad type");
