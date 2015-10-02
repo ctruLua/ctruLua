@@ -195,7 +195,7 @@
 		LUA_LDIR"?.lua;"          LUA_LDIR"?/init.lua;" \
 		LUA_LDIR LUA_VDIR"?.lua;" LUA_LDIR LUA_VDIR"?/init.lua;" \
 /*		LUA_CDIR"?.lua;"          LUA_CDIR"?/init.lua;" \
-		LUA_CDIR LUA_VDIR"?.lua;" LUA_CDIR LUA_VDIR"?/init.lua;" \ */
+		LUA_CDIR LUA_VDIR"?.lua;" LUA_CDIR LUA_VDIR"?/init.lua;" */ \
 		"./?.lua;" "./?/init.lua"
 #define LUA_CPATH_DEFAULT \
 		LUA_CDIR"?.so;" LUA_CDIR"loadall.so;" "./?.so"
