@@ -30,7 +30,7 @@ TARGET		:=	ctruLua
 BUILD		:=	build
 SOURCES		:=	source libs/lua-5.3.1/src
 DATA		:=	data
-INCLUDES	:=	include libs/lua-5.3.1/src
+INCLUDES	:=	include libs/lua-5.3.1/src libs/lzlib
 
 APP_TITLE		:= ctruLua
 APP_DESCRIPTION	:= Lua for the 3DS. Yes, it works.
