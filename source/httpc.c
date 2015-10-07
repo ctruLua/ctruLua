@@ -59,6 +59,27 @@ static int httpc_open(lua_State *L) {
 }
 
 /***
+Add a field in the request header.
+@function :addRequestHeaderField
+@tparam string name Name of the field
+@tparam string value Value of the field
+*/
+static int httpc_addRequestHeaderField(lua_State *L) {
+	httpcContext *context = lua_touserdata(L, 1);
+	char *name = (char*)luaL_checkstring(L, 2);
+	char *value = (char*)luaL_checkstring(L, 3);
+	
+	Result ret = httpcAddRequestHeaderField(context, name ,value);
+	if (ret != 0) {
+		lua_pushnil(L);
+		lua_pushinteger(L, ret);
+		return 2;
+	}
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+/***
 Begin a request to get the content at the URL.
 @function :beginRequest
 */
@@ -156,12 +177,13 @@ static int httpc_close(lua_State *L) {
 
 // object
 static const struct luaL_Reg httpc_methods[] = {
-	{"open",            httpc_open},
-	{"beginRequest",    httpc_beginRequest},
-	{"getStatusCode",   httpc_getStatusCode},
-	{"getDownloadSize", httpc_getDownloadSize},
-	{"downloadData",    httpc_downloadData},
-	{"close",           httpc_close},
+	{"open",                  httpc_open                 },
+	{"addRequestHeaderField", httpc_addRequestHeaderField},
+	{"beginRequest",          httpc_beginRequest         },
+	{"getStatusCode",         httpc_getStatusCode        },
+	{"getDownloadSize",       httpc_getDownloadSize      },
+	{"downloadData",          httpc_downloadData         },
+	{"close",                 httpc_close                },
 	{NULL, NULL}
 };
 

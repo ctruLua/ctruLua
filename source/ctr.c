@@ -70,6 +70,13 @@ The `ctr.qtm` module.
 */
 void load_qtm_lib(lua_State *L);
 
+/***
+The `ctr.cfgu` module.
+@table cfgu
+@see ctr.cfgu
+*/
+void load_cfgu_lib(lua_State *L);
+
 //void load_cam_lib(lua_State *L);
 
 /***
@@ -111,6 +118,7 @@ struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); }
 	{ "fs",    load_fs_lib,    unload_fs_lib    },
 	{ "httpc", load_httpc_lib, unload_httpc_lib },
 	{ "qtm",   load_qtm_lib,   NULL             },
+	{ "cfgu",  load_cfgu_lib,  NULL             },
 //	{ "cam",   load_cam_lib,   NULL             },
 	{ NULL, NULL }
 };
