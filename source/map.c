@@ -24,6 +24,8 @@ typedef struct {
 	u16 *data;
 	int width;
 	int height;
+	int spaceX; // in pixels
+	int spaceY; // in pixels
 } map_userdata;
 
 void getTilePos(map_userdata *map, u16 tile, int *texX, int *texY) {
@@ -62,6 +64,8 @@ static int map_load(lua_State *L) {
 	map->tileSizeY = tileSizeY;
 	map->tilesetSizeX = (map->texture->texture->width/tileSizeX);
 	map->tilesetSizeY = (map->texture->texture->height/tileSizeY);
+	map->spaceX = 0;
+	map->spaceY = 0;
 	
 	// read the map file
 	FILE *mapFile = fopen(mapPath, "r");
@@ -132,7 +136,7 @@ static int map_draw(lua_State *L) {
 			for (int yp=0; yp<map->height; yp++) {
 				u16 tile = getTile(map, xp, yp);
 				getTilePos(map, tile, &texX, &texY);
-				sf2d_draw_texture_part(map->texture->texture, (x+(map->tileSizeX*xp)), (y+(map->tileSizeY*yp)), texX, texY, map->tileSizeX, map->tileSizeY);
+				sf2d_draw_texture_part(map->texture->texture, (x+(map->tileSizeX*xp)+(xp*map->spaceX)), (y+(map->tileSizeY*yp)+(yp*map->spaceY)), texX, texY, map->tileSizeX, map->tileSizeY);
 			}
 		}
 	} else {
@@ -140,7 +144,7 @@ static int map_draw(lua_State *L) {
 			for (int yp=0; yp<map->height; yp++) {
 				u16 tile = getTile(map, xp, yp);
 				getTilePos(map, tile, &texX, &texY);
-				sf2d_draw_texture_part_blend(map->texture->texture, (x+(map->tileSizeX*xp)), (y+(map->tileSizeY*yp)), texX, texY, map->tileSizeX, map->tileSizeY, map->texture->blendColor);
+				sf2d_draw_texture_part_blend(map->texture->texture, (x+(map->tileSizeX*xp)+(xp*map->spaceX)), (y+(map->tileSizeY*yp)+(yp*map->spaceY)), texX, texY, map->tileSizeX, map->tileSizeY, map->texture->blendColor);
 			}
 		}
 	}
@@ -212,6 +216,23 @@ static int map_setTile(lua_State *L) {
 	return 0;
 }
 
+/***
+Set the space between draw tiles (in pixels).
+@function :setSpace
+@tparam number x X space
+@tparam number y Y space
+*/
+static int map_setSpace(lua_State *L) {
+	map_userdata *map = luaL_checkudata(L, 1, "LMap");
+	int x = luaL_optinteger(L, 2, map->spaceX);
+	int y = luaL_optinteger(L, 3, map->spaceY);
+	
+	map->spaceX = x;
+	map->spaceY = y;
+	
+	return 0;
+}
+
 // object
 static const struct luaL_Reg map_methods[] = {
 	{"draw",          map_draw         },
@@ -219,6 +240,7 @@ static const struct luaL_Reg map_methods[] = {
 	{"getSize",       map_getSize      },
 	{"getTile",       map_getTile      },
 	{"setTile",       map_setTile      },
+	{"setSpace",      map_setSpace     },
 	{"__gc",          map_unload       },
 	{NULL, NULL}
 };
