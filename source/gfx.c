@@ -122,6 +122,19 @@ static int gfx_get3D(lua_State *L) {
 }
 
 /***
+Enable or disable the VBlank waiting.
+@function setVBlankWait
+@tparam boolean true to enable, false to disable
+*/
+static int gfx_setVBlankWait(lua_State *L) {
+	bool enable = lua_toboolean(L, 1);
+	
+	sf2d_set_vblank_wait(enable);
+	
+	return 0;
+}
+
+/***
 Get free VRAM space.
 @function vramSpaceFree
 @treturn integer free VRAM in bytes
@@ -255,20 +268,94 @@ static int gfx_text(lua_State *L) {
 	return 0;
 }
 
+/***
+Draw a text with a new line after a certain number of pixels.
+Warning: No UTF32 support.
+@function wrappedText
+@tparam integer x text drawing origin horizontal coordinate, in pixels
+@tparam integer y text drawing origin vertical coordinate, in pixels
+@tparam string text the text to draw
+@tparam integer width width of a line, in pixels
+@tparam[opt=9] integer size drawing size, in pixels
+@tparam[opt=default color] integer color drawing color
+@tparam[opt=default font] font font to use
+*/
+static int gfx_wrappedText(lua_State *L) {
+	int x = luaL_checkinteger(L, 1);
+	int y = luaL_checkinteger(L, 2);
+	size_t len;
+	const char *text = luaL_checklstring(L, 3, &len);
+	unsigned int lineWidth = luaL_checkinteger(L, 4);
+	
+	int size = luaL_optinteger(L, 5, 9);
+	u32 color = luaL_optinteger(L, 6, color_default);
+	font_userdata *font = luaL_testudata(L, 7, "LFont");
+	if (font == NULL) {
+		lua_getfield(L, LUA_REGISTRYINDEX, "LFontDefault");
+		font = luaL_testudata(L, -1, "LFont");
+		if (font == NULL) luaL_error(L, "No default font set and no font object passed");
+	}
+	if (font->font == NULL) luaL_error(L, "The font object was unloaded");
+
+	// Wide caracters support. (wchar = UTF32 on 3DS.)
+	// Disabled as sftd_draw_wtext_wrap() doesn't exist.
+	/*wchar_t wtext[len];
+	len = mbstowcs(wtext, text, len);
+	*(wtext+len) = 0x0; // text end */
+	
+	sftd_draw_text_wrap(font->font, x, y, color, size, lineWidth, text);
+	
+	return 0;
+}
+
+/***
+Calculate the size of a text draw with `wrappedText`.
+@function calcBoundingBox
+@tparam string text The text to check
+@tparam integer lineWidth width of a line, in pixels
+@tparam[opt=9] integer size drawing size, in pixels
+@tparam[opt=default font] font font to use
+@treturn integer width of the text, in pixels
+@treturn integer height of the text, in pixels
+*/
+static int gfx_calcBoundingBox(lua_State *L) {
+	size_t len;
+	const char *text = luaL_checklstring(L, 1, &len);
+	unsigned int lineWidth = luaL_checkinteger(L, 2);
+	int size = luaL_optinteger(L, 3, 9);
+	font_userdata *font = luaL_testudata(L, 4, "LFont");
+	if (font == NULL) {
+		lua_getfield(L, LUA_REGISTRYINDEX, "LFontDefault");
+		font = luaL_testudata(L, -1, "LFont");
+		if (font == NULL) luaL_error(L, "No default font set and no font object passed");
+	}
+	if (font->font == NULL) luaL_error(L, "The font object was unloaded");
+	
+	int w, h = 0;
+	sftd_calc_bounding_box(&w, &h, font->font, size, lineWidth, text);
+	
+	lua_pushinteger(L, w);
+	lua_pushinteger(L, h);
+	return 2;
+}
+
 // Functions
 static const struct luaL_Reg gfx_lib[] = {
-	{ "startFrame",    gfx_startFrame    },
-	{ "endFrame",      gfx_endFrame      },
-	{ "render",        gfx_render        },
-	{ "getFPS",        gfx_getFPS        },
-	{ "set3D",         gfx_set3D         },
-	{ "get3D",         gfx_get3D         },
-	{ "vramSpaceFree", gfx_vramSpaceFree },
-	{ "line",          gfx_line          },
-	{ "point",         gfx_point         },
-	{ "rectangle",     gfx_rectangle     },
-	{ "circle",        gfx_circle        },
-	{ "text",          gfx_text          },
+	{ "startFrame",      gfx_startFrame      },
+	{ "endFrame",        gfx_endFrame        },
+	{ "render",          gfx_render          },
+	{ "getFPS",          gfx_getFPS          },
+	{ "set3D",           gfx_set3D           },
+	{ "get3D",           gfx_get3D           },
+	{ "setVBlankWait",   gfx_setVBlankWait   },
+	{ "vramSpaceFree",   gfx_vramSpaceFree   },
+	{ "line",            gfx_line            },
+	{ "point",           gfx_point           },
+	{ "rectangle",       gfx_rectangle       },
+	{ "circle",          gfx_circle          },
+	{ "text",            gfx_text            },
+	{ "wrappedText",     gfx_wrappedText     },
+	{ "calcBoundingBox", gfx_calcBoundingBox },
 	{ NULL, NULL }
 };
 

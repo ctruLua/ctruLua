@@ -77,6 +77,35 @@ static int texture_load(lua_State *L) {
 }
 
 /***
+Create an empty texture.
+@function new
+@tparam number width Texture width
+@tparam number height Texture height
+@tparam[opt=PLACE_RAM] number place where to put the loaded texture
+@treturn texture the loaded texture object
+*/
+static int texture_new(lua_State *L) {
+	int w = luaL_checkinteger(L, 1);
+	int h = luaL_checkinteger(L, 2);
+	u8 place = luaL_checkinteger(L, 3);
+	
+	texture_userdata *texture;
+	texture = (texture_userdata *)lua_newuserdata(L, sizeof(*texture));
+	
+	luaL_getmetatable(L, "LTexture");
+	lua_setmetatable(L, -2);
+	
+	texture->texture = sf2d_create_texture(w, h, TEXFMT_RGBA8, place);
+	sf2d_texture_tile32(texture->texture);
+	
+	texture->scaleX = 1.0f;
+	texture->scaleY = 1.0f;
+	texture->blendColor = 0xffffffff;
+	
+	return 1;
+}
+
+/***
 Texture object
 @section Methods
 */
@@ -242,6 +271,7 @@ static const struct luaL_Reg texture_methods[] = {
 // module
 static const struct luaL_Reg texture_functions[] = {
 	{"load", texture_load},
+	{"new",  texture_new },
 	{NULL, NULL}
 };
 
