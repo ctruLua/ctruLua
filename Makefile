@@ -25,12 +25,14 @@ include $(DEVKITARM)/3ds_rules
 #     - <Project name>.png
 #     - icon.png
 #     - <libctru folder>/default_icon.png
+# ROMFS: if set, use the files at this path to build a ROMFS
 #---------------------------------------------------------------------------------
 TARGET		:=	ctruLua
 BUILD		:=	build
 SOURCES		:=	source libs/lua-5.3.1/src
 DATA		:=	data
 INCLUDES	:=	include libs/lua-5.3.1/src libs/lzlib
+#ROMFS		:=	romfs
 
 APP_TITLE		:= ctruLua
 APP_DESCRIPTION	:= Lua for the 3DS. Yes, it works.
@@ -123,6 +125,11 @@ endif
 
 ifeq ($(strip $(NO_SMDH)),)
 	export _3DSXFLAGS += --smdh=$(CURDIR)/$(TARGET).smdh
+endif
+
+ifneq ($(ROMFS),)
+	export _3DSXFLAGS += --romfs=$(CURDIR)/$(ROMFS)
+	CFLAGS += -DROMFS
 endif
 
 .PHONY: $(BUILD) clean all

@@ -33,16 +33,12 @@ Send a notification to the user. WIP, do not use !!!
 static int news_notification(lua_State *L) {
 	const char *title = luaL_checkstring(L, 1);
 	const char *message = luaL_checkstring(L, 2);
-	const void *imageData = luaL_optstring(L, 3, NULL);
+	
+	u32 imageDataLength = 0;
+	const void *imageData = luaL_optlstring(L, 3, NULL, (size_t*)&imageDataLength);
 	bool jpeg = false;
 	if (lua_isboolean(L, 4))
 		jpeg = lua_toboolean(L, 4);
-	
-	u32 imageDataLength = 0;
-	if (imageData) {
-		lua_len(L, 3);
-		luaL_checkinteger(L, -1);
-	}
 	
 	const u16* cTitle = 0;
 	const u16* cMessage = 0;

@@ -9,6 +9,9 @@
 
 Handle *fsuHandle;
 FS_archive sdmcArchive;
+#ifdef ROMFS
+FS_archive romfsArchive;
+#endif
 
 void load_lzlib(lua_State *L);
 
@@ -126,12 +129,19 @@ void load_fs_lib(lua_State *L) {
 
 	sdmcArchive = (FS_archive){ARCH_SDMC, FS_makePath(PATH_EMPTY, "")};
 	FSUSER_OpenArchive(fsuHandle, &sdmcArchive);
+	#ifdef ROMFS
+	romfsArchive = (FS_archive){ARCH_ROMFS, FS_makePath(PATH_EMPTY, "")};
+	FSUSER_OpenArchive(fsuHandle, &romfsArchive);
+	#endif
 
 	luaL_requiref(L, "ctr.fs", luaopen_fs_lib, false);
 }
 
 void unload_fs_lib(lua_State *L) {
 	FSUSER_CloseArchive(fsuHandle, &sdmcArchive);
+	#ifdef ROMFS
+	FSUSER_CloseArchive(fsuHandle, &romfsArchive);
+	#endif
 
 	fsExit();
 }

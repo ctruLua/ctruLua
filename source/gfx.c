@@ -9,6 +9,7 @@ The `gfx` module.
 #include <sftd.h>
 
 #include <3ds/vram.h>
+#include <3ds/services/gsp.h>
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -130,6 +131,22 @@ static int gfx_setVBlankWait(lua_State *L) {
 	bool enable = lua_toboolean(L, 1);
 	
 	sf2d_set_vblank_wait(enable);
+	
+	return 0;
+}
+
+/***
+Wait for the VBlank interruption.
+@function waitForVBlank
+@tparam[opt=GFX_TOP] number screen the screen's VBlank to wait for
+*/
+static int gfx_waitForVBlank(lua_State *L) {
+	u8 screen = luaL_optinteger(L, 1, GFX_TOP);
+	if (screen == GFX_TOP) {
+		gspWaitForVBlank0();
+	} else {
+		gspWaitForVBlank1();
+	}
 	
 	return 0;
 }
@@ -348,6 +365,7 @@ static const struct luaL_Reg gfx_lib[] = {
 	{ "set3D",           gfx_set3D           },
 	{ "get3D",           gfx_get3D           },
 	{ "setVBlankWait",   gfx_setVBlankWait   },
+	{ "waitForVBlank",   gfx_waitForVBlank   },
 	{ "vramSpaceFree",   gfx_vramSpaceFree   },
 	{ "line",            gfx_line            },
 	{ "point",           gfx_point           },

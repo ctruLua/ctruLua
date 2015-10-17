@@ -103,6 +103,7 @@ Receive some data from the IR module.
 @function receive
 @tparam[opt=buffer size] number size bytes to receive
 @tparam[opt=false] boolean wait wait until the data is received
+@return string data
 */
 static int ir_receive(lua_State *L) {
 	u32 size = luaL_optinteger(L, 1, bufferSize);

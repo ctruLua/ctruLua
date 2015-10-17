@@ -77,6 +77,13 @@ The `ctr.cfgu` module.
 */
 void load_cfgu_lib(lua_State *L);
 
+/***
+The `ctr.socket` module.
+@table socket
+@see ctr.socket
+*/
+void load_socket_lib(lua_State *L);
+
 //void load_cam_lib(lua_State *L);
 
 /***
@@ -110,15 +117,16 @@ static const struct luaL_Reg ctr_lib[] = {
 
 // Subtables
 struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); } ctr_libs[] = {
-	{ "gfx",   load_gfx_lib,   unload_gfx_lib   },
-	{ "news",  load_news_lib,  NULL             },
-	{ "ptm",   load_ptm_lib,   NULL             },
-	{ "hid",   load_hid_lib,   unload_hid_lib   },
-	{ "ir",    load_ir_lib,    NULL             },
-	{ "fs",    load_fs_lib,    unload_fs_lib    },
-	{ "httpc", load_httpc_lib, unload_httpc_lib },
-	{ "qtm",   load_qtm_lib,   NULL             },
-	{ "cfgu",  load_cfgu_lib,  NULL             },
+	{ "gfx",    load_gfx_lib,    unload_gfx_lib   },
+	{ "news",   load_news_lib,   NULL             },
+	{ "ptm",    load_ptm_lib,    NULL             },
+	{ "hid",    load_hid_lib,    unload_hid_lib   },
+	{ "ir",     load_ir_lib,     NULL             },
+	{ "fs",     load_fs_lib,     unload_fs_lib    },
+	{ "httpc",  load_httpc_lib,  unload_httpc_lib },
+	{ "qtm",    load_qtm_lib,    NULL             },
+	{ "cfgu",   load_cfgu_lib,   NULL             },
+	{ "socket", load_socket_lib, NULL             },
 //	{ "cam",   load_cam_lib,   NULL             },
 	{ NULL, NULL }
 };
