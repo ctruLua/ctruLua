@@ -84,7 +84,12 @@ The `ctr.socket` module.
 */
 void load_socket_lib(lua_State *L);
 
-//void load_cam_lib(lua_State *L);
+/***
+The `ctr.cam` module.
+@table cam
+@see ctr.cam
+*/
+void load_cam_lib(lua_State *L);
 
 /***
 Return whether or not the program should continue.
@@ -127,7 +132,7 @@ struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); }
 	{ "qtm",    load_qtm_lib,    NULL             },
 	{ "cfgu",   load_cfgu_lib,   NULL             },
 	{ "socket", load_socket_lib, NULL             },
-//	{ "cam",   load_cam_lib,   NULL             },
+	{ "cam",    load_cam_lib,   NULL              },
 	{ NULL, NULL }
 };
 
