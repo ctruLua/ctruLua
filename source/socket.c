@@ -200,7 +200,8 @@ static int socket_receive(lua_State *L) {
 	}
 	
 	char *buff = malloc(count);
-	recv(userdata->socket, buff, count, flags);
+	int len = recv(userdata->socket, buff, count, flags);
+	*(buff+len) = 0x0; // text end
 	
 	lua_pushstring(L, buff);
 	return 1;
