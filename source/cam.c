@@ -297,6 +297,21 @@ static int cam_setEffect(lua_State *L) {
 }
 
 /***
+Set the frame rate of a camera.
+@function setFrameRate
+@tparam number camera (`SELECT_x`)
+@tparam number rate frame rate (`FRAME_RATE_x`)
+*/
+static int cam_setFrameRate(lua_State *L) {
+	u8 cam = luaL_checkinteger(L, 1);
+	u8 rate = luaL_checkinteger(L, 2);
+	
+	CAMU_SetFrameRate(cam, rate);
+	
+	return 0;
+}
+
+/***
 Take a picture and put it in a texture.
 @function takePicture
 @tparam number camera should be PORT_CAM1 if you have only 1 camera activated (`PORT_x`)
@@ -319,10 +334,8 @@ static int cam_takePicture(lua_State *L) {
 	Handle camReceiveEvent = 0;
 	
 	CAMU_ClearBuffer(cam);
-	CAMU_SetReceiving(&camReceiveEvent, buf, cam, bufSize, (s16)bufSize);
 	CAMU_StartCapture(cam);
-	svcWaitSynchronization(camReceiveEvent, 300000000ULL);
-	CAMU_SetReceiving(&camReceiveEvent, buf, cam, bufSize, (s16)bufSize); // I don't know why you have to put it twice ...
+	CAMU_SetReceiving(&camReceiveEvent, buf, cam, bufSize, (s16)bufSize);
 	svcWaitSynchronization(camReceiveEvent, 300000000ULL);
 	CAMU_StopCapture(cam);
 	
@@ -365,13 +378,12 @@ static const struct luaL_Reg cam_lib[] = {
 	{"playShutterSound",          cam_playShutterSound         },
 	{"setSize",                   cam_setSize                  },
 	{"setEffect",                 cam_setEffect                },
+	{"setFrameRate",              cam_setFrameRate             },
 	{"takePicture",               cam_takePicture              },
 	{NULL, NULL}
 };
 
-// Constants. Warning: long block
 struct { char *name; int value; } cam_constants[] = {
-	// port
 	/***
 	First camera activated.
 	@field PORT_CAM1
@@ -387,7 +399,6 @@ struct { char *name; int value; } cam_constants[] = {
 	@field PORT_BOTH
 	*/
 	{"PORT_BOTH", PORT_BOTH},
-	// camera selection
 	/***
 	@field SELECT_NONE
 	*/
@@ -420,7 +431,6 @@ struct { char *name; int value; } cam_constants[] = {
 	@field SELECT_ALL
 	*/
 	{"SELECT_ALL",       SELECT_ALL      },
-	// context
 	/***
 	@field CONTEXT_NONE
 	*/
@@ -437,7 +447,6 @@ struct { char *name; int value; } cam_constants[] = {
 	@field CONTEXT_BOTH
 	*/
 	{"CONTEXT_BOTH", CONTEXT_BOTH},
-	// image flip
 	/***
 	@field FLIP_NONE
 	*/
@@ -454,7 +463,6 @@ struct { char *name; int value; } cam_constants[] = {
 	@field FLIP_REVERSE
 	*/
 	{"FLIP_REVERSE",    FLIP_REVERSE   },
-	// image size
 	/***
 	640x480
 	@field SIZE_VGA
@@ -500,21 +508,58 @@ struct { char *name; int value; } cam_constants[] = {
 	@field SIZE_BOTTOM_LCD
 	*/
 	{"SIZE_CTR_BOTTOM_LCD", SIZE_CTR_BOTTOM_LCD},
-	// frame rate
+	/***
+	@field FRAME_RATE_15
+	*/
 	{"FRAME_RATE_15",       FRAME_RATE_15      },
+	/***
+	@field FRAME_RATE_15_TO_5
+	*/
 	{"FRAME_RATE_15_TO_5",  FRAME_RATE_15_TO_5 },
+	/***
+	@field FRAME_RATE_15_TO_2
+	*/
 	{"FRAME_RATE_15_To_2",  FRAME_RATE_15_TO_2 },
+	/***
+	@field FRAME_RATE_10
+	*/
 	{"FRAME_RATE_10",       FRAME_RATE_10      },
+	/***
+	@field FRAME_RATE_8_5
+	*/
 	{"FRAME_RATE_8_5",      FRAME_RATE_8_5     },
+	/***
+	@field FRAME_RATE_5
+	*/
 	{"FRAME_RATE_5",        FRAME_RATE_5       },
+	/***
+	@field FRAME_RATE_20
+	*/
 	{"FRAME_RATE_20",       FRAME_RATE_20      },
+	/***
+	@field FRAME_RATE_20_TO_5
+	*/
 	{"FRAME_RATE_20_TO_5",  FRAME_RATE_20_TO_5 },
+	/***
+	@field FRAME_RATE_30
+	*/
 	{"FRAME_RATE_30",       FRAME_RATE_30      },
+	/***
+	@field FRAME_RATE_TO_5
+	*/
 	{"FRAME_RATE_30_TO_5",  FRAME_RATE_30_TO_5 },
+	/***
+	@field FRAME_RATE_15_TO_10
+	*/
 	{"FRAME_RATE_15_TO_10", FRAME_RATE_15_TO_10},
+	/***
+	@field FRAME_RATE_20_TO_10
+	*/
 	{"FRAME_RATE_20_TO_10", FRAME_RATE_20_TO_10},
+	/***
+	@field FRAME_RATE_30_TO_10
+	*/
 	{"FRAME_RATE_30_TO_10", FRAME_RATE_30_TO_10},
-	// white balance
 	/***
 	@field WHITe_BALANCE_AUTO
 	*/
@@ -539,7 +584,6 @@ struct { char *name; int value; } cam_constants[] = {
 	@field WHITE_BALANCE_7000K
 	*/
 	{"WHITE_BALANCE_7000K", WHITE_BALANCE_7000K},
-	// white balance aliases
 	/***
 	@field WHITE_BALANCE_MAX
 	*/
@@ -568,13 +612,26 @@ struct { char *name; int value; } cam_constants[] = {
 	@field WHITE_BALANCE_SHADE
 	*/
 	{"WHITE_BALANCE_SHADE",                   WHITE_BALANCE_SHADE                  },
-	// photo mode
+	/***
+	@field PHOTO_MODE_NORMAL
+	*/
 	{"PHOTO_MODE_NORMAL",    PHOTO_MODE_NORMAL   },
+	/***
+	@field PHOTO_MODE_PORTRAIT
+	*/
 	{"PHOTO_MODE_PORTRAIT",  PHOTO_MODE_PORTRAIT },
+	/***
+	@field PHOTO_MODE_LANDSCAPE
+	*/
 	{"PHOTO_MODE_LANDSCAPE", PHOTO_MODE_LANDSCAPE},
+	/***
+	@field PHOTO_MODE_NIGHTVIEW
+	*/
 	{"PHOTO_MODE_NIGHTVIEW", PHOTO_MODE_NIGHTVIEW},
+	/***
+	@field PHOTO_MODE_LETTER
+	*/
 	{"PHOTO_MODE_LETTER",    PHOTO_MODE_LETTER   },
-	// camera special effects
 	/***
 	@field EFFECT_NONE
 	*/
@@ -599,7 +656,6 @@ struct { char *name; int value; } cam_constants[] = {
 	@field EFFECT_SEPIA01
 	*/
 	{"EFFECT_SEPIA01",  EFFECT_SEPIA01 },
-	// contrast
 	/***
 	@field CONTRAST_01
 	*/
@@ -656,7 +712,6 @@ struct { char *name; int value; } cam_constants[] = {
 	@field CONTRAST_HIGH
 	*/
 	{"CONTRAST_HIGH",   CONTRAST_HIGH      },
-	// lens correction
 	/***
 	@field LENS_CORRECTION_OFF
 	*/
@@ -669,7 +724,6 @@ struct { char *name; int value; } cam_constants[] = {
 	@field LENS_CORRECTION_BRIGHT
 	*/
 	{"LENS_CORRECTION_BRIGHT", LENS_CORRECTION_BRIGHT},
-	// shutter sounds
 	/***
 	@field SHUTTER_NORMAL
 	*/
@@ -682,8 +736,6 @@ struct { char *name; int value; } cam_constants[] = {
 	@field SHUTTER_MOVIE_END
 	*/
 	{"SHUTTER_MOVIE_END", SHUTTER_SOUND_TYPE_MOVIE_END},
-	// Wow, look, the end of the tunnel !
-	// I think I will never do that again
 	{NULL, 0}
 };
 
