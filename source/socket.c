@@ -1,5 +1,6 @@
 /***
-The `socket` module. Almost like luasocket, but for TCP only.
+The `socket` module. Almost like luasocket, but for the TCP part only.
+The UDP part is only without connection.
 @module ctr.socket
 @usage local socket = require("ctr.socket")
 */
@@ -79,34 +80,34 @@ static int socket_tcp(lua_State *L) {
 }
 
 /***
-TCP Sockets
-@section TCP
+Return an UDP socket.
+@function udp
+@treturn UDPMaster UDP socket
 */
-
-/***
-Accept a connection on a server.
-@function :accept
-@treturn TCPClient tcp client object, or nil.
-*/
-static int socket_accept(lua_State *L) {
-	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
-	
-	socket_userdata *client = lua_newuserdata(L, sizeof(*client));
+static int socket_udp(lua_State *L) {
+	socket_userdata *userdata = lua_newuserdata(L, sizeof(*userdata));
 	luaL_getmetatable(L, "LSocket");
 	lua_setmetatable(L, -2);
 	
-	socklen_t addrSize = sizeof(client->addr);
-	client->socket = accept(userdata->socket, (struct sockaddr*)&client->addr, &addrSize);
-	if (client->socket < 0) {
+	userdata->socket = socket(AF_INET, SOCK_DGRAM, 0);
+	if (userdata->socket < 0) {
 		lua_pushnil(L);
-		return 1;
+		lua_pushstring(L, "Failed to create a TCP socket");
+		return 2;
 	}
+	
+	userdata->addr.sin_family = AF_INET;
 	
 	return 1;
 }
 
 /***
-Bind a socket. The TCP object become a TCPServer object.
+All sockets
+@section sockets
+*/
+
+/***
+Bind a socket. The socket object become a socketServer object.
 @function :bind
 @tparam number port the port to bind the socket on.
 */
@@ -132,6 +133,33 @@ static int socket_close(lua_State *L) {
 	closesocket(userdata->socket);
 	
 	return 0;
+}
+
+/***
+TCP Sockets
+@section TCP
+*/
+
+/***
+Accept a connection on a server.
+@function :accept
+@treturn TCPClient tcp client object, or nil.
+*/
+static int socket_accept(lua_State *L) {
+	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
+	
+	socket_userdata *client = lua_newuserdata(L, sizeof(*client));
+	luaL_getmetatable(L, "LSocket");
+	lua_setmetatable(L, -2);
+	
+	socklen_t addrSize = sizeof(client->addr);
+	client->socket = accept(userdata->socket, (struct sockaddr*)&client->addr, &addrSize);
+	if (client->socket < 0) {
+		lua_pushnil(L);
+		return 1;
+	}
+	
+	return 1;
 }
 
 /***
@@ -254,23 +282,102 @@ static int socket_send(lua_State *L) {
 	return 1;
 }
 
+/***
+UDP sockets
+@section UDP
+*/
+
+/***
+Receive some data from a server.
+@function :receivefrom
+@tparam number count amount of data to receive
+@tparam string host host name
+@tparam number port port
+@treturn string data
+*/
+static int socket_receivefrom(lua_State *L) {
+	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
+	int count = luaL_checkinteger(L, 2);
+	size_t namesize = 0;
+	char *hostname = (char*)luaL_optlstring(L, 3, NULL, &namesize);
+	int port = luaL_optinteger(L, 4, 0);
+	
+	struct sockaddr_in from = {0};
+	if (hostname != NULL) { // For a server
+		struct hostent *hostinfo = gethostbyname(hostname);
+		if (hostinfo == NULL) {
+			lua_pushnil(L);
+			return 1;
+		}
+		from.sin_addr = *(struct in_addr*)hostinfo->h_addr;
+		from.sin_port = htons(port);
+		from.sin_family = AF_INET;
+	}
+	
+	char* buffer = malloc(count+1);
+	int n = recvfrom(userdata->socket, buffer, count, 0, (struct sockaddr*)&from, NULL);
+	*(buffer+n) = 0x0;
+	
+	lua_pushstring(L, buffer);
+	if (hostname != NULL) {
+		return 1;
+	} else {
+		lua_pushstring(L, inet_ntoa(from.sin_addr));
+		lua_pushinteger(L, ntohs(from.sin_port));
+		return 3;
+	}
+}
+
+/***
+Send some data to a server.
+@function :sendto
+@tparam string data data to send
+@tparam string host host name
+@tparam number port port
+*/
+static int socket_sendto(lua_State *L) {
+	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
+	size_t datasize = 0;
+	char *data = (char*)luaL_checklstring(L, 2, &datasize);
+	size_t namesize = 0;
+	char *hostname = (char*)luaL_checklstring(L, 3, &namesize);
+	int port = luaL_checkinteger(L, 4);
+	
+	struct hostent *hostinfo = gethostbyname(hostname);
+	if (hostinfo == NULL) {
+		lua_pushnil(L);
+		return 1;
+	}
+	struct sockaddr_in to = {0};
+	to.sin_addr = *(struct in_addr*)hostinfo->h_addr;
+	to.sin_port = htons(port);
+	to.sin_family = AF_INET;
+	
+	sendto(userdata->socket, data, datasize, 0, (struct sockaddr*)&to, sizeof(to));
+	
+	return 0;
+}
+
 // module functions
 static const struct luaL_Reg socket_functions[] = {
 	{"init",     socket_init    },
 	{"shutdown", socket_shutdown},
 	{"tcp",      socket_tcp     },
+	{"udp",      socket_udp     },
 	{NULL, NULL}
 };
 
 // object
 static const struct luaL_Reg socket_methods[] = {
-	{"accept",   socket_accept  },
-	{"bind",     socket_bind    },
-	{"close",    socket_close   },
-	{"connect",  socket_connect },
-	{"listen",   socket_listen  },
-	{"receive",  socket_receive },
-	{"send",     socket_send    },
+	{"accept",      socket_accept     },
+	{"bind",        socket_bind       },
+	{"close",       socket_close      },
+	{"connect",     socket_connect    },
+	{"listen",      socket_listen     },
+	{"receive",     socket_receive    },
+	{"receivefrom", socket_receivefrom},
+	{"send",        socket_send       },
+	{"sendto",      socket_sendto     },
 	{NULL, NULL}
 };
 
