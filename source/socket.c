@@ -181,25 +181,52 @@ static int socket_listen(lua_State *L) {
 
 /***
 Receive some data from the socket.
+If no data is avaible, it returns an empty string (non-blocking).
 @function :receive
-@tparam number size amount of data to receive; can also be "*a" to receive everything
+@tparam[opt="l"] number/string size amount of bytes to receive; or
+							   "a" to receive everything,
+							   "l" to receive the next line, skipping the end of line,
+							   "L" to receive the next line, keeping the end of line.
 @treturn string data
 */
 static int socket_receive(lua_State *L) {
 	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
 	int count = 0;
 	int flags = 0;
+
 	if (lua_isnumber(L, 2)) {
 		count = luaL_checkinteger(L, 2);
-	} else if (lua_isstring(L, 2) && luaL_checkstring(L, 2) == (char*)&"*a") {
-		count = SIZE_MAX/2;
 	} else {
-		lua_pushnil(L);
-		lua_pushstring(L, "");
-		return 2;
+		const char *p = luaL_optstring(L, 2, "l");
+		if (*p == 'a') {
+			count = SIZE_MAX/2;
+
+		} else if (*p == 'l') {
+			luaL_Buffer b;
+			luaL_buffinit(L, &b);
+
+			char buff;
+			while (recv(userdata->socket, &buff, 1, flags) > 0 && buff != '\n') luaL_addchar(&b, buff);
+
+			luaL_pushresult(&b);
+			return 1;
+
+		} else if (*p == 'L') {
+			luaL_Buffer b;
+			luaL_buffinit(L, &b);
+
+			char buff;
+			while (buff != '\n' && recv(userdata->socket, &buff, 1, flags) > 0) luaL_addchar(&b, buff);
+
+			luaL_pushresult(&b);
+			return 1;
+
+		} else {
+			return luaL_argerror(L, 2, "invalid format");
+		}
 	}
 	
-	char *buff = malloc(count);
+	char *buff = malloc(count+1);
 	int len = recv(userdata->socket, buff, count, flags);
 	*(buff+len) = 0x0; // text end
 	
