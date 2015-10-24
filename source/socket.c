@@ -139,6 +139,9 @@ Connect a socket to a server. The TCP object becomes a TCPClient object.
 @function :connect
 @tparam string host address of the host
 @tparam number port port of the server
+@treturn[1] boolean true if success
+@treturn[2] boolean false if failed
+@treturn[2] string error string
 */
 static int socket_connect(lua_State *L) {
 	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
@@ -161,7 +164,7 @@ static int socket_connect(lua_State *L) {
 		return 2;
 	}
 	
-	lua_pushinteger(L, 1);
+	lua_pushboolean(L, 1);
 	return 1;
 }
 
