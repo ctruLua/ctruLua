@@ -27,6 +27,26 @@ The `ctr.fs.lzlib` module.
 */
 void load_lzlib(lua_State *L);
 
+/*
+Automatically prefix the path if it's absolute (starts with /)
+*/
+const char* prefix_path(const char* path) {
+	if (strncmp(path, "/", 1) == 0) {
+		#ifdef ROMFS
+		char* prefix = "romfs:";
+		#else
+		char* prefix = "sdmc:";
+		#endif
+
+		char out[256];
+		strcpy(out, prefix);
+		return strcat(out, path);
+
+	} else {
+		return path;
+	}
+}
+
 /***
 Lists a directory contents.
 @function list
@@ -46,17 +66,32 @@ Lists a directory contents.
 `
 */
 static int fs_list(lua_State *L) {
-	const char *path = luaL_checkstring(L, 1);
-
-	if (strncmp(path, "sdmc:", 5) == 0) path += 5; // Ignore sdmc: prefix
+	const char *path = prefix_path(luaL_checkstring(L, 1));
 
 	lua_newtable(L);
 	int i = 1; // table index
 
+	// Get default archive
+	#ifdef ROMFS
+	FS_archive archive = romfsArchive;
+	#else
+	FS_archive archive = sdmcArchive;
+	#endif
+	// Archive path override (and skip path prefix)
+	if (strncmp(path, "sdmc:", 5) == 0) {
+		path += 5;
+		archive = sdmcArchive;
+	#ifdef ROMFS
+	} else if (strncmp(path, "romfs:", 6) == 0) {
+		path += 6;
+		archive = romfsArchive;
+	#endif
+	}
+
 	FS_path dirPath = FS_makePath(PATH_CHAR, path);
 
 	Handle dirHandle;
-	FSUSER_OpenDirectory(fsuHandle, &dirHandle, sdmcArchive, dirPath);
+	FSUSER_OpenDirectory(fsuHandle, &dirHandle, archive, dirPath);
 
 	u32 entriesRead = 0;
 	do {
@@ -106,7 +141,7 @@ Check if a item (file or directory) exists.
 @treturn boolean true if it exists, false otherwise
 */
 static int fs_exists(lua_State *L) {
-	const char *path = luaL_checkstring(L, 1);
+	const char *path = prefix_path(luaL_checkstring(L, 1));
 	
 	lua_pushboolean(L, access(path, F_OK) == 0);
 
@@ -135,7 +170,7 @@ Set the current working directory.
 @treturn[2] string error message
 */
 static int fs_setDirectory(lua_State *L) {
-	const char *path = luaL_checkstring(L, 1);
+	const char *path = prefix_path(luaL_checkstring(L, 1));
 
 	int result = chdir(path);
 
