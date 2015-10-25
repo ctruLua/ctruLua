@@ -372,6 +372,7 @@ static const struct luaL_Reg socket_methods[] = {
 	{"accept",      socket_accept     },
 	{"bind",        socket_bind       },
 	{"close",       socket_close      },
+	{"__gc",        socket_close      },
 	{"connect",     socket_connect    },
 	{"listen",      socket_listen     },
 	{"receive",     socket_receive    },
