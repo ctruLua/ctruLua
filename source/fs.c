@@ -20,6 +20,8 @@ void load_lzlib(lua_State *L);
 static int fs_list(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
 
+	if (strncmp(path, "sdmc:", 5) == 0) path += 5; // Ignore sdmc: prefix
+
 	lua_newtable(L);
 	int i = 1; // table index
 
@@ -36,7 +38,7 @@ static int fs_list(lua_State *L) {
 
 		if (!entriesRead) break;
 
-		uint8_t name[256]; // utf8 file name
+		uint8_t name[0x106+1]; // utf8 file name
 		size_t size = utf16_to_utf8(name, buffer.name, 0x106);
 		*(name+size) = 0x0; // mark text end
 

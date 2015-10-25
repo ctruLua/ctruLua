@@ -276,7 +276,7 @@ static int gfx_text(lua_State *L) {
 	if (font->font == NULL) luaL_error(L, "The font object was unloaded");
 
 	// Wide caracters support. (wchar = UTF32 on 3DS.)
-	wchar_t wtext[len];
+	wchar_t wtext[len+1];
 	len = mbstowcs(wtext, text, len);
 	*(wtext+len) = 0x0; // text end
 
@@ -316,7 +316,7 @@ static int gfx_wrappedText(lua_State *L) {
 
 	// Wide caracters support. (wchar = UTF32 on 3DS.)
 	// Disabled as sftd_draw_wtext_wrap() doesn't exist.
-	/*wchar_t wtext[len];
+	/*wchar_t wtext[len+1];
 	len = mbstowcs(wtext, text, len);
 	*(wtext+len) = 0x0; // text end */
 	
