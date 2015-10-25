@@ -4,8 +4,6 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-#define BOOT_FILE "sdmc:/3ds/ctruLua/main.lua"
-
 void load_ctr_lib(lua_State *L);
 void unload_ctr_lib(lua_State *L);
 
@@ -47,7 +45,7 @@ int main() {
 	load_ctr_lib(L);
 
 	// Do the actual thing
-	if (luaL_dofile(L, BOOT_FILE)) error(luaL_checkstring(L, -1));
+	if (luaL_dofile(L, "main.lua")) error(luaL_checkstring(L, -1));
 
 	// Unload libs
 	unload_ctr_lib(L);

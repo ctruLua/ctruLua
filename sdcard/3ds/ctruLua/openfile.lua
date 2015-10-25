@@ -1,6 +1,6 @@
 --- Open a file explorer to select a file.
 -- string title: title of the file explorer.
--- string curdir: the directory to initially open the file explorer in.
+-- string curdir: the directory to initially open the file explorer in, or nil for the current directory.
 -- string exts: the file extensions the user can select, separated by ";". If nil, all extensions are accepted.
 -- string type: "exist" to select an existing file, "new" to select an non-existing file or "any" to select a existing
 --              or non-existing file name. If nil, defaults to "exist".
@@ -11,9 +11,10 @@ return function(title, curdir, exts, type)
 	local ctr = require("ctr")
 	local gfx = require("ctr.gfx")
 	
-	local keyboard = dofile("sdmc:/3ds/ctruLua/keyboard.lua")
+	local keyboard = require("keyboard")
 	
 	-- Arguments
+	local curdir = curdir or ctr.fs.getDirectory()
 	local type = type or "exist"
 	
 	-- Variables

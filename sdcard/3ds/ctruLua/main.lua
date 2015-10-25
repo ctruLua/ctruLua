@@ -1,8 +1,11 @@
 local fs = require("ctr.fs")
 
+-- Set up path
+local ldir = fs.getDirectory().."libs/"
+package.path = package.path..";".. ldir.."?.lua;".. ldir.."?/init.lua"
+
 repeat
-	fs.setDirectory("sdmc:/3ds/ctruLua")
-	local file = dofile("openfile.lua")("Choose a Lua file to execute", "/3ds/ctruLua/", ".lua", "exist")
+	local file = require("openfile")("Choose a Lua file to execute", nil, ".lua", "exist")
 	if file then
 		fs.setDirectory(file:match("^(.-)[^/]*$"))
 		dofile(file)

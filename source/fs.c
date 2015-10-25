@@ -1,4 +1,6 @@
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
 #include <3ds/types.h>
 #include <3ds/util/utf.h>
@@ -88,12 +90,15 @@ static int fs_setDirectory(lua_State *L) {
 
 	int result = chdir(path);
 
-	if (result == 0)
+	if (result == 0) {
 		lua_pushboolean(L, true);
-	else
-		lua_pushboolean(L, false);
+		return 1;
 
-	return 1;
+	} else {
+		lua_pushboolean(L, false);
+		lua_pushstring(L, strerror(errno));
+		return 2;
+	}
 }
 
 static const struct luaL_Reg fs_lib[] = {

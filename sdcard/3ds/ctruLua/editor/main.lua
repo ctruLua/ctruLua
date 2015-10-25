@@ -3,8 +3,8 @@ local hid = require("ctr.hid")
 local gfx = require("ctr.gfx")
 
 -- Open libs
-local keyboard = dofile("sdmc:/3ds/ctruLua/keyboard.lua")
-local openfile = dofile("sdmc:/3ds/ctruLua/openfile.lua")
+local keyboard = require("keyboard")
+local openfile = require("openfile")
 local color = dofile("color.lua")
 local syntax = dofile("syntax.lua")
 
@@ -12,7 +12,7 @@ local syntax = dofile("syntax.lua")
 local font = gfx.font.load("VeraMono.ttf")
 
 -- Open file
-local path, status = openfile("Choose a file to edit", "/3ds/ctruLua/", nil, "any")
+local path, status = openfile("Choose a file to edit", nil, nil, "any")
 if not path then return end
 local lineEnding
 local lines = {}
