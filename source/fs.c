@@ -1,3 +1,8 @@
+/***
+The `fs` module.
+@module ctr.fs
+@usage local fs = require("ctr.fs")
+*/
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -15,8 +20,31 @@ FS_archive sdmcArchive;
 FS_archive romfsArchive;
 #endif
 
+/***
+The `ctr.fs.lzlib` module.
+@table lzlib
+@see ctr.fs.lzlib
+*/
 void load_lzlib(lua_State *L);
 
+/***
+Lists a directory contents.
+@function list
+@tparam string path the directory we wants to list the content
+@treturn table the item list. Each item is a table like:
+`
+	{
+		name = "Item name.txt",
+		shortName = "ITEM~",
+		shortExt = "TXT",
+		isDirectory = false,
+		isHidden = false,
+		isArchive = false,
+		isReadOnly = false,
+		fileSize = 321 -- (integer) in bytes
+	}
+`
+*/
 static int fs_list(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
 
@@ -71,6 +99,12 @@ static int fs_list(lua_State *L) {
 	return 1;
 }
 
+/***
+Check if a item (file or directory) exists.
+@function exists
+@tparam string path the item
+@treturn boolean true if it exists, false otherwise
+*/
 static int fs_exists(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
 	
@@ -79,6 +113,11 @@ static int fs_exists(lua_State *L) {
 	return 1;
 }
 
+/***
+Get the current working directory.
+@function getDirectory
+@treturn string the current working directory
+*/
 static int fs_getDirectory(lua_State *L) {
 	char cwd[256];
 
@@ -87,6 +126,14 @@ static int fs_getDirectory(lua_State *L) {
 	return 1;
 }
 
+/***
+Set the current working directory.
+@function setDirectory
+@tparam path path of the new working directory
+@treturn[1] boolean true if success
+@treturn[2] boolean false if failed
+@treturn[2] string error message
+*/
 static int fs_setDirectory(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
 
@@ -113,7 +160,7 @@ static const struct luaL_Reg fs_lib[] = {
 
 // submodules
 struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); } fs_libs[] = {
-	{"zip", load_lzlib, NULL},
+	{"lzlib", load_lzlib, NULL},
 	{NULL, NULL}
 };
 
