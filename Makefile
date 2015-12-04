@@ -29,9 +29,9 @@ include $(DEVKITARM)/3ds_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	ctruLua
 BUILD		:=	build
-SOURCES		:=	source libs/lua-5.3.1/src
+SOURCES		:=	source libs/lua-5.3.2/src
 DATA		:=	data
-INCLUDES	:=	include libs/lua-5.3.1/src libs/lzlib
+INCLUDES	:=	include libs/lua-5.3.2/src libs/lzlib
 #ROMFS		:=	romfs
 
 APP_TITLE		:= ctruLua
