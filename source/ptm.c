@@ -17,6 +17,7 @@ Initialize the PTM module.
 */
 static int ptm_init(lua_State *L) {
 	ptmInit();
+	ptmSysmInit();
 	
 	return 0;
 }
@@ -27,12 +28,13 @@ Disable the PTM module.
 */
 static int ptm_shutdown(lua_State *L) {
 	ptmExit();
+	ptmSysmExit();
 	
 	return 0;
 }
 
 /***
-Return the shell state. Don't care about this.
+Return the shell state.
 @function getShellState
 @treturn number shell state
 */
@@ -101,6 +103,30 @@ static int ptm_getTotalStepCount(lua_State *L) {
 	return 1;
 }
 
+/***
+Setup the new 3DS CPU features (overclock, 4 cores ...)
+@newonly
+@function configureNew3DSCPU
+@tparam boolean enable enable the New3DS CPU features
+@treturn boolean `true` if everything went fine
+*/
+static int ptm_configureNew3DSCPU(lua_State *L) {
+	u8 conf = false;
+	if (lua_isboolean(L, 1))
+		conf = lua_toboolean(L, 1);
+	
+	Result ret = PTMSYSM_ConfigureNew3DSCPU(conf);
+	
+	if (ret) {
+		lua_pushboolean(L, false);
+		lua_pushinteger(L, ret);
+		return 2;
+	}
+	
+	lua_pushboolean(L, true);
+	return 1;
+}
+
 static const struct luaL_Reg ptm_lib[] = {
 	{"init",                  ptm_init                 },
 	{"shutdown",              ptm_shutdown             },
@@ -109,6 +135,7 @@ static const struct luaL_Reg ptm_lib[] = {
 	{"getBatteryChargeState", ptm_getBatteryChargeState},
 	{"getPedometerState",     ptm_getPedometerState    },
 	{"getTotalStepCount",     ptm_getTotalStepCount    },
+	{"configureNew3DSCPU",    ptm_configureNew3DSCPU   },
 	{NULL, NULL}
 };
 

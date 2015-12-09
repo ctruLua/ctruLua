@@ -4,7 +4,7 @@
 
 
 static int sf2d_initialized = 0;
-static u32 clear_color = RGBA8(0x00, 0x00, 0x00, 0xFF);
+static u32 clear_color = 0;
 static u32 *gpu_cmd = NULL;
 //GPU init variables
 static int gpu_cmd_size = 0;
@@ -193,8 +193,9 @@ void sf2d_end_frame()
 	gspWaitForPPF();
 
 	//Clear the screen
-	GX_SetMemoryFill(NULL, gpu_fb_addr, clear_color, &gpu_fb_addr[0x2EE00],
-		0x201, gpu_depth_fb_addr, 0x00000000, &gpu_depth_fb_addr[0x2EE00], 0x201);
+	GX_SetMemoryFill(NULL,
+		gpu_fb_addr, clear_color, &gpu_fb_addr[240*400], GX_FILL_TRIGGER | GX_FILL_32BIT_DEPTH,
+		gpu_depth_fb_addr, 0, &gpu_depth_fb_addr[240*400], GX_FILL_TRIGGER | GX_FILL_32BIT_DEPTH);
 	gspWaitForPSC0();
 }
 
@@ -245,6 +246,11 @@ void *sf2d_pool_memalign(u32 size, u32 alignment)
 	return NULL;
 }
 
+void *sf2d_pool_calloc(u32 nmemb, u32 size)
+{
+	return sf2d_pool_memalign(nmemb * size, size);
+}
+
 unsigned int sf2d_pool_space_free()
 {
 	return pool_size - pool_index;
@@ -257,7 +263,11 @@ void sf2d_pool_reset()
 
 void sf2d_set_clear_color(u32 color)
 {
-	clear_color = color;
+	// GX_SetMemoryFill wants the color inverted?
+	clear_color =  RGBA8_GET_R(color) << 24 |
+		       RGBA8_GET_G(color) << 16 |
+		       RGBA8_GET_B(color) <<  8 |
+		       RGBA8_GET_A(color) <<  0;
 }
 
 void sf2d_set_scissor_test(GPU_SCISSORMODE mode, u32 x, u32 y, u32 w, u32 h)

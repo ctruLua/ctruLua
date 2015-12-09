@@ -76,12 +76,32 @@ static int color_RGBA8(lua_State *L) {
 	return 1;
 }
 
+/***
+Return a color from a hexadecimal value.
+@function hex
+@tparam integer hex the hexadecimal color code: 0xRRGGBBAA
+@treturn integer the color
+*/
+static int color_hex(lua_State *L) {
+	u32 hex = luaL_checkinteger(L, 1);
+	
+	u8 r = (hex & 0xFF000000) >> 24;
+	u8 g = (hex & 0x00FF0000) >> 16;
+	u8 b = (hex & 0x0000FF00) >> 8;
+	u8 a = (hex & 0x000000FF);
+	
+	lua_pushinteger(L, RGBA8(r, g, b, a));
+	
+	return 1;
+}
+
 static const struct luaL_Reg color_lib[] = {
 	{ "setDefault",    color_setDefault    },
 	{ "getDefault",    color_getDefault    },
 	{ "setBackground", color_setBackground },
 	{ "getBackground", color_getBackground },
 	{ "RGBA8",         color_RGBA8         },
+	{ "hex",           color_hex           },
 	{ NULL, NULL }
 };
 

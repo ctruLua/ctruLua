@@ -33,7 +33,7 @@ return function(title, curdir, exts, type)
 	local wasFont = gfx.font.getDefault()
 	gfx.set3D(false)
 	gfx.color.setDefault(0xFFFFFFFF)
-	gfx.color.setBackground(0x000000FF)
+	gfx.color.setBackground(0xFF000000)
 	gfx.font.setDefault()
 
 	while ctr.run() do

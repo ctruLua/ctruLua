@@ -69,7 +69,7 @@ return {
 				if xTouch then
 					if xTouch > xKey and xTouch < xKey + keyWidth then
 						if yTouch > yKey and yTouch < yKey + keyHeight then
-							gfx.rectangle(xKey, yKey, keyWidth, keyHeight, 0, 0xFFFFFFDD)
+							gfx.rectangle(xKey, yKey, keyWidth, keyHeight, 0, 0xDDFFFFFF)
 							
 							local k = alias[key] or key
 							if sticky[k] and layout[sticky[k]] then

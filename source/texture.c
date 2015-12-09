@@ -35,13 +35,13 @@ int getType(const char *name) {
 Load a texture from a file. Supported formats: PNG, JPEG, BMP.
 @function load
 @tparam string path path to the image file
-@tparam[opt=PLACE_RAM] number place where to put the loaded texture
+@tparam[opt=PLACE_VRAM] number place where to put the loaded texture
 @tparam[opt=auto] number type type of the image
 @treturn texture the loaded texture object
 */
 static int texture_load(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
-	u8 place = luaL_optinteger(L, 2, SF2D_PLACE_RAM); //place in ram by default
+	u8 place = luaL_optinteger(L, 2, SF2D_PLACE_VRAM); //place in vram by default
 	u8 type = luaL_optinteger(L, 3, 3); //type 3 is "search at the end of the filename"
 
 	texture_userdata *texture;

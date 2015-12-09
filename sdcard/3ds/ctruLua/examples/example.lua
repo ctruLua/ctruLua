@@ -21,7 +21,7 @@ local function drawStuffIn3D(eye)
 	-- 3D stuff
 	local function d(depth) return math.ceil(eye * depth * dMul) end
 
-	gfx.color.setDefault(0x00FFFFFF)
+	gfx.color.setDefault(0xFFFFFF00)
 	gfx.rectangle(240 + d(10), 150, 120, 10)
 
 	gfx.point(10 + d(6), 20, 0xFF0000FF)
@@ -70,7 +70,7 @@ while ctr.run() do
 
 		local cx, cy = hid.circle()
 		gfx.rectangle(40, 90, 60, 60, 0, 0xDDDDDDFF)
-		gfx.circle(70 + math.ceil(cx/156 * 30), 120 - math.ceil(cy/156 * 30), 10, 0x000000FF)
+		gfx.circle(70 + math.ceil(cx/156 * 30), 120 - math.ceil(cy/156 * 30), 10, 0xFF000000)
 
 	gfx.endFrame()
 

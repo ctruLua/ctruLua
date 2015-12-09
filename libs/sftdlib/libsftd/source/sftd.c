@@ -13,7 +13,6 @@
 
 static int sftd_initialized = 0;
 static FT_Library ftlibrary;
-static FTC_Manager ftcmanager;
 
 typedef enum {
 	SFTD_LOAD_FROM_FILE,
@@ -617,7 +616,7 @@ int sftd_width_wtext(sftd_font *font, unsigned int size, const wchar_t *text)
 {
 	FTC_FaceID face_id = (FTC_FaceID)font;
 	FT_Face face;
-	FTC_Manager_LookupFace(ftcmanager, face_id, &face);
+	FTC_Manager_LookupFace(font->ftcmanager, face_id, &face);
 
 	FT_Int charmap_index;
 	charmap_index = FT_Get_Charmap_Index(face->charmap);
