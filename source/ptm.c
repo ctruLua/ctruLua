@@ -4,19 +4,18 @@ The `ptm` module.
 @usage local ptm = require("ctr.ptm")
 */
 #include <3ds/types.h>
-#include <3ds/services/ptm.h>
+#include <3ds/services/ptmu.h>
+#include <3ds/services/ptmsysm.h>
 
 #include <lua.h>
 #include <lauxlib.h>
-
-static Handle *ptmHandle;
 
 /***
 Initialize the PTM module.
 @function init
 */
 static int ptm_init(lua_State *L) {
-	ptmInit();
+	ptmuInit();
 	ptmSysmInit();
 	
 	return 0;
@@ -27,7 +26,7 @@ Disable the PTM module.
 @function shutdown
 */
 static int ptm_shutdown(lua_State *L) {
-	ptmExit();
+	ptmuExit();
 	ptmSysmExit();
 	
 	return 0;
@@ -40,7 +39,7 @@ Return the shell state.
 */
 static int ptm_getShellState(lua_State *L) {
 	u8 out = 0;
-	PTMU_GetShellState(ptmHandle, &out);
+	PTMU_GetShellState(&out);
 	
 	lua_pushinteger(L, out);
 	
@@ -54,7 +53,7 @@ Return the battery level.
 */
 static int ptm_getBatteryLevel(lua_State *L) {
 	u8 out = 0;
-	PTMU_GetBatteryLevel(ptmHandle, &out);
+	PTMU_GetBatteryLevel(&out);
 	
 	lua_pushinteger(L, out);
 	
@@ -68,7 +67,7 @@ Return whether or not the battery is charging.
 */
 static int ptm_getBatteryChargeState(lua_State *L) {
 	u8 out = 0;
-	PTMU_GetBatteryChargeState(ptmHandle, &out);
+	PTMU_GetBatteryChargeState(&out);
 	
 	lua_pushboolean(L, out);
 	
@@ -82,7 +81,7 @@ Return whether or not the pedometer is counting.
 */
 static int ptm_getPedometerState(lua_State *L) {
 	u8 out = 0;
-	PTMU_GetPedometerState(ptmHandle, &out);
+	PTMU_GetPedometerState(&out);
 	
 	lua_pushboolean(L, out);
 	
@@ -96,7 +95,7 @@ Return the total steps taken with the system.
 */
 static int ptm_getTotalStepCount(lua_State *L) {
 	u32 steps = 0;
-	PTMU_GetTotalStepCount(ptmHandle, &steps);
+	PTMU_GetTotalStepCount(&steps);
 	
 	lua_pushinteger(L, steps);
 	

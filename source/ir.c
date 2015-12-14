@@ -10,8 +10,7 @@ The `ir` module.
 #include <lualib.h>
 #include <lauxlib.h>
 
-u32 bufferSize = 0;
-u32 *buffer;
+#include <string.h>
 
 /***
 Bitrate codes list (this is not a part of the module, just a reference)
@@ -38,19 +37,11 @@ Bitrate codes list (this is not a part of the module, just a reference)
 Initialize the IR module.
 @function init
 @tparam[opt=6] number bitrate bitrate of the IR module (more informations below)
-@tparam[opt=2048] number buffer size of the buffer, in bytes (max 2048)
 */
 static int ir_init(lua_State *L) {
 	u8 bitrate = luaL_optinteger(L, 1, 6);
-	bufferSize = luaL_optinteger(L, 2, 2048); //default: 2Kio
-	if (bufferSize > 2048) {
-		lua_pushboolean(L, false);
-		lua_pushstring(L, "the buffer can't be larger than 2048 bytes.");
-		return 2;
-	}
-	buffer = linearAlloc(bufferSize);
 	
-	Result ret = IRU_Initialize(buffer, bufferSize);
+	Result ret = IRU_Initialize();
 	if (ret) {
 		lua_pushboolean(L, false);
 		lua_pushinteger(L, ret);
@@ -88,37 +79,41 @@ static int ir_send(lua_State *L) {
 	u8 *data = (u8*)luaL_checkstring(L, 1);
 	u32 wait = lua_toboolean(L, 2);
 	
-	Result ret = IRU_SendData(data, sizeof(data), wait);
+	Result ret = IRU_StartSendTransfer(data, strlen((const char*)data));
+	if (wait)
+		IRU_WaitSendTransfer();
+	
 	if (ret) {
 		lua_pushboolean(L, false);
 		lua_pushinteger(L, ret);
 		return 2;
 	}
 	
-	return 0;
+	lua_pushboolean(L, true);
+	return 1;
 }
 
 /***
 Receive some data from the IR module.
 @function receive
-@tparam[opt=buffer size] number size bytes to receive
+@tparam number size bytes to receive
 @tparam[opt=false] boolean wait wait until the data is received
 @return string data
 */
 static int ir_receive(lua_State *L) {
-	u32 size = luaL_optinteger(L, 1, bufferSize);
+	u32 size = luaL_checkinteger(L, 1);
 	u32 wait = lua_toboolean(L, 2);
 	u8 *data = 0;
-	u32 *transfercount = 0;
+	u32 transfercount = 0;
 	
-	Result ret = IRU_RecvData(data, size, 0x00, transfercount, wait);
+	Result ret = iruRecvData(data, size, 0x00, &transfercount, wait);
 	if (ret) {
 		lua_pushboolean(L, false);
 		lua_pushinteger(L, ret);
 		return 2;
 	}
 	
-	lua_pushstring(L, (const char *)data);
+	lua_pushlstring(L, (const char *)data, (size_t)transfercount);
 	
 	return 1;
 }

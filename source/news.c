@@ -47,7 +47,7 @@ static int news_notification(lua_State *L) {
 	titleLength = (u32) utf8_to_utf16((uint16_t*)cTitle, (uint8_t*)title, strlen(title));
 	messageLength = (u32) utf8_to_utf16((uint16_t*)cMessage, (uint8_t*)message, strlen(message));
 	
-	NEWSU_AddNotification(cTitle, titleLength, cMessage, messageLength, imageData, imageDataLength, jpeg);
+	NEWS_AddNotification(cTitle, titleLength, cMessage, messageLength, imageData, imageDataLength, jpeg);
 	
 	return 0;
 }

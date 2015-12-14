@@ -51,7 +51,7 @@ Keys states
 */
 
 // Key list based on hid.h from the ctrulib by smealum
-struct { PAD_KEY key; char *name; } hid_keys_name[] = {
+struct { u32 key; char *name; } hid_keys_name[] = {
 	{ KEY_A            , "a"          },
 	{ KEY_B            , "b"          },
 	{ KEY_SELECT       , "select"     },
@@ -117,7 +117,7 @@ static int hid_keys(lua_State *L) {
 	lua_newtable(L); // up table
 
 	for (int i = 0; hid_keys_name[i].key; i++) {
-		PAD_KEY key = hid_keys_name[i].key;
+		u32 key = hid_keys_name[i].key;
 		char *name = hid_keys_name[i].name;
 		
 		if (kDown & key) {

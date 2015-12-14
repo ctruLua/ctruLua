@@ -14,7 +14,7 @@ The `qtm` module, for headtracking. New3ds only.
 #include <string.h>
 
 typedef struct {
-	qtmHeadtrackingInfo *info;
+	QTM_HeadTrackingInfo *info;
 } qtm_userdata;
 
 static const struct luaL_Reg qtm_methods[];
@@ -66,7 +66,7 @@ static int qtm_getHeadtrackingInfo(lua_State *L) {
 	qtm_userdata *data = lua_newuserdata(L, sizeof(*data));
 	luaL_getmetatable(L, "LQTM");
 	lua_setmetatable(L, -2);
-	Result ret = qtmGetHeadtrackingInfo(0, data->info);
+	Result ret = QTM_GetHeadTrackingInfo(0, data->info);
 	if (ret) {
 		lua_pushnil(L);
 		return 1;

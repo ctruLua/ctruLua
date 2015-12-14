@@ -585,10 +585,6 @@ struct { char *name; int value; } cam_constants[] = {
 	*/
 	{"WHITE_BALANCE_7000K", WHITE_BALANCE_7000K},
 	/***
-	@field WHITE_BALANCE_MAX
-	*/
-	{"WHITE_BALANCE_MAX",                     WHITE_BALANCE_MAX                    },
-	/***
 	@field WHITE_BALANCE_TUNGSTEN
 	*/
 	{"WHITE_BALANCE_TUNGSTEN",                WHITE_BALANCE_TUNGSTEN               },

@@ -15,9 +15,9 @@ The `fs` module.
 #include <lauxlib.h>
 
 Handle *fsuHandle;
-FS_archive sdmcArchive;
+FS_Archive sdmcArchive;
 #ifdef ROMFS
-FS_archive romfsArchive;
+FS_Archive romfsArchive;
 #endif
 
 /***
@@ -73,9 +73,9 @@ static int fs_list(lua_State *L) {
 
 	// Get default archive
 	#ifdef ROMFS
-	FS_archive archive = romfsArchive;
+	FS_Archive archive = romfsArchive;
 	#else
-	FS_archive archive = sdmcArchive;
+	FS_Archive archive = sdmcArchive;
 	#endif
 	// Archive path override (and skip path prefix)
 	if (strncmp(path, "sdmc:", 5) == 0) {
@@ -88,14 +88,14 @@ static int fs_list(lua_State *L) {
 	#endif
 	}
 
-	FS_path dirPath = FS_makePath(PATH_CHAR, path);
+	FS_Path dirPath = fsMakePath(PATH_ASCII, path);
 
 	Handle dirHandle;
-	FSUSER_OpenDirectory(fsuHandle, &dirHandle, archive, dirPath);
+	FSUSER_OpenDirectory(&dirHandle, archive, dirPath);
 
 	u32 entriesRead = 0;
 	do {
-		FS_dirent buffer;
+		FS_DirectoryEntry buffer;
 
 		FSDIR_Read(dirHandle, &entriesRead, 1, &buffer);
 
@@ -113,13 +113,13 @@ static int fs_list(lua_State *L) {
 		lua_setfield(L, -2, "shortName");
 		lua_pushstring(L, (const char *)buffer.shortExt);
 		lua_setfield(L, -2, "shortExt");
-		lua_pushboolean(L, buffer.isDirectory);
+		lua_pushboolean(L, buffer.attributes&FS_ATTRIBUTE_DIRECTORY);
 		lua_setfield(L, -2, "isDirectory");
-		lua_pushboolean(L, buffer.isHidden);
+		lua_pushboolean(L, buffer.attributes&FS_ATTRIBUTE_HIDDEN);
 		lua_setfield(L, -2, "isHidden");
-		lua_pushboolean(L, buffer.isArchive);
+		lua_pushboolean(L, buffer.attributes&FS_ATTRIBUTE_ARCHIVE);
 		lua_setfield(L, -2, "isArchive");
-		lua_pushboolean(L, buffer.isReadOnly);
+		lua_pushboolean(L, buffer.attributes&FS_ATTRIBUTE_READ_ONLY);
 		lua_setfield(L, -2, "isReadOnly");
 		lua_pushinteger(L, buffer.fileSize);
 		lua_setfield(L, -2, "fileSize");
@@ -214,22 +214,22 @@ void load_fs_lib(lua_State *L) {
 	fsInit();
 
 	fsuHandle = fsGetSessionHandle();
-	FSUSER_Initialize(fsuHandle);
+	FSUSER_Initialize(*fsuHandle);
 
-	sdmcArchive = (FS_archive){ARCH_SDMC, FS_makePath(PATH_EMPTY, "")};
-	FSUSER_OpenArchive(fsuHandle, &sdmcArchive);
+	sdmcArchive = (FS_Archive){ARCHIVE_SDMC, fsMakePath(PATH_EMPTY, "")};
+	FSUSER_OpenArchive(&sdmcArchive);
 	#ifdef ROMFS
-	romfsArchive = (FS_archive){ARCH_ROMFS, FS_makePath(PATH_EMPTY, "")};
-	FSUSER_OpenArchive(fsuHandle, &romfsArchive);
+	romfsArchive = (FS_Archive){ARCHIVE_ROMFS, fsMakePath(PATH_EMPTY, "")};
+	FSUSER_OpenArchive(&romfsArchive);
 	#endif
 
 	luaL_requiref(L, "ctr.fs", luaopen_fs_lib, false);
 }
 
 void unload_fs_lib(lua_State *L) {
-	FSUSER_CloseArchive(fsuHandle, &sdmcArchive);
+	FSUSER_CloseArchive(&sdmcArchive);
 	#ifdef ROMFS
-	FSUSER_CloseArchive(fsuHandle, &romfsArchive);
+	FSUSER_CloseArchive(&romfsArchive);
 	#endif
 
 	fsExit();

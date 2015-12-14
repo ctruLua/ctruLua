@@ -25,7 +25,7 @@ The UDP part is only without connection.
 typedef struct {
 	int socket;
 	struct sockaddr_in addr;
-	struct hostent *host; // only user for client sockets
+	struct hostent *host; // only used for client sockets
 } socket_userdata;
 
 /***
@@ -35,7 +35,7 @@ Initialize the socket module
 */
 static int socket_init(lua_State *L) {
 	u32 size = luaL_optinteger(L, 1, 0x100000);
-	Result ret = SOC_Initialize((u32*)memalign(0x1000, size), size);
+	Result ret = socInit((u32*)memalign(0x1000, size), size);
 	
 	if (ret) {
 		lua_pushboolean(L, false);
@@ -52,7 +52,7 @@ Disable the socket module. Must be called before exiting ctrµLua.
 @function shutdown
 */
 static int socket_shutdown(lua_State *L) {
-	SOC_Shutdown();
+	socExit();
 	
 	return 0;
 }

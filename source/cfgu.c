@@ -19,7 +19,7 @@ Initialize the CFGU module.
 @function init
 */
 static int cfgu_init(lua_State *L) {
-	initCfgu();
+	cfguInit();
 	
 	return 0;
 }
@@ -29,7 +29,7 @@ Disable the CFGU module.
 @function shutdown
 */
 static int cfgu_shutdown(lua_State *L) {
-	exitCfgu();
+	cfguExit();
 	
 	return 0;
 }
