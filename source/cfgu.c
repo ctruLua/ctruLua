@@ -290,7 +290,7 @@ struct { char *name; int value; } cfgu_constants[] = {
 	It is equal to `4`.
 	@field MODEL_N3DSXL
 	*/
-	{"MOdEL_N3DSXL", 4},
+	{"MODEL_N3DSXL", 4},
 	
 	{NULL, 0}
 };
