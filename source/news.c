@@ -10,6 +10,7 @@ The `news` module.
 #include <lua.h>
 #include <lauxlib.h>
 
+#include <stdlib.h>
 #include <string.h>
 
 /***
@@ -23,7 +24,7 @@ static int news_init(lua_State *L) {
 }
 
 /***
-Send a notification to the user. WIP, do not use !!!
+Send a notification to the user. Should work now.
 @function notification
 @tparam string title title of the notification
 @tparam[opt=nil] string message message of the notification, or nil for no message
@@ -40,8 +41,8 @@ static int news_notification(lua_State *L) {
 	if (lua_isboolean(L, 4))
 		jpeg = lua_toboolean(L, 4);
 	
-	const u16* cTitle = 0;
-	const u16* cMessage = 0;
+	const u16* cTitle = malloc(strlen(title)*sizeof(u16));
+	const u16* cMessage = malloc(strlen(message)*sizeof(u16));
 	u32 titleLength, messageLength;
 	
 	titleLength = (u32) utf8_to_utf16((uint16_t*)cTitle, (uint8_t*)title, strlen(title));
