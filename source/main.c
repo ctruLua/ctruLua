@@ -52,6 +52,6 @@ int main() {
 
 	// Unload Lua
 	lua_close(L);
-	
+
 	return 0;
 }

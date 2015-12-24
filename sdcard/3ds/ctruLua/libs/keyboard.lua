@@ -1,5 +1,6 @@
 local hid = require("ctr.hid")
 local gfx = require("ctr.gfx")
+local hex = gfx.color.hex
 
 -- Options
 local keyWidth, keyHeight = 25, 25
@@ -62,14 +63,14 @@ return {
 			for column, key in pairs(rowKeys) do
 				local xKey, yKey = x + (column-1)*(keyWidth-1), y + (row-1)*(keyHeight-1)
 			
-				gfx.rectangle(xKey, yKey, keyWidth, keyHeight, 0, 0xFFFFFFFF)
-				gfx.rectangle(xKey + 1, yKey + 1, keyWidth - 2, keyHeight - 2, 0, 0x000000FF)
+				gfx.rectangle(xKey, yKey, keyWidth, keyHeight, 0, hex(0xFFFFFFFF))
+				gfx.rectangle(xKey + 1, yKey + 1, keyWidth - 2, keyHeight - 2, 0, hex(0x000000FF))
 				gfx.text(xKey + 2, yKey + 2, key)
 				
 				if xTouch then
 					if xTouch > xKey and xTouch < xKey + keyWidth then
 						if yTouch > yKey and yTouch < yKey + keyHeight then
-							gfx.rectangle(xKey, yKey, keyWidth, keyHeight, 0, 0xDDFFFFFF)
+							gfx.rectangle(xKey, yKey, keyWidth, keyHeight, 0, hex(0xDDFFFFFF))
 							
 							local k = alias[key] or key
 							if sticky[k] and layout[sticky[k]] then
