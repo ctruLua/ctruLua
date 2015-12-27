@@ -7,11 +7,11 @@
 void load_ctr_lib(lua_State *L);
 void unload_ctr_lib(lua_State *L);
 
-bool isGfxInitialised;
+bool isGfxInitialized;
 
 // Display an error
 void error(const char *error) {
-	if (!isGfxInitialised) gfxInitDefault();
+	if (!isGfxInitialized) gfxInitDefault();
 	gfxSet3D(false);
 
 	consoleInit(GFX_TOP, NULL);
@@ -28,7 +28,7 @@ void error(const char *error) {
 		gspWaitForVBlank();
 	}
 
-	if (!isGfxInitialised) gfxExit();
+	if (!isGfxInitialized) gfxExit();
 }
 
 // Main loop

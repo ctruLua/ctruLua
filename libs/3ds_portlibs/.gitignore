@@ -4,4 +4,6 @@ libjpeg-*
 libpng-*
 sqlite-*
 zlib-*
+libogg-*
+libvorbis-*
 build/

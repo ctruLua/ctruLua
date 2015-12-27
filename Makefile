@@ -55,7 +55,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lsfil -ljpeg -lsftd -lfreetype -lpng -lz -lsf2d -lctru -lm
+LIBS	:= -lsfil -ljpeg -lsftd -lfreetype -lpng -lz -lsf2d -lctru -lvorbisfile -lvorbis -logg -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -142,7 +142,7 @@ $(BUILD):
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 build-portlibs:
-	@make -C libs/3ds_portlibs zlib freetype libjpeg-turbo libpng
+	@make -C libs/3ds_portlibs zlib freetype libjpeg-turbo libpng libogg libvorbis
 
 build-sf2dlib:
 	@make -C libs/sf2dlib/libsf2d build

@@ -16,7 +16,7 @@ The `gfx` module.
 
 #include "font.h"
 
-bool isGfxInitialised = false;
+bool isGfxInitialized = false;
 bool is3DEnabled = false; //TODO: add a function for this in the ctrulib/sf2dlib.
 
 /***
@@ -459,7 +459,7 @@ void load_gfx_lib(lua_State *L) {
 	sf2d_init();
 	sftd_init();
 
-	isGfxInitialised = true;
+	isGfxInitialized = true;
 
 	luaL_requiref(L, "ctr.gfx", luaopen_gfx_lib, 0);
 }

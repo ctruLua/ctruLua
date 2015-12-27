@@ -92,6 +92,14 @@ The `ctr.cam` module.
 void load_cam_lib(lua_State *L);
 
 /***
+The `ctr.audio` module.
+@table audio
+@see ctr.audio
+*/
+void load_audio_lib(lua_State *L);
+void unload_audio_lib(lua_State *L);
+
+/***
 Return whether or not the program should continue.
 @function run
 @treturn boolean `false` if the program should exist or `true` if it can continue
@@ -132,7 +140,8 @@ struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); }
 	{ "qtm",    load_qtm_lib,    NULL             },
 	{ "cfgu",   load_cfgu_lib,   NULL             },
 	{ "socket", load_socket_lib, NULL             },
-	{ "cam",    load_cam_lib,   NULL              },
+	{ "cam",    load_cam_lib,    NULL             },
+	{ "audio",  load_audio_lib,  unload_audio_lib },
 	{ NULL, NULL }
 };
 

@@ -28,6 +28,16 @@ ZLIB_VERSION         := $(ZLIB)-1.2.8
 ZLIB_SRC             := $(ZLIB_VERSION).tar.gz
 ZLIB_DOWNLOAD        := "http://prdownloads.sourceforge.net/libpng/zlib-1.2.8.tar.gz"
 
+LIBOGG               := libogg
+LIBOGG_VERSION       := $(LIBOGG)-1.3.2
+LIBOGG_SRC           := $(LIBOGG_VERSION).tar.gz
+LIBOGG_DOWNLOAD      := "http://downloads.xiph.org/releases/ogg/libogg-1.3.2.tar.gz"
+
+LIBVORBIS            := libvorbis
+LIBVORBIS_VERSION    := $(LIBVORBIS)-1.3.5
+LIBVORBIS_SRC        := $(LIBVORBIS_VERSION).tar.gz
+LIBVORBIS_DOWNLOAD   := "http://downloads.xiph.org/releases/vorbis/libvorbis-1.3.5.tar.gz"
+
 export PORTLIBS        := $(CURDIR)/build
 export PATH            := $(DEVKITARM)/bin:$(PATH)
 export PKG_CONFIG_PATH := $(PORTLIBS)/lib/pkgconfig
@@ -66,8 +76,8 @@ $(FREETYPE): $(FREETYPE_SRC)
 	 ./configure --prefix=$(PORTLIBS) --host=arm-none-eabi --disable-shared --enable-static --without-harfbuzz
 	@$(MAKE) -C $(FREETYPE_VERSION)
 	@make create_build_dir
-	@cp -srf $(CURDIR)/freetype-2.6/include/. $(CURDIR)/build/include
-	@cp -sf $(CURDIR)/freetype-2.6/objs/.libs/libfreetype.a $(CURDIR)/build/lib/libfreetype.a
+	@cp -srf $(CURDIR)/$(FREETYPE_VERSION)/include/. $(CURDIR)/build/include
+	@cp -sf $(CURDIR)/$(FREETYPE_VERSION)/objs/.libs/libfreetype.a $(CURDIR)/build/lib/libfreetype.a
 
 $(LIBEXIF): $(LIBEXIF_SRC)
 	@[ -d $(LIBEXIF_VERSION) ] || tar -xf $<
@@ -81,8 +91,8 @@ $(LIBJPEGTURBO): $(LIBJPEGTURBO_SRC)
 	 ./configure --prefix=$(PORTLIBS) --host=arm-none-eabi --disable-shared --enable-static
 	@$(MAKE) CFLAGS+="\"-Drandom()=rand()\"" -C $(LIBJPEGTURBO_VERSION)
 	@make create_build_dir
-	@cp -sf $(CURDIR)/libjpeg-turbo-*/*.h $(CURDIR)/build/include
-	@cp -sf $(CURDIR)/libjpeg-turbo-*/.libs/libjpeg.a $(CURDIR)/build/lib/libjpeg.a
+	@cp -sf $(CURDIR)/$(LIBJPEGTURBO_VERSION)/*.h $(CURDIR)/build/include
+	@cp -sf $(CURDIR)/$(LIBJPEGTURBO_VERSION)/.libs/libjpeg.a $(CURDIR)/build/lib/libjpeg.a
 
 $(LIBPNG): $(LIBPNG_SRC)
 	@[ -d $(LIBPNG_VERSION) ] || tar -xf $<
@@ -90,8 +100,8 @@ $(LIBPNG): $(LIBPNG_SRC)
 	 ./configure --prefix=$(PORTLIBS) --host=arm-none-eabi --disable-shared --enable-static
 	@$(MAKE) -C $(LIBPNG_VERSION)
 	@make create_build_dir
-	@cp -sf $(CURDIR)/libpng-*/*.h $(CURDIR)/build/include
-	@cp -sf $(CURDIR)/libpng-*/.libs/*.a $(CURDIR)/build/lib/libpng.a
+	@cp -sf $(CURDIR)/$(LIBPNG_VERSION)/*.h $(CURDIR)/build/include
+	@cp -sf $(CURDIR)/$(LIBPNG_VERSION)/.libs/*.a $(CURDIR)/build/lib/libpng.a
 
 # sqlite won't work with -ffast-math
 $(SQLITE): $(SQLITE_SRC)
@@ -107,8 +117,26 @@ $(ZLIB): $(ZLIB_SRC)
 	 CHOST=arm-none-eabi ./configure --static --prefix=$(PORTLIBS)
 	@$(MAKE) -C $(ZLIB_VERSION)
 	@make create_build_dir
-	@cp -sf $(CURDIR)/zlib-*/*.h $(CURDIR)/build/include
-	@cp -sf $(CURDIR)/zlib-*/libz.a $(CURDIR)/build/lib/libz.a
+	@cp -sf $(CURDIR)/$(ZLIB_VERSION)/*.h $(CURDIR)/build/include
+	@cp -sf $(CURDIR)/$(ZLIB_VERSION)/libz.a $(CURDIR)/build/lib/libz.a
+
+$(LIBOGG): $(LIBOGG_SRC)
+	@[ -d $(LIBOGG_VERSION) ] || tar -xf $<
+	@cd $(LIBOGG_VERSION) && \
+	 ./configure --prefix=$(PORTLIBS) --host=arm-none-eabi --disable-shared --enable-static
+	@$(MAKE) -C $(LIBOGG_VERSION)
+	@make create_build_dir
+	@cp -srf $(CURDIR)/$(LIBOGG_VERSION)/include/. $(CURDIR)/build/include
+	@cp -sf $(CURDIR)/$(LIBOGG_VERSION)/src/.libs/*.a $(CURDIR)/build/lib
+
+$(LIBVORBIS): $(LIBVORBIS_SRC)
+	@[ -d $(LIBVORBIS_VERSION) ] || tar -xf $<
+	@cd $(LIBVORBIS_VERSION) && \
+	 ./configure --prefix=$(PORTLIBS) --host=arm-none-eabi --disable-shared --enable-static
+	@$(MAKE) -C $(LIBVORBIS_VERSION)
+	@make create_build_dir
+	@cp -srf $(CURDIR)/$(LIBVORBIS_VERSION)/include/. $(CURDIR)/build/include
+	@cp -sf $(CURDIR)/$(LIBVORBIS_VERSION)/lib/.libs/*.a $(CURDIR)/build/lib
 
 # Downloads
 $(ZLIB_SRC):
@@ -129,6 +157,12 @@ $(LIBPNG_SRC):
 $(SQLITE_SRC):
 	wget -O $@ $(SQLITE_DOWNLOAD)
 
+$(LIBOGG_SRC):
+	wget -O $@ $(LIBOGG_DOWNLOAD)
+
+$(LIBVORBIS_SRC):
+	wget -O $@ $(LIBVORBIS_DOWNLOAD)
+
 install-zlib:
 	@$(MAKE) -C $(ZLIB_VERSION) install
 
@@ -138,6 +172,8 @@ install:
 	@[ ! -d $(LIBJPEGTURBO_VERSION) ] || $(MAKE) -C $(LIBJPEGTURBO_VERSION) install
 	@[ ! -d $(LIBPNG_VERSION) ] || $(MAKE) -C $(LIBPNG_VERSION) install
 	@[ ! -d $(SQLITE_VERSION) ] || $(MAKE) -C $(SQLITE_VERSION) install-libLTLIBRARIES install-data
+	@[ ! -d $(LIBOGG_VERSION) ] || $(MAKE) -C $(LIBOGG_VERSION) install
+	@[ ! -d $(LIBVORBIS_VERSION) ] || $(MAKE) -C $(LIBVORBIS_VERSION) install
 
 clean:
 	@$(RM) -r $(FREETYPE_VERSION)
@@ -146,5 +182,7 @@ clean:
 	@$(RM) -r $(LIBPNG_VERSION)
 	@$(RM) -r $(SQLITE_VERSION)
 	@$(RM) -r $(ZLIB_VERSION)
+	@$(RM) -r $(LIBOGG_VERSION)
+	@$(RM) -r $(LIBVORBIS_VERSION)
 	@rm -rf $(CURDIR)/build
 	@rm -f $(CURDIR)/*.tar.*
