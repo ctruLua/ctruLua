@@ -100,6 +100,13 @@ void load_audio_lib(lua_State *L);
 void unload_audio_lib(lua_State *L);
 
 /***
+The `ctr.apt` module.
+@table apt
+@see ctr.apt
+*/
+void load_apt_lib(lua_State *L);
+
+/***
 Return whether or not the program should continue.
 @function run
 @treturn boolean `false` if the program should exist or `true` if it can continue
@@ -142,6 +149,7 @@ struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); }
 	{ "socket", load_socket_lib, NULL             },
 	{ "cam",    load_cam_lib,    NULL             },
 	{ "audio",  load_audio_lib,  unload_audio_lib },
+	{ "apt",    load_apt_lib,    NULL             },
 	{ NULL, NULL }
 };
 
