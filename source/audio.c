@@ -15,8 +15,8 @@ There are 24 audio channels available, numbered from 0 to 23.
 #include <lua.h>
 #include <lauxlib.h>
 
-#include <vorbis/codec.h>
-#include <vorbis/vorbisfile.h>
+#include <ivorbiscodec.h>
+#include <ivorbisfile.h>
 
 // Audio object type
 typedef enum {
@@ -98,16 +98,12 @@ static int audio_load(lua_State *L) {
 		audio->type = TYPE_OGG;
 
 		// Load audio file
-		if (ov_fopen(path, &audio->vf) < 0) {
+		FILE *file = fopen(path, "rb");
+		if (ov_open(file, &audio->vf, NULL, 0) < 0) {
 			lua_pushnil(L);
 			lua_pushstring(L, "input does not appear to be a valid ogg vorbis file or doesn't exist");
 			return 2;
 		}
-
-		// Some Ogg Vorbis decoding parameters
-		bool bigendianp = false; // bigendianness
-		u8 word = 2; // word size; 1 or 2 (8bits/sample or 16bits/sample)
-		bool sgned = true; // signed data
 
 		// Decoding Ogg Vorbis bitstream
 		vorbis_info* vi = ov_info(&audio->vf, -1);
@@ -117,7 +113,7 @@ static int audio_load(lua_State *L) {
 		audio->channels = vi->channels;
 		audio->encoding = NDSP_ENCODING_PCM16;
 		audio->nsamples = ov_pcm_total(&audio->vf, -1);
-		audio->size = audio->nsamples * word;
+		audio->size = audio->nsamples * audio->channels * 2; // *2 because output is PCM16 (2 bytes/sample)
 
 		if (linearSpaceFree() < audio->size) luaL_error(L, "not enough linear memory available");
 		audio->data = linearAlloc(audio->size);
@@ -127,7 +123,7 @@ static int audio_load(lua_State *L) {
 		int eof = 0;
 		int current_section;
 		while (!eof) {
-			long ret = ov_read(&audio->vf, &audio->data[offset], 4096, bigendianp, word, sgned, &current_section);
+			long ret = ov_read(&audio->vf, &audio->data[offset], 4096, &current_section);
 
 			if (ret == 0) {
 				eof = 1;

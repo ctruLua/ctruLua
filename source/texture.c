@@ -41,7 +41,7 @@ Load a texture from a file. Supported formats: PNG, JPEG, BMP.
 */
 static int texture_load(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
-	u8 place = luaL_optinteger(L, 2, SF2D_PLACE_RAM); //place in vram by default
+	u8 place = luaL_optinteger(L, 2, SF2D_PLACE_RAM); //place in ram by default
 	u8 type = luaL_optinteger(L, 3, 3); //type 3 is "search at the end of the filename"
 
 	texture_userdata *texture;
