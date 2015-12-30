@@ -86,20 +86,20 @@ while ctr.run() do
 		if not file then
 			local t = os.time()
 			repeat
-				gfx.startFrame(gfx.GFX_TOP)
+				gfx.start(gfx.GFX_TOP)
 				gfx.text(3, 3, "Can't open file in write mode")
-				gfx.endFrame()
+				gfx.stop()
 				gfx.render()
 			until t + 5 < os.time()
 		else
 			for i = 1, #lines, 1 do
 				file:write(lines[i]..lineEnding)
-				gfx.startFrame(gfx.GFX_TOP)
+				gfx.start(gfx.GFX_TOP)
 				gfx.rectangle(0, 0, math.ceil(i/#lines*gfx.TOP_WIDTH), gfx.TOP_HEIGHT, 0, 0xFFFFFFFF)
 				gfx.color.setDefault(color.background)
 				gfx.text(gfx.TOP_WIDTH/2, gfx.TOP_HEIGHT/2, math.ceil(i/#lines*100).."%")
 				gfx.color.setDefault(color.default)
-				gfx.endFrame()
+				gfx.stop()
 				gfx.render()
 			end 
 			file:flush()
@@ -138,7 +138,7 @@ while ctr.run() do
 	end
 	
 	-- Draw
-	gfx.startFrame(gfx.GFX_TOP)
+	gfx.start(gfx.GFX_TOP)
 
 		-- Lines
 		local sI = math.floor(scrollY / lineHeight)
@@ -167,15 +167,15 @@ while ctr.run() do
 		gfx.rectangle(-scrollX+ font:width(displayedText(curline:sub(1, (utf8.offset(curline, cursorX) or 0)-1))), 
 		              -scrollY+ (cursorY-1)*lineHeight, 1, lineHeight, 0, color.cursor)
 
-	gfx.endFrame()
+	gfx.stop()
 	
-	gfx.startFrame(gfx.GFX_BOTTOM)
+	gfx.start(gfx.GFX_BOTTOM)
 
 		gfx.text(3, 3, "FPS: "..math.ceil(gfx.getFPS()))
 		
 		keyboard.draw(5, 115)
 		
-	gfx.endFrame()
+	gfx.stop()
 
 	gfx.render()
 end

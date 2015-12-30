@@ -23,9 +23,9 @@ repeat
 			while true do
 				hid.read()
 				if hid.keys().down.start then break end
-				gfx.startFrame(gfx.GFX_TOP)
+				gfx.start(gfx.TOP)
 					gfx.wrappedText(0, 0, err, gfx.TOP_WIDTH)
-				gfx.endFrame()
+				gfx.stop()
 				gfx.render()
 			end
 		end

@@ -52,11 +52,11 @@ void load_map_lib(lua_State *L);
 /***
 Start drawing to a screen.
 Must be called before any draw operation.
-@function startFrame
+@function start
 @tparam number screen the screen to draw to (`GFX_TOP` or `GFX_BOTTOM`)
 @tparam[opt=GFX_LEFT] number eye the eye to draw to (`GFX_LEFT` or `GFX_RIGHT`)
 */
-static int gfx_startFrame(lua_State *L) {
+static int gfx_start(lua_State *L) {
 	u8 screen = luaL_checkinteger(L, 1);
 	u8 eye = luaL_optinteger(L, 2, GFX_LEFT);
 	
@@ -68,9 +68,9 @@ static int gfx_startFrame(lua_State *L) {
 /***
 End drawing to a screen.
 Must be called after your draw operations.
-@function endFrame
+@function stop
 */
-static int gfx_endFrame(lua_State *L) {
+static int gfx_stop(lua_State *L) {
 	sf2d_end_frame();
 
 	return 0;
@@ -358,8 +358,8 @@ static int gfx_calcBoundingBox(lua_State *L) {
 
 // Functions
 static const struct luaL_Reg gfx_lib[] = {
-	{ "startFrame",      gfx_startFrame      },
-	{ "endFrame",        gfx_endFrame        },
+	{ "start",           gfx_start           },
+	{ "stop",            gfx_stop            },
 	{ "render",          gfx_render          },
 	{ "getFPS",          gfx_getFPS          },
 	{ "set3D",           gfx_set3D           },

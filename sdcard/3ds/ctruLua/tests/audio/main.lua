@@ -40,11 +40,11 @@ while true do
 		audio.mix(nil, leftBalance, 1-leftBalance)
 	end
 
-	gfx.startFrame(gfx.GFX_TOP)
+	gfx.start(gfx.GFX_TOP)
 		gfx.text(5, 5, "Audio test! "..tostring(test:time()).."/"..tostring(test:duration()).."s")
 		gfx.text(5, 25, "Last audio played on channel "..tostring(channel))
 		gfx.text(5, 65, "Speed: "..(speed*100).."% - Left balance: "..(leftBalance*100).."%")
-	gfx.endFrame()
+	gfx.stop()
 
 	gfx.render()
 end

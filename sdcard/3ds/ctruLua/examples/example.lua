@@ -47,19 +47,19 @@ while ctr.run() do
 	
 	dMul = hid.pos3d()
 
-	gfx.startFrame(gfx.GFX_TOP, gfx.GFX_LEFT)
+	gfx.start(gfx.GFX_TOP, gfx.GFX_LEFT)
 
 		drawStuffIn3D(-1)
 
-	gfx.endFrame()
+	gfx.stop()
 	
-	gfx.startFrame(gfx.GFX_TOP, gfx.GFX_RIGHT)
+	gfx.start(gfx.GFX_TOP, gfx.GFX_RIGHT)
 		
 		drawStuffIn3D(1)
 		
-	gfx.endFrame()
+	gfx.stop()
 	
-	gfx.startFrame(gfx.GFX_BOTTOM)
+	gfx.start(gfx.GFX_BOTTOM)
 
 		gfx.color.setDefault(gfx.color.RGBA8(0, 0, 0))
 		gfx.text(5, 5, "FPS: "..math.ceil(gfx.getFPS()))
@@ -72,7 +72,7 @@ while ctr.run() do
 		gfx.rectangle(40, 90, 60, 60, 0, 0xDDDDDDFF)
 		gfx.circle(70 + math.ceil(cx/156 * 30), 120 - math.ceil(cy/156 * 30), 10, 0xFF000000)
 
-	gfx.endFrame()
+	gfx.stop()
 
 	angle = angle + 0.05
 	if angle > 2*math.pi then angle = angle - 2*math.pi end

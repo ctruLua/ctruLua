@@ -25,9 +25,9 @@ while ctr.run() do
     data = (data.."!")
   end
   
-  gfx.startFrame(gfx.GFX_TOP)
+  gfx.start(gfx.GFX_TOP)
     gfx.text(0, 0, data)
-  gfx.endFrame()
+  gfx.stop()
   
   gfx.render()
 end

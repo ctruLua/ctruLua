@@ -98,7 +98,7 @@ return function(title, curdir, exts, type)
 		end
 		
 		-- Draw
-		gfx.startFrame(gfx.GFX_TOP)
+		gfx.start(gfx.GFX_TOP)
 
 			gfx.rectangle(0, 10+(sel-scroll)*15, gfx.TOP_WIDTH, 15, 0, gfx.color.RGBA8(0, 0, 200))
 
@@ -112,9 +112,9 @@ return function(title, curdir, exts, type)
 			gfx.rectangle(0, 0, gfx.TOP_WIDTH, 25, 0, gfx.color.RGBA8(200, 200, 200))
 			gfx.text(3, 3, curdir, 13, gfx.color.RGBA8(0, 0, 0))
 
-		gfx.endFrame()
+		gfx.stop()
 		
-		gfx.startFrame(gfx.GFX_BOTTOM)
+		gfx.start(gfx.GFX_BOTTOM)
 	
 			gfx.text(5, 5, title)
 			gfx.text(5, 20, "Accepted file extensions: "..(exts or "all"))
@@ -124,7 +124,7 @@ return function(title, curdir, exts, type)
 				keyboard.draw(5, 115)
 			end
 		
-		gfx.endFrame()
+		gfx.stop()
 
 		gfx.render()
 	end
