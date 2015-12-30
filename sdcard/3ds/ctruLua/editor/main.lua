@@ -86,7 +86,7 @@ while ctr.run() do
 		if not file then
 			local t = os.time()
 			repeat
-				gfx.start(gfx.GFX_TOP)
+				gfx.start(gfx.TOP)
 				gfx.text(3, 3, "Can't open file in write mode")
 				gfx.stop()
 				gfx.render()
@@ -94,7 +94,7 @@ while ctr.run() do
 		else
 			for i = 1, #lines, 1 do
 				file:write(lines[i]..lineEnding)
-				gfx.start(gfx.GFX_TOP)
+				gfx.start(gfx.TOP)
 				gfx.rectangle(0, 0, math.ceil(i/#lines*gfx.TOP_WIDTH), gfx.TOP_HEIGHT, 0, 0xFFFFFFFF)
 				gfx.color.setDefault(color.background)
 				gfx.text(gfx.TOP_WIDTH/2, gfx.TOP_HEIGHT/2, math.ceil(i/#lines*100).."%")
@@ -138,7 +138,7 @@ while ctr.run() do
 	end
 	
 	-- Draw
-	gfx.start(gfx.GFX_TOP)
+	gfx.start(gfx.TOP)
 
 		-- Lines
 		local sI = math.floor(scrollY / lineHeight)
@@ -169,7 +169,7 @@ while ctr.run() do
 
 	gfx.stop()
 	
-	gfx.start(gfx.GFX_BOTTOM)
+	gfx.start(gfx.BOTTOM)
 
 		gfx.text(3, 3, "FPS: "..math.ceil(gfx.getFPS()))
 		

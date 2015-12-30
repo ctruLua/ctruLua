@@ -53,8 +53,8 @@ void load_map_lib(lua_State *L);
 Start drawing to a screen.
 Must be called before any draw operation.
 @function start
-@tparam number screen the screen to draw to (`GFX_TOP` or `GFX_BOTTOM`)
-@tparam[opt=GFX_LEFT] number eye the eye to draw to (`GFX_LEFT` or `GFX_RIGHT`)
+@tparam number screen the screen to draw to (`gfx.TOP` or `gfx.BOTTOM`)
+@tparam[opt=gfx.LEFT] number eye the eye to draw to (`gfx.LEFT` or `gfx.RIGHT`)
 */
 static int gfx_start(lua_State *L) {
 	u8 screen = luaL_checkinteger(L, 1);
@@ -382,27 +382,27 @@ struct { char *name; int value; } gfx_constants[] = {
 	/***
 	Constant used to select the top screen.
 	It is equal to `0`.
-	@field GFX_TOP
+	@field TOP
 	*/
-	{ "GFX_TOP",       GFX_TOP    },
+	{ "TOP",           GFX_TOP    },
 	/***
 	Constant used to select the bottom screen.
 	It is equal to `1`.
-	@field GFX_BOTTOM
+	@field BOTTOM
 	*/
-	{ "GFX_BOTTOM",    GFX_BOTTOM },
+	{ "BOTTOM",        GFX_BOTTOM },
 	/***
 	Constant used to select the left eye.
 	It is equal to `0`.
-	@field GFX_LEFT
+	@field LEFT
 	*/
-	{ "GFX_LEFT",      GFX_LEFT   },
+	{ "LEFT",          GFX_LEFT   },
 	/***
 	Constant used to select the right eye.
 	It is equal to `1`.
-	@field GFX_RIGHT
+	@field RIGHT
 	*/
-	{ "GFX_RIGHT",     GFX_RIGHT  },
+	{ "RIGHT",         GFX_RIGHT  },
 	/***
 	The top screen height, in pixels.
 	It is equal to `240`.

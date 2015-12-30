@@ -47,19 +47,19 @@ while ctr.run() do
 	
 	dMul = hid.pos3d()
 
-	gfx.start(gfx.GFX_TOP, gfx.GFX_LEFT)
+	gfx.start(gfx.TOP, gfx.LEFT)
 
 		drawStuffIn3D(-1)
 
 	gfx.stop()
 	
-	gfx.start(gfx.GFX_TOP, gfx.GFX_RIGHT)
+	gfx.start(gfx.TOP, gfx.RIGHT)
 		
 		drawStuffIn3D(1)
 		
 	gfx.stop()
 	
-	gfx.start(gfx.GFX_BOTTOM)
+	gfx.start(gfx.BOTTOM)
 
 		gfx.color.setDefault(gfx.color.RGBA8(0, 0, 0))
 		gfx.text(5, 5, "FPS: "..math.ceil(gfx.getFPS()))

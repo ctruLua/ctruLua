@@ -98,7 +98,7 @@ return function(title, curdir, exts, type)
 		end
 		
 		-- Draw
-		gfx.start(gfx.GFX_TOP)
+		gfx.start(gfx.TOP)
 
 			gfx.rectangle(0, 10+(sel-scroll)*15, gfx.TOP_WIDTH, 15, 0, gfx.color.RGBA8(0, 0, 200))
 
@@ -114,7 +114,7 @@ return function(title, curdir, exts, type)
 
 		gfx.stop()
 		
-		gfx.start(gfx.GFX_BOTTOM)
+		gfx.start(gfx.BOTTOM)
 	
 			gfx.text(5, 5, title)
 			gfx.text(5, 20, "Accepted file extensions: "..(exts or "all"))
