@@ -1,5 +1,6 @@
 /***
 The `map` module.
+Tile coordinates start at x=0,y=0.
 @module ctr.gfx.map
 @usage local map = require("ctr.gfx.map")
 */
@@ -42,20 +43,18 @@ u16 getTile(map_userdata *map, int x, int y) {
 /***
 Load a map from a file.
 @function load
-@tparam string path path to the .map
+@tparam string/table map path to the .map or a 2D table containing tile data (`{ [Y1]={[X1]=tile1, [X2]=tile2}, [Y2]=..., ... }`)
 @tparam texture tileset containing the tileset
 @tparam number tileWidth tile width
 @tparam number tileHeight tile height
 @treturn map loaded map object
 */
 static int map_load(lua_State *L) {
-	const char *mapPath = luaL_checkstring(L, 1);
 	texture_userdata *texture = luaL_checkudata(L, 2, "LTexture");
 	u8 tileSizeX = luaL_checkinteger(L, 3);
 	u8 tileSizeY = luaL_checkinteger(L, 4);
 	
-	map_userdata *map;
-	map = (map_userdata*)lua_newuserdata(L, sizeof(map_userdata));
+	map_userdata *map = lua_newuserdata(L, sizeof(map_userdata));
 	luaL_getmetatable(L, "LMap");
 	lua_setmetatable(L, -2);
 	
@@ -68,47 +67,87 @@ static int map_load(lua_State *L) {
 	map->spaceY = 0;
 	
 	// read the map file
-	FILE *mapFile = fopen(mapPath, "r");
-	if (mapFile == NULL) {
-		lua_pushnil(L);
-		lua_pushstring(L, "No such file");
-		return 2;
-	}
-	fseek(mapFile, 0L, SEEK_END);
-	int fileSize = ftell(mapFile);
-	fseek(mapFile, 0L, SEEK_SET);
-	char *buffer = (char *)malloc(sizeof(char)*fileSize);
-	fread(buffer, 1, fileSize, mapFile);
-	fclose(mapFile);
-	
-	int width = 0;
-	for (int i=0; buffer[i]; i++) {
-		if (buffer[i] == '|') {
-			width++;
-		} else if (buffer[i] == '\n') {
-			break;
+	if (lua_isstring(L, 1)) {
+		const char *mapPath = luaL_checkstring(L, 1);
+
+		FILE *mapFile = fopen(mapPath, "r");
+		if (mapFile == NULL) {
+			lua_pushnil(L);
+			lua_pushfstring(L, "no such file \"%s\"", mapPath);
+			return 2;
 		}
+		fseek(mapFile, 0L, SEEK_END);
+		int fileSize = ftell(mapFile);
+		fseek(mapFile, 0L, SEEK_SET);
+		char *buffer = (char *)malloc(sizeof(char)*fileSize);
+		fread(buffer, 1, fileSize, mapFile);
+		fclose(mapFile);
+
+		int width = 0;
+		for (int i=0; buffer[i]; i++) {
+			if (buffer[i] == ',') {
+				width++;
+			} else if (buffer[i] == '\n') {
+				width++;
+				break;
+			}
+		}
+		int height = 0;
+		for (int i=0; buffer[i]; i++) { // this should do
+			if (buffer[i] == '\n' && (buffer[i+1] != '\n' || !buffer[i+1])) height++;
+		}
+
+		map->width = width;
+		map->height = height;
+
+		map->data = malloc(sizeof(u16)*width*height);
+		int i = 0;
+		char *token = strtok(buffer, ",\n");
+		while (token != NULL) {
+			map->data[i] = (u16)atoi(token);
+			i++;
+			token = strtok(NULL, ",\n");
+		}
+		free(buffer);
+
+		return 1;
+
+	} else if (lua_istable(L, 1)) {
+		int height = luaL_len(L, 1);
+		if (height < 1) luaL_error(L, "map height must be greater or equal to 1");
+
+		lua_geti(L, 1, 1);
+		int width = luaL_len(L, -1);
+		if (width < 1) luaL_error(L, "map width must be greater or equal to 1");
+		lua_pop(L, 1);
+
+		map->width = width;
+		map->height = height;
+
+		map->data = malloc(sizeof(u16)*width*height);
+		for (int y=1; y<=height; y++) {
+			if (lua_geti(L, 1, y) != LUA_TTABLE) luaL_error(L, "map table must be an array of tables");
+			if (luaL_len(L, -1) < width) luaL_error(L, "table line y=%d is shorter than the map width", y);
+
+			for (int x=1; x<=width; x++) {
+				lua_geti(L, -1, x);
+
+				bool isnum;
+				map->data[(x-1)+((y-1)*map->width)] = (u16)lua_tointegerx(L, -1, (int *)&isnum);
+				if (!isnum) luaL_error(L, "tiles must be integers");
+
+				lua_pop(L, 1);
+			}
+
+			lua_pop(L, 1);
+		}
+		
+		return 1;
+
+	} else {
+		luaL_error(L, "map (first argument) must be a string or a table");
+		return 0;
 	}
-	int height = 0;
-	for (int i=0; buffer[i]; i++) { // this should do
-		if (buffer[i] == '\n' && (buffer[i+1] != '\n' || !buffer[i+1])) height++;
-	}
-	
-	map->width = width;
-	map->height = height;
-	
-	map->data = malloc(sizeof(u16)*width*height);
-	int i = 0;
-	char *token;
-	token = strtok(buffer, "|");
-	while (token != NULL) {
-		map->data[i] = (u16)atoi(token);
-		i++;
-		token = strtok(NULL, "|");
-	}
-	free(buffer);
-	
-	return 1;
 }
 
 /***
@@ -129,7 +168,6 @@ static int map_draw(lua_State *L) {
 	int y = luaL_checkinteger(L, 3);
 	int texX = 0;
 	int texY = 0;
-	
 	
 	if (map->texture->blendColor == 0xffffffff) {
 		for (int xp=0; xp<map->width; xp++) {
@@ -159,8 +197,9 @@ Unload a map.
 */
 static int map_unload(lua_State *L) {
 	map_userdata *map = luaL_checkudata(L, 1, "LMap");
+
 	free(map->data);
-	free(map);
+
 	return 0;
 }
 
@@ -183,8 +222,8 @@ static int map_getSize(lua_State *L) {
 /***
 Return the value of a tile.
 @function :getTile
-@tparam number x X position of the tile
-@tparam number y Y position of the tile
+@tparam number x X position of the tile (in tiles)
+@tparam number y Y position of the tile (in tiles)
 @treturn number value of the tile
 @within Methods
 */
@@ -194,15 +233,16 @@ static int map_getTile(lua_State *L) {
 	int y = luaL_checkinteger(L, 3);
 	
 	lua_pushinteger(L, getTile(map, x, y));
+
 	return 1;
 }
 
 /***
 Set the value of a tile.
 @function :setTile
-@tparam number x X position of the tile
-@tparam number y Y position of the tile
-@tparam number value New value for the tile
+@tparam number x X position of the tile (in tiles)
+@tparam number y Y position of the tile (in tiles)
+@tparam number value new value for the tile
 @within Methods
 */
 static int map_setTile(lua_State *L) {
@@ -219,8 +259,8 @@ static int map_setTile(lua_State *L) {
 /***
 Set the space between draw tiles (in pixels).
 @function :setSpace
-@tparam number x X space
-@tparam number y Y space
+@tparam number x X space (in pixels)
+@tparam number y Y space (in pixels)
 */
 static int map_setSpace(lua_State *L) {
 	map_userdata *map = luaL_checkudata(L, 1, "LMap");
@@ -247,7 +287,7 @@ static const struct luaL_Reg map_methods[] = {
 
 // module
 static const struct luaL_Reg map_functions[] = {
-	{"load",   map_load},
+	{ "load",   map_load },
 	{NULL, NULL}
 };
 
