@@ -1,3 +1,15 @@
+-- Sort ctr.fs.list returns (directories first and alphabetical sorting)
+local function sort(files)
+	table.sort(files, function(i, j)
+		if i.isDirectory and not j.isDirectory then
+			return true
+		elseif i.isDirectory == j.isDirectory then
+			return string.lower(i.name) < string.lower(j.name)
+		end
+	end)
+	return files
+end
+
 --- Open a file explorer to select a file.
 -- string title: title of the file explorer.
 -- string curdir: the directory to initially open the file explorer in, or nil for the current directory.
@@ -20,7 +32,8 @@ return function(title, curdir, exts, type)
 	-- Variables
 	local sel = 1
 	local scroll = 0
-	local files = ctr.fs.list(curdir)
+	local files = sort(ctr.fs.list(curdir))
+
 	if curdir ~= "/" then table.insert(files, 1, { name = "..", isDirectory = true }) end
 	local newFileName = ""
 	
@@ -59,7 +72,7 @@ return function(title, curdir, exts, type)
 
 				sel = 1
 				scroll = 0
-				files = ctr.fs.list(curdir)
+				files = sort(ctr.fs.list(curdir))
 
 				if curdir ~= "/" then
 					table.insert(files, 1, { name = "..", isDirectory = true })

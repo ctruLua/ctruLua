@@ -48,7 +48,7 @@ const char* prefix_path(const char* path) {
 }
 
 /***
-Lists a directory contents.
+Lists a directory contents (unsorted).
 @function list
 @tparam string path the directory we wants to list the content
 @treturn table the item list. Each item is a table like:
