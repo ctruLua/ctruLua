@@ -215,7 +215,7 @@ struct { char *name; int value; } cfgu_constants[] = {
 	/***
 	Constant returned by `getLanguage` if the language is Italian.
 	It is equal to `4`.
-	@field LANGUAGE_JP
+	@field LANGUAGE_IT
 	*/
 	{"LANGUAGE_IT", CFG_LANGUAGE_IT},
 	/***
@@ -276,7 +276,7 @@ struct { char *name; int value; } cfgu_constants[] = {
 	/***
 	Constant returned by `getModel` if the console is a New 3DS.
 	It is equal to `2`.
-	@field MODEL_3DSXL
+	@field MODEL_N3DS
 	*/
 	{"MODEL_N3DS",   2},
 	/***
