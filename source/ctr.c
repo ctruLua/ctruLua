@@ -6,6 +6,7 @@ The `ctr` module.
 #include <3ds/types.h>
 #include <3ds/services/apt.h>
 #include <3ds/os.h>
+#include <3ds/svc.h>
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -107,6 +108,13 @@ The `ctr.apt` module.
 void load_apt_lib(lua_State *L);
 
 /***
+The `ctr.mic` module.
+@table mic
+@see ctr.mic
+*/
+void load_mic_lib(lua_State *L);
+
+/***
 Return whether or not the program should continue.
 @function run
 @treturn boolean `false` if the program should exist or `true` if it can continue
@@ -128,10 +136,22 @@ static int ctr_time(lua_State *L) {
 	return 1;
 }
 
+/***
+Return a number of microseconds based on the system ticks.
+@function utime
+@treturn number microseconds
+*/
+static int ctr_utime(lua_State *L) {
+	lua_pushinteger(L, svcGetSystemTick()/268.123480);
+	
+	return 1;
+}
+
 // Functions
 static const struct luaL_Reg ctr_lib[] = {
-	{ "run",  ctr_run },
-	{ "time", ctr_time},
+	{ "run",   ctr_run  },
+	{ "time",  ctr_time },
+	{ "utime", ctr_utime},
 	{ NULL, NULL }
 };
 
@@ -150,6 +170,7 @@ struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); }
 	{ "cam",    load_cam_lib,    NULL             },
 	{ "audio",  load_audio_lib,  unload_audio_lib },
 	{ "apt",    load_apt_lib,    NULL             },
+	{ "mic",    load_mic_lib,    NULL             },
 	{ NULL, NULL }
 };
 

@@ -243,6 +243,55 @@ static int audio_load(lua_State *L) {
 }
 
 /***
+Load raw audio data from a string.
+@function loadRaw
+@tparam string data raw audio data
+@tparam number rate sampling rate
+@tparam string encoding audio encoding, can be `"PCM8"`, `"PCM16"` or `"ADPCM"`
+@tparam[opt=1] number channels audio channels count
+@treturn[1] audio the loaded audio object
+@treturn[2] nil if a error happened
+@treturn[2] string error message
+*/
+static int audio_loadRaw(lua_State *L) {
+	size_t dataSize;
+	char* data = (char*)luaL_checklstring(L, 1, &dataSize);
+	float rate = luaL_checkinteger(L, 2);
+	const char* argEncoding = luaL_checkstring(L, 3);
+	u32 channels = luaL_optinteger(L, 4, 1);
+	
+	audio_userdata *audio = lua_newuserdata(L, sizeof(*audio));
+	luaL_getmetatable(L, "LAudio");
+	lua_setmetatable(L, -2);
+	
+	audio->type = TYPE_WAV;
+	audio->rate = rate;
+	audio->channels = channels;
+	
+	u8 sampleSize = 2; // default to 2
+	if (strcmp(argEncoding, "PCM8")) {
+		audio->encoding = NDSP_ENCODING_PCM8;
+		sampleSize = 1;
+	} else if (strcmp(argEncoding, "PCM16")) {
+		audio->encoding = NDSP_ENCODING_PCM16;
+	} else if (strcmp(argEncoding, "ADPCM")) {
+		audio->encoding = NDSP_ENCODING_ADPCM;
+	} else {
+		lua_pushnil(L);
+		lua_pushstring(L, "Wrong format");
+		return 2;
+	}
+	
+	audio->nsamples = dataSize/sampleSize;
+	audio->size = dataSize;
+	audio->data = data;
+	
+	audio->speed = 1.0;
+	
+	return 1;
+}
+
+/***
 Check if audio is currently playing on a channel.
 @function playing
 @tparam[opt] integer channel number; if `nil` will search the first channel playing an audio
@@ -817,6 +866,7 @@ static const struct luaL_Reg audio_object_methods[] = {
 // Library functions
 static const struct luaL_Reg audio_lib[] = {
 	{ "load",          audio_load          },
+	{ "loadRaw",       audio_loadRaw       },
 	{ "playing",       audio_playing       },
 	{ "mix",           audio_mix           },
 	{ "interpolation", audio_interpolation },
