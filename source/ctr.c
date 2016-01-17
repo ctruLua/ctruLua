@@ -115,6 +115,13 @@ The `ctr.mic` module.
 void load_mic_lib(lua_State *L);
 
 /***
+The `ctr.thread` module.
+@table thread
+@see ctr.thread
+*/
+void load_thread_lib(lua_State *L);
+
+/***
 Return whether or not the program should continue.
 @function run
 @treturn boolean `false` if the program should exist or `true` if it can continue
@@ -171,6 +178,7 @@ struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); }
 	{ "audio",  load_audio_lib,  unload_audio_lib },
 	{ "apt",    load_apt_lib,    NULL             },
 	{ "mic",    load_mic_lib,    NULL             },
+	{ "thread", load_thread_lib, NULL             },
 	{ NULL, NULL }
 };
 

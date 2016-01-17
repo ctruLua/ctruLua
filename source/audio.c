@@ -887,7 +887,9 @@ int luaopen_audio_lib(lua_State *L) {
 }
 
 void load_audio_lib(lua_State *L) {
-	isAudioInitialized = !ndspInit(); // ndspInit returns 0 in case of success
+	if (!isAudioInitialized) {
+		isAudioInitialized = !ndspInit(); // ndspInit returns 0 in case of success
+	}
 
 	luaL_requiref(L, "ctr.audio", luaopen_audio_lib, false);
 }

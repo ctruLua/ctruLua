@@ -456,8 +456,10 @@ int luaopen_gfx_lib(lua_State *L) {
 }
 
 void load_gfx_lib(lua_State *L) {
-	sf2d_init();
-	sftd_init();
+	if (!isGfxInitialized) {
+		sf2d_init();
+		sftd_init();
+	}
 
 	isGfxInitialized = true;
 

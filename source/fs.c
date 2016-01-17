@@ -14,6 +14,8 @@ The `fs` module.
 #include <lua.h>
 #include <lauxlib.h>
 
+bool isFsInitialized = false;
+
 Handle *fsuHandle;
 FS_Archive sdmcArchive;
 #ifdef ROMFS
@@ -211,18 +213,21 @@ int luaopen_fs_lib(lua_State *L) {
 }
 
 void load_fs_lib(lua_State *L) {
-	fsInit();
+	if (!isFsInitialized) {
+		fsInit();
 
-	fsuHandle = fsGetSessionHandle();
-	FSUSER_Initialize(*fsuHandle);
+		fsuHandle = fsGetSessionHandle();
+		FSUSER_Initialize(*fsuHandle);
 
-	sdmcArchive = (FS_Archive){ARCHIVE_SDMC, fsMakePath(PATH_EMPTY, "")};
-	FSUSER_OpenArchive(&sdmcArchive);
-	#ifdef ROMFS
-	romfsArchive = (FS_Archive){ARCHIVE_ROMFS, fsMakePath(PATH_EMPTY, "")};
-	FSUSER_OpenArchive(&romfsArchive);
-	#endif
-
+		sdmcArchive = (FS_Archive){ARCHIVE_SDMC, fsMakePath(PATH_EMPTY, "")};
+		FSUSER_OpenArchive(&sdmcArchive);
+		#ifdef ROMFS
+		romfsArchive = (FS_Archive){ARCHIVE_ROMFS, fsMakePath(PATH_EMPTY, "")};
+		FSUSER_OpenArchive(&romfsArchive);
+		#endif
+		isFsInitialized = true;
+	}
+	
 	luaL_requiref(L, "ctr.fs", luaopen_fs_lib, false);
 }
 

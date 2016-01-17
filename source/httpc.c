@@ -13,6 +13,8 @@ The `httpc` module.
 #include <lapi.h>
 #include <lauxlib.h>
 
+bool isHttpcInitialized = false;
+
 /***
 Create a HTTP Context.
 @function context
@@ -205,7 +207,10 @@ int luaopen_httpc_lib(lua_State *L) {
 }
 
 void load_httpc_lib(lua_State *L) {
-	httpcInit();
+	if (!isHttpcInitialized) {
+		httpcInit();
+		isHttpcInitialized = true;
+	}
 	
 	luaL_requiref(L, "ctr.httpc", luaopen_httpc_lib, false);
 }
