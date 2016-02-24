@@ -4,6 +4,8 @@ local gfx = require("ctr.gfx")
 
 -- Initializing "constants"
 ctruLua = {}
+
+--- The ctruLua root directory's absolute path
 ctruLua.root = fs.getDirectory()
 
 -- Set up path
