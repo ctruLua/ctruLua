@@ -1,4 +1,4 @@
-²local ctr = require("ctr")
+local ctr = require("ctr")
 local fs  = require("ctr.fs")
 local gfx = require("ctr.gfx")
 
