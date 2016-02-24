@@ -22,12 +22,6 @@ Create a HTTP Context.
 */
 static int httpc_context(lua_State *L) {
 	httpcContext context;
-	Result ret = httpcOpenContext(&context, "http://google.com/", 0); // Initialization only.
-	if (ret != 0) {
-		lua_pushnil(L);
-		lua_pushinteger(L, ret);
-		return 2;
-	}
 	lua_newuserdata(L, sizeof(&context));
 	luaL_getmetatable(L, "LHTTPC");
 	lua_setmetatable(L, -2);
@@ -44,13 +38,25 @@ context object
 Open an url in the context.
 @function :open
 @tparam string url the url to open
+@tparam[opt="GET"] string method method to use; can be `"GET"`, `"POST"`, `"HEAD"`, `"PUT"` or `"DELETE"`
 */
 static int httpc_open(lua_State *L) {
 	httpcContext *context = lua_touserdata(L, 1);
 	char *url = (char*)luaL_checkstring(L, 2);
+	char *smethod = (char*)luaL_optstring(L, 3, "GET");
+	HTTPC_RequestMethod method = HTTPC_METHOD_GET; // default to GET
+	if (strcmp(smethod, "POST")) {
+		method = HTTPC_METHOD_POST;
+	} else if (strcmp(smethod, "HEAD")) {
+		method = HTTPC_METHOD_HEAD;
+	} else if (strcmp(smethod, "PUT")) {
+		method = HTTPC_METHOD_PUT;
+	} else if (strcmp(smethod, "DELETE")) {
+		method = HTTPC_METHOD_DELETE;
+	}
 	Result ret = 0;
 	
-	ret = httpcOpenContext(context, url, 0);
+	ret = httpcOpenContext(context, method, url, 0);
 	if (ret != 0) {
 		lua_pushnil(L);
 		lua_pushinteger(L, ret);
@@ -177,6 +183,41 @@ static int httpc_close(lua_State *L) {
 	return 0;
 }
 
+/***
+Add a POST form field to a HTTP context.
+@function :addPostData
+@tparam string name name of the field
+@tparam string value value of the field 
+*/
+static int httpc_addPostData(lua_State *L) {
+	httpcContext *context = lua_touserdata(L, 1);
+	char *name = (char*)luaL_checkstring(L, 2);
+	char *value = (char*)luaL_checkstring(L, 3);
+	
+	httpcAddPostDataAscii(context, name, value);
+	
+	return 0;
+}
+
+/***
+Get a header field from a response.
+@function :getResponseHeader
+@tparam string name name of the header field to get
+@tparam[opt=2048] number maximum size of the value to get
+@treturn string field value
+*/
+static int httpc_getResponseHeader(lua_State *L) {
+	httpcContext *context = lua_touserdata(L, 1);
+	char *name = (char*)luaL_checkstring(L, 2);
+	u32 maxSize = luaL_checkinteger(L, 3);
+	char* value = 0;
+	
+	httpcGetResponseHeader(context, name, value, maxSize);
+	
+	lua_pushstring(L, value);
+	return 1;
+}
+
 // object
 static const struct luaL_Reg httpc_methods[] = {
 	{"open",                  httpc_open                 },
@@ -186,6 +227,8 @@ static const struct luaL_Reg httpc_methods[] = {
 	{"getDownloadSize",       httpc_getDownloadSize      },
 	{"downloadData",          httpc_downloadData         },
 	{"close",                 httpc_close                },
+	{"addPostData",           httpc_addPostData          },
+	{"getResponseHeader",     httpc_getResponseHeader    },
 	{NULL, NULL}
 };
 
@@ -208,7 +251,7 @@ int luaopen_httpc_lib(lua_State *L) {
 
 void load_httpc_lib(lua_State *L) {
 	if (!isHttpcInitialized) {
-		httpcInit();
+		httpcInit(0x1000);
 		isHttpcInitialized = true;
 	}
 	

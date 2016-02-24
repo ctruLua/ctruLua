@@ -36,6 +36,7 @@ local models = {
 	[cfgu.MODEL_N3DSXL] = "New 3DS XL"
 }
 
+cfgu.init()
 while ctr.run() do
 	hid.read()
 	keys = hid.keys()
@@ -45,7 +46,7 @@ while ctr.run() do
 		gfx.text(2, 2, "CFGU example")
 		gfx.text(2, 20, "Region: "..regions[cfgu.getRegion()])
 		gfx.text(2, 30, "Model: "..models[cfgu.getModel()])
-		gfx.text(2, 40, "Language: "..models[cfgu.getLanguage()])
+		gfx.text(2, 40, "Language: "..languages[cfgu.getLanguage()])
 		gfx.text(2, 50, "Username: "..cfgu.getUsername())
 		local m,d = cfgu.getBirthday()
 		gfx.text(2, 60, "Birthday: "..d.."/"..m)
