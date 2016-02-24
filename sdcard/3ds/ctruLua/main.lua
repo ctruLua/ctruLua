@@ -14,6 +14,7 @@ package.path = package.path..";".. ldir.."?.lua;".. ldir.."?/init.lua"
 
 -- Erroring
 local function displayError(err)
+	gfx.set3D(false)
 	gfx.color.setBackground(0xFF0000B3)
 	gfx.color.setDefault(0xFFFDFDFD)
 	gfx.font.setDefault(gfx.font.load(ctruLua.root .. "resources/VeraMono.ttf"))
