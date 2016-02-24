@@ -18,6 +18,7 @@ The `gfx` module.
 
 bool isGfxInitialized = false;
 bool is3DEnabled = false; //TODO: add a function for this in the ctrulib/sf2dlib.
+u32 textSize = 9;
 
 /***
 The `ctr.gfx.color` module.
@@ -255,7 +256,7 @@ Draw a text on the current screen.
 @tparam integer x text drawing origin horizontal coordinate, in pixels
 @tparam integer y text drawing origin vertical coordinate, in pixels
 @tparam string text the text to draw
-@tparam[opt=9] integer size drawing size, in pixels
+@tparam[opt=default size] integer size drawing size, in pixels
 @tparam[opt=default color] integer color drawing color
 @tparam[opt=default font] font font to use
 */
@@ -265,7 +266,7 @@ static int gfx_text(lua_State *L) {
 	size_t len;
 	const char *text = luaL_checklstring(L, 3, &len);
 
-	int size = luaL_optinteger(L, 4, 9);
+	int size = luaL_optinteger(L, 4, textSize);
 	u32 color = luaL_optinteger(L, 5, color_default);
 	font_userdata *font = luaL_testudata(L, 6, "LFont");
 	if (font == NULL) {
@@ -293,7 +294,7 @@ Warning: No UTF32 support.
 @tparam integer y text drawing origin vertical coordinate, in pixels
 @tparam string text the text to draw
 @tparam integer width width of a line, in pixels
-@tparam[opt=9] integer size drawing size, in pixels
+@tparam[opt=default Size] integer size drawing size, in pixels
 @tparam[opt=default color] integer color drawing color
 @tparam[opt=default font] font font to use
 */
@@ -304,7 +305,7 @@ static int gfx_wrappedText(lua_State *L) {
 	const char *text = luaL_checklstring(L, 3, &len);
 	unsigned int lineWidth = luaL_checkinteger(L, 4);
 	
-	int size = luaL_optinteger(L, 5, 9);
+	int size = luaL_optinteger(L, 5, textSize);
 	u32 color = luaL_optinteger(L, 6, color_default);
 	font_userdata *font = luaL_testudata(L, 7, "LFont");
 	if (font == NULL) {
@@ -330,7 +331,7 @@ Calculate the size of a text draw with `wrappedText`.
 @function calcBoundingBox
 @tparam string text The text to check
 @tparam integer lineWidth width of a line, in pixels
-@tparam[opt=9] integer size drawing size, in pixels
+@tparam[opt=default size] integer size drawing size, in pixels
 @tparam[opt=default font] font font to use
 @treturn integer width of the text, in pixels
 @treturn integer height of the text, in pixels
@@ -339,7 +340,7 @@ static int gfx_calcBoundingBox(lua_State *L) {
 	size_t len;
 	const char *text = luaL_checklstring(L, 1, &len);
 	unsigned int lineWidth = luaL_checkinteger(L, 2);
-	int size = luaL_optinteger(L, 3, 9);
+	int size = luaL_optinteger(L, 3, textSize);
 	font_userdata *font = luaL_testudata(L, 4, "LFont");
 	if (font == NULL) {
 		lua_getfield(L, LUA_REGISTRYINDEX, "LFontDefault");
@@ -354,6 +355,26 @@ static int gfx_calcBoundingBox(lua_State *L) {
 	lua_pushinteger(L, w);
 	lua_pushinteger(L, h);
 	return 2;
+}
+
+/***
+Set the default text size.
+@function setTextSize
+@tparam number size new default text size
+*/
+static int gfx_setTextSize(lua_State *L) {
+	textSize = luaL_checkinteger(L, 1);
+	return 0;
+}
+
+/***
+Return the default text size.
+@function getTextSize
+@treturn number the default text size
+*/
+static int gfx_getTextSize(lua_State *L) {
+	lua_pushinteger(L, textSize);
+	return 1;
 }
 
 // Functions
@@ -374,6 +395,8 @@ static const struct luaL_Reg gfx_lib[] = {
 	{ "text",            gfx_text            },
 	{ "wrappedText",     gfx_wrappedText     },
 	{ "calcBoundingBox", gfx_calcBoundingBox },
+	{ "setTextSize",     gfx_setTextSize     },
+	{ "getTextSize",     gfx_getTextSize     },
 	{ NULL, NULL }
 };
 
