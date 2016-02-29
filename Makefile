@@ -166,7 +166,16 @@ build-all:
 	@make build
 
 build-doc:
+	@echo Building HTML documentation...
+	@make build-doc-html
+	@echo Building SublimeText documentation...
+	@make build-doc-st
+
+build-doc-html:
 	@cd doc/ && ldoc . && cd ..
+
+build-doc-st:
+	@cd doc/ && ldoc . --template ./ --ext sublime-completions --dir ./sublimetext/ && cd ..
 
 #---------------------------------------------------------------------------------
 clean:
@@ -197,7 +206,16 @@ clean-all:
 	@make clean
 
 clean-doc:
+	@echo Cleaning HTML documentation...
+	@make clean-doc-html
+	@echo Cleaning SublimeText documentation...
+	@make clean-doc-st
+
+clean-doc-html:
 	@rm -rf doc/html
+
+clean-doc-st:
+	@rm -rf doc/sublimetext
 
 
 #---------------------------------------------------------------------------------
