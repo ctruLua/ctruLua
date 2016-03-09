@@ -4,10 +4,10 @@ Everything is in the Wiki.
 
 Warning: the 'u' in the repo's name is a 'µ', not a 'u'.
 
-#### Builds ![build status](http://thomas99.no-ip.org:3000/ctrulua.png)
+#### Builds ![build status](http://ci.reuh.tk/ctrulua.png)
 
-* Most recent working build: [here](http://thomas99.no-ip.org:3000/ctrulua/builds/latest/artifacts/ctruLua.3dsx) (warning: only tested with Citra, sometimes on real hardware).
-* See http://thomas99.no-ip.org:3000/ctrulua for all the builds.
+* Most recent working build: [here](http://ci.reuh.tk/ctrulua/builds/latest/artifacts/ctruLua.3dsx) (warning: only tested with Citra, sometimes on real hardware).
+* See http://ci.reuh.tk/ctrulua for all the builds.
 
 #### Build instructions
 
@@ -19,7 +19,7 @@ May not work under Windows.
 
 #### Lua API Documentation
 
-* An online version of the documentation can be found here : http://thomas99.no-ip.org/ctrulua
+* An online version of the documentation can be found here : http://reuh.tk/ctrulua
 * To build the documentation, run `make build-doc` (requires [LDoc](https://github.com/stevedonovan/LDoc)).
 
 #### Based on ctrulib by smealum: [https://github.com/smealum/ctrulib](https://github.com/smealum/ctrulib)
