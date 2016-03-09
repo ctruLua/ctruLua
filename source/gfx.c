@@ -377,6 +377,33 @@ static int gfx_getTextSize(lua_State *L) {
 	return 1;
 }
 
+/***
+Enables or disable the scissor test.
+When the scissor test is enabled, the drawing area will be limited to a specific rectangle, every pixel drawn outside will be discarded.
+Calls this function without argument to disable the scissor test.
+@function scissor
+@tparam integer x scissor rectangle origin horizontal coordinate, in pixels
+@tparam integer y scissor rectangle origin vertical coordinate, in pixels
+@tparam integer width scissor rectangle width, in pixels
+@tparam integer height scissor rectangle height, in pixels
+@tparam[opt=false] boolean invert if true the scissor will be inverted (will draw only outside of the rectangle)
+*/
+static int gfx_scissor(lua_State *L) {
+	if (lua_gettop(L) == 0) {
+		sf2d_set_scissor_test(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
+	} else {
+		int x = luaL_checkinteger(L, 1);
+		int y = luaL_checkinteger(L, 2);
+		int width = luaL_checkinteger(L, 3);
+		int height = luaL_checkinteger(L, 4);
+		bool invert = lua_toboolean(L, 5);
+
+		sf2d_set_scissor_test(invert ? GPU_SCISSOR_INVERT : GPU_SCISSOR_NORMAL, x, y, width, height);
+	}
+
+	return 0;
+}
+
 // Functions
 static const struct luaL_Reg gfx_lib[] = {
 	{ "start",           gfx_start           },
@@ -397,6 +424,7 @@ static const struct luaL_Reg gfx_lib[] = {
 	{ "calcBoundingBox", gfx_calcBoundingBox },
 	{ "setTextSize",     gfx_setTextSize     },
 	{ "getTextSize",     gfx_getTextSize     },
+	{ "scissor",         gfx_scissor         },
 	{ NULL, NULL }
 };
 
