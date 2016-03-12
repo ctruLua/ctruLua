@@ -3,6 +3,9 @@ The `ctr` module.
 @module ctr
 @usage local ctr = require("ctr")
 */
+#include <stdlib.h>
+#include <unistd.h>
+
 #include <3ds/types.h>
 #include <3ds/services/apt.h>
 #include <3ds/os.h>
@@ -202,6 +205,19 @@ int luaopen_ctr_lib(lua_State *L) {
 	*/
 	lua_pushstring(L, CTR_BUILD);
 	lua_setfield(L, -2, "build");
+	
+	/***
+	Root directory of ctrµLua. Contains the working directory where ctrµLua has been launched OR the romfs root if romfs has been enabled.
+	@field root
+	*/
+	#ifdef ROMFS
+	char* buff = "romfs:";
+	#else
+	char* buff = malloc(1024);
+	getcwd(buff, 1024);
+	#endif
+	lua_pushstring(L, buff);
+	lua_setfield(L, -2, "root");
 
 	return 1;
 }

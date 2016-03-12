@@ -40,7 +40,7 @@ const char* prefix_path(const char* path) {
 		char* prefix = "sdmc:";
 		#endif
 
-		char out[256];
+		char out[1024];
 		strcpy(out, prefix);
 		return strcat(out, path);
 
@@ -156,9 +156,9 @@ Get the current working directory.
 @treturn string the current working directory
 */
 static int fs_getDirectory(lua_State *L) {
-	char cwd[256];
+	char cwd[1024];
 
-	lua_pushstring(L, getcwd(cwd, 256));
+	lua_pushstring(L, getcwd(cwd, 1024));
 
 	return 1;
 }
