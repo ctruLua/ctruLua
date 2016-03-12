@@ -189,6 +189,19 @@ int luaopen_ctr_lib(lua_State *L) {
 		ctr_libs[i].load(L);
 		lua_setfield(L, -2, ctr_libs[i].name);
 	}
+	
+	/***
+	Running version of ctrµLua. This string contains the exact name of the last (pre-)release tag.
+	@field version
+	*/
+	lua_pushstring(L, CTR_VERSION);
+	lua_setfield(L, -2, "version");
+	/***
+	Running build of ctrµLua. This string contains the last commit hash.
+	@field build
+	*/
+	lua_pushstring(L, CTR_BUILD);
+	lua_setfield(L, -2, "build");
 
 	return 1;
 }

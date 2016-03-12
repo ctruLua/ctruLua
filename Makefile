@@ -38,6 +38,8 @@ APP_TITLE		:= ctruLua
 APP_DESCRIPTION	:= Lua for the 3DS. Yes, it works.
 APP_AUTHOR		:= Reuh, Firew0lf and NegiAD
 ICON 			:= icon.png
+APP_VERSION		:= $(shell git describe --abbrev=0 --tags)
+LASTCOMMIT	:= $(shell git rev-parse HEAD)
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -48,7 +50,7 @@ CFLAGS	:=	-g -Wall -O2 -mword-relocations -std=gnu11 \
 			-fomit-frame-pointer -ffast-math \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS
+CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS -DCTR_VERSION=\"$(APP_VERSION)\" -DCTR_BUILD=\"$(LASTCOMMIT)\"
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 

@@ -8,7 +8,7 @@ The `gfx` module.
 #include <sf2d.h>
 #include <sftd.h>
 
-#include <3ds/vram.h>
+//#include <3ds/vram.h>
 //#include <3ds/services/gsp.h>
 
 #include <lua.h>

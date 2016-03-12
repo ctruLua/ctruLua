@@ -218,6 +218,21 @@ static int httpc_getResponseHeader(lua_State *L) {
 	return 1;
 }
 
+/***
+Add a trusted RootCA cert to a context.
+@function :addTrustedRootCA
+@tparam string DER certificate
+*/
+static int httpc_addTrustedRootCA(lua_State *L) {
+	httpcContext *context = lua_touserdata(L, 1);
+	u32 certsize;
+	u8* cert = (u8*)luaL_checklstring(L, 2, (size_t*)&certsize);
+	
+	httpcAddTrustedRootCA(context, cert, certsize);
+	
+	return 0;
+}
+
 // object
 static const struct luaL_Reg httpc_methods[] = {
 	{"open",                  httpc_open                 },
@@ -229,6 +244,7 @@ static const struct luaL_Reg httpc_methods[] = {
 	{"close",                 httpc_close                },
 	{"addPostData",           httpc_addPostData          },
 	{"getResponseHeader",     httpc_getResponseHeader    },
+	{"addTrustedRootCA",      httpc_addTrustedRootCA     },
 	{NULL, NULL}
 };
 

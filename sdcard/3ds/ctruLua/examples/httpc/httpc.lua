@@ -25,19 +25,18 @@ while ctr.run() do
     dls = dls + 1
   end
   
-  gfx.startFrame(gfx.TOP)
+  gfx.start(gfx.TOP)
     gfx.text(0, 0, data)
     gfx.text(0, 20, "Downloaded "..dls.." times.")
-  gfx.endFrame()
+  gfx.stop()
   
-  gfx.startFrame(gfx.BOTTOM)
+  gfx.start(gfx.BOTTOM)
   	gfx.text(2, 2, "HTTP Contexts example")
   	gfx.text(2, 20, "The data is downloaded from '"..addr.."'.")
   	gfx.text(2, 30, "Press [B] to redownload.")
-  gfx.endFrame()
+  gfx.stop()
   
   gfx.render()
 end
-
 
 context:close()

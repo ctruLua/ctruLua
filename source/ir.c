@@ -5,7 +5,7 @@ The `ir` module.
 */
 #include <3ds/types.h>
 #include <3ds/services/ir.h>
-#include <3ds/linear.h>
+//#include <3ds/linear.h>
 
 #include <lualib.h>
 #include <lauxlib.h>
