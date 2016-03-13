@@ -2,14 +2,8 @@ local ctr = require("ctr")
 local fs  = require("ctr.fs")
 local gfx = require("ctr.gfx")
 
--- Initializing "constants"
-ctruLua = {}
-
---- The ctruLua root directory's absolute path
-ctruLua.root = fs.getDirectory()
-
 -- Set up path
-local ldir = fs.getDirectory().."libs/"
+local ldir = ctr.root.."libs/"
 package.path = package.path..";".. ldir.."?.lua;".. ldir.."?/init.lua"
 
 -- Erroring
@@ -17,7 +11,7 @@ local function displayError(err)
 	gfx.set3D(false)
 	gfx.color.setBackground(0xFF0000B3)
 	gfx.color.setDefault(0xFFFDFDFD)
-	gfx.font.setDefault(gfx.font.load(ctruLua.root .. "resources/VeraMono.ttf"))
+	gfx.font.setDefault(gfx.font.load(ctr.root .. "resources/VeraMono.ttf"))
 
 	while ctr.run() do
 		gfx.start(gfx.TOP)

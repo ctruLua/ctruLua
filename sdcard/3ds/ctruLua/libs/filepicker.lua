@@ -8,7 +8,7 @@ local function saveGraphicsState()
 	local old = {gfx.get3D(), gfx.color.getDefault(), gfx.color.getBackground(),
 		gfx.font.getDefault()}
 
-	local mono = gfx.font.load(ctruLua.root .. "resources/VeraMono.ttf")
+	local mono = gfx.font.load(ctr.root .. "resources/VeraMono.ttf")
 
 	gfx.set3D(false)
 	gfx.color.setDefault(0xFFFDFDFD)
