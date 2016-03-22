@@ -182,7 +182,7 @@ struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); }
 	{ "apt",    load_apt_lib,    NULL             },
 	{ "mic",    load_mic_lib,    NULL             },
 	{ "thread", load_thread_lib, NULL             },
-	{ NULL, NULL }
+	{ NULL, NULL, NULL }
 };
 
 int luaopen_ctr_lib(lua_State *L) {

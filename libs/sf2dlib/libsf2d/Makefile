@@ -30,6 +30,7 @@ CFLAGS	:=	-g -Wall -O2\
 		$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS
+#CFLAGS	+=	-std=c11
 
 #WILL HAVE TO BE REMOVED SOON
 CFLAGS += -DLIBCTRU_NO_DEPRECATION
@@ -137,6 +138,8 @@ $(OUTPUT)	:	$(OFILES)
 	@echo "extern const u8" `(echo $(notdir $<).shbin | sed -e 's/^\([0-9]\)/_\1/' | tr . _)`"_end[];" > `(echo $(notdir $<).shbin | tr . _)`.h
 	@echo "extern const u8" `(echo $(notdir $<).shbin | sed -e 's/^\([0-9]\)/_\1/' | tr . _)`"[];" >> `(echo $(notdir $<).shbin | tr . _)`.h
 	@echo "extern const u32" `(echo $(notdir $<).shbin | sed -e 's/^\([0-9]\)/_\1/' | tr . _)`_size";" >> `(echo $(notdir $<).shbin | tr . _)`.h
+
+sf2d.c: shader.vsh
 
 -include $(DEPENDS)
 

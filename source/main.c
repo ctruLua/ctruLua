@@ -1,3 +1,5 @@
+#include <unistd.h>
+
 #include <3ds.h>
 
 #include <lua.h>
@@ -32,7 +34,32 @@ void error(const char *error) {
 }
 
 // Main loop
-int main() {
+int main(int argc, char** argv) {
+	// Default arguments
+	char* mainFile = "main.lua";
+	
+	// Parse arguments
+	for (int i=0;i<argc;i++) {
+		if (argv[i][0] == '-') {
+			switch(argv[i][1]) {
+				case 'm': { // main file replacement
+					mainFile = &argv[i][2];
+					if (argv[i][2] == ' ') mainFile = &argv[i][3];
+					break;
+				}
+				
+				case 'r': { // root directory replacement
+					char* root;
+					root = &argv[i][2];
+					if (argv[i][2] == ' ') root = &argv[i][3];
+					if (chdir(root)) error("No such root path");
+					break;
+				}
+					
+			}
+		}
+	}
+	
 	// Init Lua
 	lua_State *L = luaL_newstate();
 	if (L == NULL) {
@@ -43,15 +70,16 @@ int main() {
 	// Load libs
 	luaL_openlibs(L);
 	load_ctr_lib(L);
+	isGfxInitialized = true;
 
 	// Do the actual thing
-	if (luaL_dofile(L, "main.lua")) error(luaL_checkstring(L, -1));
+	if (luaL_dofile(L, mainFile)) error(luaL_checkstring(L, -1));
 
 	// Unload libs
 	unload_ctr_lib(L);
-
+	
 	// Unload Lua
 	lua_close(L);
-
+	
 	return 0;
 }

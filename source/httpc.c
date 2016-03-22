@@ -228,9 +228,15 @@ static int httpc_addTrustedRootCA(lua_State *L) {
 	u32 certsize;
 	u8* cert = (u8*)luaL_checklstring(L, 2, (size_t*)&certsize);
 	
-	httpcAddTrustedRootCA(context, cert, certsize);
+	Result ret = httpcAddTrustedRootCA(context, cert, certsize);
+	if (ret != 0) {
+		lua_pushnil(L);
+		lua_pushinteger(L, ret);
+		return 2;
+	}
 	
-	return 0;
+	lua_pushboolean(L, true);
+	return 1;
 }
 
 // object
@@ -242,6 +248,7 @@ static const struct luaL_Reg httpc_methods[] = {
 	{"getDownloadSize",       httpc_getDownloadSize      },
 	{"downloadData",          httpc_downloadData         },
 	{"close",                 httpc_close                },
+	{"__gc",                  httpc_close                },
 	{"addPostData",           httpc_addPostData          },
 	{"getResponseHeader",     httpc_getResponseHeader    },
 	{"addTrustedRootCA",      httpc_addTrustedRootCA     },

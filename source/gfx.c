@@ -4,6 +4,8 @@ The `gfx` module.
 @usage local gfx = require("ctr.gfx")
 */
 #include <stdlib.h>
+#include <string.h>
+#include <math.h>
 
 #include <sf2d.h>
 #include <sftd.h>
@@ -15,6 +17,11 @@ The `gfx` module.
 #include <lauxlib.h>
 
 #include "font.h"
+#include "texture.h"
+
+typedef struct {
+	sf2d_rendertarget *target;
+} target_userdata;
 
 bool isGfxInitialized = false;
 bool is3DEnabled = false; //TODO: add a function for this in the ctrulib/sf2dlib.
@@ -51,17 +58,23 @@ The `ctr.gfx.map` module.
 void load_map_lib(lua_State *L);
 
 /***
-Start drawing to a screen.
+Start drawing to a screen/target.
 Must be called before any draw operation.
 @function start
-@tparam number screen the screen to draw to (`gfx.TOP` or `gfx.BOTTOM`)
+@tparam number/target screen the screen or target to draw to (`gfx.TOP`, `gfx.BOTTOM`, or render target)
 @tparam[opt=gfx.LEFT] number eye the eye to draw to (`gfx.LEFT` or `gfx.RIGHT`)
 */
 static int gfx_start(lua_State *L) {
-	u8 screen = luaL_checkinteger(L, 1);
-	u8 eye = luaL_optinteger(L, 2, GFX_LEFT);
+	if (lua_isinteger(L, 1)) {
+		u8 screen = luaL_checkinteger(L, 1);
+		u8 eye = luaL_optinteger(L, 2, GFX_LEFT);
 	
-	sf2d_start_frame(screen, eye);
+		sf2d_start_frame(screen, eye);
+	} else if (lua_isuserdata(L, 1)) {
+		target_userdata *target = luaL_checkudata(L, 1, "LTarget");
+		
+		sf2d_start_frame_target(target->target);
+	}
 
 	return 0;
 }
@@ -170,6 +183,7 @@ Draw a line on the current screen.
 @tparam integer y1 line's starting point vertical coordinate, in pixels
 @tparam integer x2 line's endpoint horizontal coordinate, in pixels
 @tparam integer y2 line's endpoint vertical coordinate, in pixels
+@tparam[opt=1] number width line's thickness, in pixels
 @tparam[opt=default color] integer color drawing color
 */
 static int gfx_line(lua_State *L) {
@@ -177,10 +191,11 @@ static int gfx_line(lua_State *L) {
 	int y1 = luaL_checkinteger(L, 2);
 	int x2 = luaL_checkinteger(L, 3);
 	int y2 = luaL_checkinteger(L, 4);
+	float width = luaL_optnumber(L, 5, 1.0f);
 	
-	u32 color = luaL_optinteger(L, 5, color_default);
+	u32 color = luaL_optinteger(L, 6, color_default);
 	
-	sf2d_draw_line(x1, y1, x2, y2, color);
+	sf2d_draw_line(x1, y1, x2, y2, width, color);
 
 	return 0;
 }
@@ -404,6 +419,111 @@ static int gfx_scissor(lua_State *L) {
 	return 0;
 }
 
+/***
+__Work in progress__. Create a render target. Don't use it.
+@function target
+@tparam integer width
+@tparam integer height
+@treturn target
+*/
+static int gfx_target(lua_State *L) {
+	int width = luaL_checkinteger(L, 1);
+	int height = luaL_checkinteger(L, 2);
+	int wpo2 = 0, hpo2 = 0;
+	for (;width>pow(2,wpo2);wpo2++);
+	width = pow(2,wpo2);
+	for (;height>pow(2,hpo2);hpo2++);
+	height = pow(2,hpo2);
+	
+	target_userdata *target;
+	target = (target_userdata*)lua_newuserdata(L, sizeof(*target));
+	
+	luaL_getmetatable(L, "LTarget");
+	lua_setmetatable(L, -2);
+	
+	target->target = sf2d_create_rendertarget(width, height);
+	
+	return 1;
+}
+
+/***
+Render targets
+@section target
+*/
+
+/***
+Clear a target to a specified color.
+@function :clear
+@tparam[opt=default color] integer color color to fill the target with
+*/
+static int gfx_target_clear(lua_State *L) {
+	target_userdata *target = luaL_checkudata(L, 1, "LTarget");
+	u32 color = luaL_optinteger(L, 2, color_default);
+	
+	sf2d_clear_target(target->target, color);
+	
+	return 0;
+}
+
+/***
+Destroy a target.
+@function :destroy
+*/
+static int gfx_target_destroy(lua_State *L) {
+	target_userdata *target = luaL_checkudata(L, 1, "LTarget");
+	
+	sf2d_free_target(target->target);
+	
+	return 0;
+}
+
+static const struct luaL_Reg target_methods[];
+/***
+
+*/
+static int gfx_target___index(lua_State *L) {
+	target_userdata *target = luaL_checkudata(L, 1, "LTarget");
+	const char* name = luaL_checkstring(L, 2);
+	
+	if (strcmp(name, "texture") == 0) {
+		texture_userdata *texture;
+		texture = (texture_userdata*)lua_newuserdata(L, sizeof(*texture));
+		luaL_getmetatable(L, "LTexture");
+		lua_setmetatable(L, -2);
+		
+		texture->texture = &(target->target->texture);
+		texture->scaleX = 1.0f;
+		texture->scaleY = 1.0f;
+		texture->blendColor = 0xffffffff;
+		
+		return 1;
+	} else if (strcmp(name, "duck") == 0) {
+		sf2d_rendertarget *target = sf2d_create_rendertarget(64, 64);
+		for(int i=0;;i++) {
+			sf2d_clear_target(target, 0xff000000);
+			sf2d_start_frame_target(target);
+			sf2d_draw_fill_circle(i%380, i%200, 10, 0xff0000ff);
+			sf2d_end_frame();
+			//sf2d_texture_tile32(&target->texture);
+			
+			sf2d_start_frame(GFX_TOP, GFX_LEFT);
+			sf2d_draw_texture(&target->texture, 10, 10);
+			sf2d_end_frame();
+			sf2d_swapbuffers();
+		}
+	} else {
+		for (u8 i=0;target_methods[i].name;i++) {
+			if (strcmp(target_methods[i].name, name) == 0) {
+				lua_pushcfunction(L, target_methods[i].func);
+				return 1;
+			}
+		}
+	}
+	
+	lua_pushnil(L);
+	return 1;
+}
+
 // Functions
 static const struct luaL_Reg gfx_lib[] = {
 	{ "start",           gfx_start           },
@@ -425,6 +545,16 @@ static const struct luaL_Reg gfx_lib[] = {
 	{ "setTextSize",     gfx_setTextSize     },
 	{ "getTextSize",     gfx_getTextSize     },
 	{ "scissor",         gfx_scissor         },
+	{ "target",          gfx_target          },
+	{ NULL, NULL }
+};
+
+// Render target
+static const struct luaL_Reg target_methods[] = {
+	{ "__index", gfx_target___index },
+	{"clear",    gfx_target_clear   },
+	{"destroy",  gfx_target_destroy },
+	{"__gc",     gfx_target_destroy },
 	{ NULL, NULL }
 };
 
@@ -491,6 +621,11 @@ struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); }
 };
 
 int luaopen_gfx_lib(lua_State *L) {
+	luaL_newmetatable(L, "LTarget");
+	lua_pushvalue(L, -1);
+	lua_setfield(L, -2, "__index");
+	luaL_setfuncs(L, target_methods, 0);
+	
 	luaL_newlib(L, gfx_lib);
 	
 	for (int i = 0; gfx_constants[i].name; i++) {
