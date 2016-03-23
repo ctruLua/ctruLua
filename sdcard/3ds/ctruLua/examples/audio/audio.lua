@@ -47,6 +47,7 @@ while true do
 		gfx.text(5, 65, "Speed: "..(speed*100).."% - Left balance: "..(leftBalance*100).."%")
 	gfx.stop()
 
+	audio.update()
 	gfx.render()
 end
 

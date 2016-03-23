@@ -931,7 +931,7 @@ static int audio_object_stop(lua_State *L) {
 /***
 Returns the audio object type.
 @function :type
-@treturn string "ogg" or "wav"
+@treturn string "ogg", "wav" or "raw"
 */
 static int audio_object_type(lua_State *L) {
 	audio_userdata *audio = luaL_checkudata(L, 1, "LAudio");
