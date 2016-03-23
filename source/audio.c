@@ -11,6 +11,7 @@ There are 24 audio channels available, numbered from 0 to 23.
 #include <malloc.h>
 #include <string.h>
 #include <errno.h>
+#include <math.h>
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -22,29 +23,77 @@ There are 24 audio channels available, numbered from 0 to 23.
 typedef enum {
 	TYPE_UNKNOWN = -1,
 	TYPE_OGG = 0,
-	TYPE_WAV = 1
+	TYPE_WAV = 1,
+	TYPE_RAW = 2
 } filetype;
 
 // Audio object userdata
 typedef struct {
 	filetype type; // file type
 
-	// OGG Vorbis specific
-	OggVorbis_File vf; // ogg vorbis file
+	// File type specific
+	union {
+		// OGG Vorbis
+		struct {
+			OggVorbis_File vf;
+			int currentSection; // section and position at the end of the initial data
+			long rawPosition;
+		};
+		// WAV
+		struct {
+			FILE* file;
+			long fileSize;
+			long filePosition; // position at the end of the initial data
+		};
+	};
 
 	// Needed for playback
 	float rate; // sample rate (per channel) (Hz)
 	u32 channels; // channel count
 	u32 encoding; // data encoding (NDSP_ENCODING_*)
+
+	// Initial data
 	u32 nsamples; // numbers of samples in the audio (per channel, not the total)
 	u32 size; // number of bytes in the audio (total, ie data size)
 	char* data; // raw audio data
+
+	// Other useful data
+	u16 bytePerSample; // bytes per sample (warning: undefined for ADPCM (only for raw data))
+	u32 chunkSize; // size per chunk (for streaming)
+	u32 chunkNsamples; // number of samples per chunk
 
 	// Playing parameters (type-independant)
 	float mix[12]; // mix parameters
 	ndspInterpType interp; // interpolation type
 	double speed; // playing speed
 } audio_userdata;
+
+// Audio stream instance struct (when an audio is played; only used when streaming)
+typedef struct {
+	audio_userdata* audio;
+
+	// Current position information
+	union {
+		// OGG
+		struct {
+			int currentSection;
+			long rawPosition;
+		};
+		// WAV
+		long filePosition;
+	};
+
+	double prevStartTime; // audio time when last chunk started playing
+	bool eof; // if reached end of file
+	bool done; // if streaming ended and the stream will be skipped on the next update
+	// (the struct should be keept in memory until replaced or it will break audio:time())
+
+	char* nextData; // the next data to play
+	ndspWaveBuf* nextWaveBuf;
+
+	char* prevData; // the data actually playing
+	ndspWaveBuf* prevWaveBuf;
+} audio_stream;
 
 // Indicate if NDSP was initialized or not.
 // NDSP doesn't work on citra yet.
@@ -55,12 +104,24 @@ bool isAudioInitialized = false;
 // Array of the last audio_userdata sent to each channel; channels range from 0 to 23
 audio_userdata* channels[24];
 
+// Array of the audio_instance that needs to be updated when calling audio.update (indexed per channel).
+audio_stream* streaming[24];
+
 /***
 Load an audio file.
 OGG Vorbis and PCM WAV file format are currently supported.
 (Most WAV files use the PCM encoding).
+NOTE: audio streaming doesn't use threading for now, this means that the decoding will be done on the main thread.
+It should work fine with WAVs, but with OGG files you may suffer slowdowns when a new chunk of data is decoded.
+To avoid that, you can either reduce the chunkDuration or disable streaming, but be careful if you do so, audio files
+can fill the memory really quickly.
 @function load
-@tparam string path path to the file
+@tparam string path path to the file or the data if type is raw
+@tparam[opt=0.1] number chunkDuration if set to -1, streaming will be disabled (all data is loaded in memory at once)
+                                     Other values are the stream chunk duration in seconds (ctrµLua will load
+                                     the audio per chunk of x seconds). Note that you need to call audio.update() each
+                                     frame in order for ctµLua to load new data from audio streams. Two chunks of data
+                                     will be loaded at the same time at most (one playing, the other ready to be played).
 @tparam[opt=detect] string type file type, `"ogg"` or `"wav"`.
                                 If set to `"detect"`, will try to deduce the type from the filename.
 @treturn[1] audio the loaded audio object
@@ -69,7 +130,8 @@ OGG Vorbis and PCM WAV file format are currently supported.
 */
 static int audio_load(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
-	const char* argType = luaL_optstring(L, 2, "detect");
+	double streamChunk = luaL_optnumber(L, 2, 0.1);
+	const char* argType = luaL_optstring(L, 3, "detect");
 
 	// Create userdata
 	audio_userdata *audio = lua_newuserdata(L, sizeof(*audio));
@@ -91,6 +153,8 @@ static int audio_load(lua_State *L) {
 		type = TYPE_OGG;
 	} else if (strcmp(argType, "wav") == 0) {
 		type = TYPE_WAV;
+	} else if (strcmp(argType, "raw") == 0) {
+		type = TYPE_RAW;
 	}
 
 	// Open and read file
@@ -114,16 +178,26 @@ static int audio_load(lua_State *L) {
 		audio->encoding = NDSP_ENCODING_PCM16;
 		audio->nsamples = ov_pcm_total(&audio->vf, -1);
 		audio->size = audio->nsamples * audio->channels * 2; // *2 because output is PCM16 (2 bytes/sample)
+		audio->bytePerSample = 2;
 
-		if (linearSpaceFree() < audio->size) luaL_error(L, "not enough linear memory available");
-		audio->data = linearAlloc(audio->size);
+		// Streaming
+		if (streamChunk < 0) {
+			audio->chunkNsamples = audio->nsamples;
+			audio->chunkSize = audio->size;
+		} else {
+			audio->chunkNsamples = round(streamChunk * audio->rate);
+			audio->chunkSize = audio->chunkNsamples * audio->channels * 2;
+		}
+
+		// Allocate
+		if (linearSpaceFree() < audio->chunkSize) luaL_error(L, "not enough linear memory available");
+		audio->data = linearAlloc(audio->chunkSize);
 
 		// Decoding loop
 		int offset = 0;
 		int eof = 0;
-		int current_section;
-		while (!eof) {
-			long ret = ov_read(&audio->vf, &audio->data[offset], 4096, &current_section);
+		while (!eof && offset < audio->chunkSize) {
+			long ret = ov_read(&audio->vf, &audio->data[offset], fmin(audio->chunkSize - offset, 4096), &audio->currentSection);
 
 			if (ret == 0) {
 				eof = 1;
@@ -137,6 +211,7 @@ static int audio_load(lua_State *L) {
 				offset += ret;
 			}
 		}
+		audio->rawPosition = ov_raw_tell(&audio->vf);
 
 		return 1;
 
@@ -222,13 +297,29 @@ static int audio_load(lua_State *L) {
 				return 0;
 			}
 
+			audio->bytePerSample = byte_per_sample / audio->channels;
+
+			// Streaming
+			if (streamChunk < 0) {
+				audio->chunkNsamples = audio->nsamples;
+				audio->chunkSize = audio->size;
+			} else {
+				audio->chunkNsamples = round(streamChunk * audio->rate);
+				audio->chunkSize = audio->chunkNsamples * audio->channels * audio->bytePerSample;
+			}
+
 			// Read data
-			if (linearSpaceFree() < audio->size) luaL_error(L, "not enough linear memory available");
-			audio->data = linearAlloc(audio->size);
+			if (linearSpaceFree() < audio->chunkSize) luaL_error(L, "not enough linear memory available");
+			audio->data = linearAlloc(audio->chunkSize);
 
-			fread(audio->data, audio->size, 1, file);
+			fread(audio->data, audio->chunkSize, 1, file);
 
-			fclose(file);
+			audio->file = file;
+			audio->filePosition = ftell(file);
+
+			fseek(file, 0, SEEK_END);
+			audio->fileSize = ftell(file);
+
 			return 1;
 
 		} else {
@@ -244,6 +335,7 @@ static int audio_load(lua_State *L) {
 
 /***
 Load raw audio data from a string.
+No streaming.
 @function loadRaw
 @tparam string data raw audio data
 @tparam number rate sampling rate
@@ -264,16 +356,18 @@ static int audio_loadRaw(lua_State *L) {
 	luaL_getmetatable(L, "LAudio");
 	lua_setmetatable(L, -2);
 	
-	audio->type = TYPE_WAV;
+	audio->type = TYPE_RAW;
 	audio->rate = rate;
 	audio->channels = channels;
 	
 	u8 sampleSize = 2; // default to 2
 	if (strcmp(argEncoding, "PCM8")) {
 		audio->encoding = NDSP_ENCODING_PCM8;
+		audio->bytePerSample = 1;
 		sampleSize = 1;
 	} else if (strcmp(argEncoding, "PCM16")) {
 		audio->encoding = NDSP_ENCODING_PCM16;
+		audio->bytePerSample = 2;
 	} else if (strcmp(argEncoding, "ADPCM")) {
 		audio->encoding = NDSP_ENCODING_ADPCM;
 	} else {
@@ -285,6 +379,9 @@ static int audio_loadRaw(lua_State *L) {
 	audio->nsamples = dataSize/sampleSize;
 	audio->size = dataSize;
 	audio->data = data;
+
+	audio->chunkSize = audio->size;
+	audio->chunkNsamples = audio->nsamples;
 	
 	audio->speed = 1.0;
 	
@@ -464,6 +561,102 @@ static int audio_stop(lua_State *L) {
 }
 
 /***
+Update all the currently playing audio streams.
+Must be called every frame if you want to use audio with streaming.
+@function update
+*/
+static int audio_update(lua_State *L) {
+	if (!isAudioInitialized) luaL_error(L, "audio wasn't initialized correctly");
+
+	for (int i = 0; i <= 23; i++) {
+		if (streaming[i] == NULL) continue;
+		audio_stream* stream = streaming[i];
+		if (stream->done) continue;
+		audio_userdata* audio = stream->audio;
+
+		// If the next chunk started to play, load the next one
+		if (stream->nextWaveBuf != NULL && ndspChnGetWaveBufSeq(i) == stream->nextWaveBuf->sequence_id) {
+			if (stream->prevWaveBuf) stream->prevStartTime = stream->prevStartTime + (double)(audio->chunkNsamples) / audio->rate;
+
+			if (!stream->eof) {
+				// Swap buffers
+				char* prevData = stream->prevData; // doesn't contain important data, can rewrite
+				char* nextData = stream->nextData; // contains the data that started playing
+				stream->prevData = nextData; // buffer in use
+				stream->nextData = prevData; // now contains an available buffer
+				stream->prevWaveBuf = stream->nextWaveBuf;
+
+				// Decoding loop
+				u32 chunkNsamples = audio->chunkNsamples; // chunk nsamples and size may be lower than the defaults if reached EOF
+				u32 chunkSize = audio->chunkSize;
+				if (audio->type == TYPE_OGG) {
+					if (ov_seekable(&audio->vf) && ov_raw_tell(&audio->vf) != stream->rawPosition)
+						ov_raw_seek(&audio->vf, stream->rawPosition); // goto last read end (audio file may be played multiple times at one)
+
+					int offset = 0;
+					while (!stream->eof && offset < audio->chunkSize) {
+						long ret = ov_read(&audio->vf, &stream->nextData[offset], fmin(audio->chunkSize - offset, 4096), &stream->currentSection);
+						if (ret == 0) {
+							stream->eof = 1;
+						} else if (ret < 0) {
+							luaL_error(L, "error in the ogg vorbis stream");
+							return 0;
+						} else {
+							offset += ret;
+						}
+					}
+					stream->rawPosition = ov_raw_tell(&audio->vf);
+					chunkSize = offset;
+					chunkNsamples = chunkSize / audio->channels / audio->bytePerSample;
+
+				} else if (audio->type == TYPE_WAV) {
+					chunkSize = fmin(audio->fileSize - stream->filePosition, audio->chunkSize);
+					chunkNsamples = chunkSize / audio->channels / audio->bytePerSample;
+
+					fseek(audio->file, stream->filePosition, SEEK_SET); // goto last read end (audio file may be played multiple times at one)
+					fread(stream->nextData, chunkSize, 1, audio->file);
+					stream->filePosition = ftell(audio->file);
+					if (stream->filePosition == audio->fileSize) stream->eof = 1;
+
+				} else luaL_error(L, "unknown audio type");
+
+				// Send & play audio data
+				ndspWaveBuf* waveBuf = calloc(1, sizeof(ndspWaveBuf));
+
+				waveBuf->data_vaddr = stream->nextData;
+				waveBuf->nsamples = chunkNsamples;
+				waveBuf->looping = false;
+
+				DSP_FlushDataCache((u32*)stream->nextData, chunkSize);
+
+				ndspChnWaveBufAdd(i, waveBuf);
+
+				stream->nextWaveBuf = waveBuf;
+			}
+		}
+
+		// Free the last chunk if it's no longer played
+		if (stream->prevWaveBuf != NULL && ndspChnGetWaveBufSeq(i) != stream->prevWaveBuf->sequence_id) {
+			free(stream->prevWaveBuf);
+			stream->prevWaveBuf = NULL;
+		}
+
+		// We're done
+		if (stream->prevWaveBuf == NULL && stream->nextWaveBuf != NULL && ndspChnGetWaveBufSeq(i) != stream->nextWaveBuf->sequence_id && stream->eof) {
+			free(stream->nextWaveBuf);
+			stream->nextWaveBuf = NULL;
+			linearFree(stream->prevData);
+			stream->prevData = NULL;
+			linearFree(stream->nextData);
+			stream->nextData = NULL;
+			stream->done = true;
+		}
+	}
+
+	return 0;
+}
+
+/***
 audio object
 @section Methods
 */
@@ -505,8 +698,11 @@ static int audio_object_time(lua_State *L) {
 
 	if (channel == -1 || channels[channel] != audio || !isAudioInitialized) // audio not playing
 		lua_pushnumber(L, 0);
-	else
-		lua_pushnumber(L, (double)(ndspChnGetSamplePos(channel)) / audio->rate);
+	else {
+		double additionnalTime = 0;
+		if (streaming[channel] != NULL) additionnalTime = streaming[channel]->prevStartTime;
+		lua_pushnumber(L, (double)(ndspChnGetSamplePos(channel)) / audio->rate + additionnalTime);
+	}
 
 	return 1;
 }
@@ -650,19 +846,45 @@ static int audio_object_play(lua_State *L) {
 	ndspChnSetRate(channel, audio->rate * audio->speed); // maybe hackish way to set a different speed, but it works
 	ndspChnSetFormat(channel, NDSP_CHANNELS(audio->channels) | NDSP_ENCODING(audio->encoding));
 
-	// Send & play audio data
+	// Send & play audio initial data
 	ndspWaveBuf* waveBuf = calloc(1, sizeof(ndspWaveBuf));
 
 	waveBuf->data_vaddr = audio->data;
-	waveBuf->nsamples = audio->nsamples;
+	waveBuf->nsamples = audio->chunkNsamples;
 	waveBuf->looping = loop;
 	
-	DSP_FlushDataCache((u32*)audio->data, audio->size);
+	DSP_FlushDataCache((u32*)audio->data, audio->chunkSize);
 	
 	ndspChnWaveBufAdd(channel, waveBuf);
 	channels[channel] = audio;
 
 	lua_pushinteger(L, channel);
+
+	// Remove last audio stream
+	if (streaming[channel] != NULL) {
+		free(streaming[channel]);
+		streaming[channel] = NULL;
+	}
+
+	// Stream the rest of the audio
+	if (audio->chunkSize < audio->size) {
+		audio_stream* stream = calloc(1, sizeof(audio_stream));
+		stream->audio = audio;
+		stream->nextWaveBuf = waveBuf;
+
+		// Allocate buffers
+		if (linearSpaceFree() < audio->chunkSize*2) luaL_error(L, "not enough linear memory available");
+		stream->nextData = linearAlloc(audio->chunkSize);
+		stream->prevData = linearAlloc(audio->chunkSize);
+
+		// Init stream values
+		if (audio->type == TYPE_OGG) {
+			stream->currentSection = audio->currentSection;
+			stream->rawPosition = audio->rawPosition;
+		} else if (audio->type == TYPE_WAV) stream->filePosition = audio->filePosition;
+
+		streaming[channel] = stream;
+	}
 
 	return 1;
 }
@@ -718,6 +940,10 @@ static int audio_object_type(lua_State *L) {
 		lua_pushstring(L, "ogg");
 	else if (audio->type == TYPE_WAV)
 		lua_pushstring(L, "wav");
+	else if (audio->type == TYPE_RAW)
+		lua_pushstring(L, "raw");
+	else
+		lua_pushstring(L, "unknown");
 
 	return 1;
 }
@@ -739,6 +965,7 @@ static int audio_object_unload(lua_State *L) {
 	}
 
 	if (audio->type == TYPE_OGG) ov_clear(&audio->vf);
+	else if (audio->type == TYPE_WAV) fclose(audio->file);
 
 	// Free memory
 	linearFree(audio->data);
@@ -872,6 +1099,7 @@ static const struct luaL_Reg audio_lib[] = {
 	{ "interpolation", audio_interpolation },
 	{ "speed",         audio_speed         },
 	{ "stop",          audio_stop          },
+	{ "update",        audio_update        },
 	{ NULL, NULL }
 };
 
@@ -887,9 +1115,7 @@ int luaopen_audio_lib(lua_State *L) {
 }
 
 void load_audio_lib(lua_State *L) {
-	if (!isAudioInitialized) {
-		isAudioInitialized = !ndspInit(); // ndspInit returns 0 in case of success
-	}
+	if (!isAudioInitialized) isAudioInitialized = !ndspInit(); // ndspInit returns 0 in case of success
 
 	luaL_requiref(L, "ctr.audio", luaopen_audio_lib, false);
 }
