@@ -86,7 +86,7 @@ typedef struct {
 	double prevStartTime; // audio time when last chunk started playing
 	bool eof; // if reached end of file
 	bool done; // if streaming ended and the stream will be skipped on the next update
-	// (the struct should be keept in memory until replaced or it will break audio:time())
+	// (the struct should be keept in memory until replaced or audio stopped or it will break audio:time())
 
 	char* nextData; // the next data to play
 	ndspWaveBuf* nextWaveBuf;
@@ -106,6 +106,34 @@ audio_userdata* channels[24];
 
 // Array of the audio_instance that needs to be updated when calling audio.update (indexed per channel).
 audio_stream* streaming[24];
+
+// Stop playing audio on a channel, and stop streaming/free memory.
+void stopAudio(int channel) {
+	ndspChnWaveBufClear(channel);
+
+	// Stop streaming and free data
+	if (streaming[channel] != NULL) {
+		audio_stream* stream = streaming[channel];
+		if (stream->nextWaveBuf != NULL) {
+			free(stream->nextWaveBuf);
+			stream->nextWaveBuf = NULL;
+		}
+		if (stream->nextData != NULL) {
+			linearFree(stream->nextData);
+			stream->nextData = NULL;
+		}
+		if (stream->prevWaveBuf != NULL) {
+			free(stream->prevWaveBuf);
+			stream->prevWaveBuf = NULL;
+		}
+		if (stream->prevData != NULL) {
+			linearFree(stream->prevData);
+			stream->prevData = NULL;
+		}
+		free(stream);
+		streaming[channel] = NULL;
+	}
+}
 
 /***
 Load an audio file.
@@ -542,7 +570,7 @@ static int audio_stop(lua_State *L) {
 	if (channel == -1) {
 		for (int i = 0; i <= 23; i++) {
 			if (ndspChnIsPlaying(i)) {
-				ndspChnWaveBufClear(i);
+				stopAudio(i);
 				n++;
 			}
 		}
@@ -550,7 +578,7 @@ static int audio_stop(lua_State *L) {
 		luaL_error(L, "channel number must be between 0 and 23");
 	} else {
 		if (ndspChnIsPlaying(channel)) {
-			ndspChnWaveBufClear(channel);
+			stopAudio(channel);
 			n++;
 		}
 	}
@@ -838,7 +866,7 @@ static int audio_object_play(lua_State *L) {
 	if (channel < 0 || channel > 23) luaL_error(L, "channel number must be between 0 and 23");
 
 	// Set channel parameters
-	ndspChnWaveBufClear(channel);
+	stopAudio(channel);
 	ndspChnReset(channel);
 	ndspChnInitParams(channel);
 	ndspChnSetMix(channel, audio->mix);
@@ -910,7 +938,7 @@ static int audio_object_stop(lua_State *L) {
 	if (channel == -1) {
 		for (int i = 0; i <= 23; i++) {
 			if (channels[i] == audio && ndspChnIsPlaying(i)) {
-				ndspChnWaveBufClear(i);
+				stopAudio(i);
 				n++;
 			}
 		}
@@ -918,7 +946,7 @@ static int audio_object_stop(lua_State *L) {
 		luaL_error(L, "channel number must be between 0 and 23");
 	} else {
 		if (channels[channel] == audio && ndspChnIsPlaying(channel)) {
-			ndspChnWaveBufClear(channel);
+			stopAudio(channel);
 			n++;
 		}
 	}
@@ -959,7 +987,7 @@ static int audio_object_unload(lua_State *L) {
 	if (isAudioInitialized) {
 		for (int i = 0; i <= 23; i++) {
 			if (channels[i] == audio) {
-				ndspChnWaveBufClear(i);
+				stopAudio(i);
 			}
 		}
 	}
