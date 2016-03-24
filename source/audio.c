@@ -72,6 +72,8 @@ typedef struct {
 typedef struct {
 	audio_userdata* audio;
 
+	bool loop; // loop audio?
+
 	// Current position information
 	union {
 		// OGG
@@ -213,7 +215,7 @@ static int audio_load(lua_State *L) {
 			audio->chunkNsamples = audio->nsamples;
 			audio->chunkSize = audio->size;
 		} else {
-			audio->chunkNsamples = round(streamChunk * audio->rate);
+			audio->chunkNsamples = fmin(round(streamChunk * audio->rate), audio->nsamples);
 			audio->chunkSize = audio->chunkNsamples * audio->channels * 2;
 		}
 
@@ -332,7 +334,7 @@ static int audio_load(lua_State *L) {
 				audio->chunkNsamples = audio->nsamples;
 				audio->chunkSize = audio->size;
 			} else {
-				audio->chunkNsamples = round(streamChunk * audio->rate);
+				audio->chunkNsamples = fmin(round(streamChunk * audio->rate), audio->nsamples);
 				audio->chunkSize = audio->chunkNsamples * audio->channels * audio->bytePerSample;
 			}
 
@@ -673,11 +675,37 @@ static int audio_update(lua_State *L) {
 		if (stream->prevWaveBuf == NULL && stream->nextWaveBuf != NULL && ndspChnGetWaveBufSeq(i) != stream->nextWaveBuf->sequence_id && stream->eof) {
 			free(stream->nextWaveBuf);
 			stream->nextWaveBuf = NULL;
-			linearFree(stream->prevData);
-			stream->prevData = NULL;
-			linearFree(stream->nextData);
-			stream->nextData = NULL;
-			stream->done = true;
+
+			// Free memory
+			if (!stream->loop) {
+				linearFree(stream->prevData);
+				stream->prevData = NULL;
+				linearFree(stream->nextData);
+				stream->nextData = NULL;
+				stream->done = true;
+			// Loop: goto start
+			} else {
+				// Send & play audio initial data
+				ndspWaveBuf* waveBuf = calloc(1, sizeof(ndspWaveBuf));
+
+				waveBuf->data_vaddr = audio->data;
+				waveBuf->nsamples = audio->chunkNsamples;
+				waveBuf->looping = false;
+
+				DSP_FlushDataCache((u32*)audio->data, audio->chunkSize);
+
+				ndspChnWaveBufAdd(i, waveBuf);
+
+				stream->nextWaveBuf = waveBuf;
+
+				// Reset stream values
+				stream->prevStartTime = 0;
+				stream->eof = false;
+				if (audio->type == TYPE_OGG) {
+					stream->currentSection = audio->currentSection;
+					stream->rawPosition = audio->rawPosition;
+				} else if (audio->type == TYPE_WAV) stream->filePosition = audio->filePosition;
+			}
 		}
 	}
 
@@ -879,7 +907,7 @@ static int audio_object_play(lua_State *L) {
 
 	waveBuf->data_vaddr = audio->data;
 	waveBuf->nsamples = audio->chunkNsamples;
-	waveBuf->looping = loop;
+	waveBuf->looping = (audio->chunkSize < audio->size) ? false : loop; // let ndsp loop the chunk if not streaming
 	
 	DSP_FlushDataCache((u32*)audio->data, audio->chunkSize);
 	
@@ -898,6 +926,7 @@ static int audio_object_play(lua_State *L) {
 	if (audio->chunkSize < audio->size) {
 		audio_stream* stream = calloc(1, sizeof(audio_stream));
 		stream->audio = audio;
+		stream->loop = loop;
 		stream->nextWaveBuf = waveBuf;
 
 		// Allocate buffers
