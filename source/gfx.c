@@ -558,6 +558,10 @@ static const struct luaL_Reg target_methods[] = {
 	{ NULL, NULL }
 };
 
+/***
+Constants
+@section constants
+*/
 // Constants
 struct { char *name; int value; } gfx_constants[] = {
 	/***

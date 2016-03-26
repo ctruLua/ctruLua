@@ -12,6 +12,12 @@ The `gfx.texture` module.
 #include <stdlib.h>
 #include <string.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+#include <png.h>
+
 #include "texture.h"
 
 int getType(const char *name) {
@@ -58,9 +64,15 @@ static int texture_load(lua_State *L) {
 	} else if (type==2) { //BMP
 		texture->texture = sfil_load_BMP_file(path, place); //appears to be broken right now.
 	} else {
-		lua_pushnil(L);
-		lua_pushstring(L, "Bad type");
-		return 2;
+		int w, h;
+		char* data = (char*)stbi_load(path, &w, &h, NULL, 4);
+		if (data == NULL) {
+			lua_pushnil(L);
+			lua_pushstring(L, "Can't open file");
+			return 2;
+		}
+		texture->texture = sf2d_create_texture_mem_RGBA8(data, w, h, TEXFMT_RGBA8, place);
+		free(data);
 	}
 	
 	if (texture->texture == NULL) {
@@ -246,12 +258,93 @@ Set the blend color of the texture.
 @tparam number color new blend color
 */
 static int texture_setBlendColor(lua_State *L) {
-  texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
+	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 	u32 color = luaL_checkinteger(L, 2);
 	
 	texture->blendColor = color;
 	
 	return 0;
+}
+
+/***
+Save a texture to a file.
+@function :save
+@tparam string filename path to the file to save the texture to
+@tparam[opt=TYPE_PNG] number type type of the image to save. Can be TYPE_PNG or TYPE_BMP
+@treturn[1] boolean true on success
+@treturn[2] nil
+@treturn[2] string error message
+*/
+static int texture_save(lua_State *L) {
+	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
+	const char* path = luaL_checkstring(L, 2);
+	u8 type = luaL_optinteger(L, 3, 0);
+
+	u32* buff = malloc(texture->texture->width * texture->texture->height * 4);
+	if (buff == NULL) {
+		lua_pushnil(L);
+		lua_pushstring(L, "Failed to allocate buffer");
+		return 2;
+	}
+	for (int y=0;y<texture->texture->height;y++) {
+		for (int x=0;x<texture->texture->width;x++) {
+			buff[x+(y*texture->texture->width)] = __builtin_bswap32(sf2d_get_pixel(texture->texture, x, y));
+		}
+	}
+
+	int result = 0;
+	if (type == 0) { // PNG
+		FILE* file = fopen(path, "wb");
+		if (file == NULL) {
+			free(buff);
+			lua_pushnil(L);
+			lua_pushstring(L, "Can open file");
+			return 2;
+		}
+		png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+		png_infop infos = png_create_info_struct(png);
+		setjmp(png_jmpbuf(png));
+		png_init_io(png, file);
+
+		png_set_IHDR(png, infos, texture->texture->width, texture->texture->height, 8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+		png_write_info(png, infos);
+
+		png_bytep row = malloc(4 * texture->texture->width * sizeof(png_byte));
+
+		for(int y=0;y<texture->texture->height;y++) {
+			for (int x=0;x<texture->texture->width;x++) {
+				((u32*)row)[x] = buff[x+(y*texture->texture->width)];
+			}
+			png_write_row(png, row);
+		}
+
+		png_write_end(png, NULL);
+
+		fclose(file);
+		png_free_data(png, infos, PNG_FREE_ALL, -1);
+		png_destroy_write_struct(&png, &infos);
+		free(row);
+
+		result = 1;
+
+	} else if (type == 2) { // BMP
+		result = stbi_write_bmp(path, texture->texture->width, texture->texture->height, 4, buff);
+	} else {
+		free(buff);
+		lua_pushnil(L);
+		lua_pushstring(L, "Not a valid type");
+		return 2;
+	}
+	free(buff);
+
+	if (result == 0) {
+		lua_pushnil(L);
+		lua_pushstring(L, "Failed to save the texture");
+		return 2;
+	}
+
+	lua_pushboolean(L, true);
+	return 1;
 }
 
 // object
@@ -264,6 +357,7 @@ static const struct luaL_Reg texture_methods[] = {
 	{ "getPixel",      texture_getPixel      },
 	{ "setPixel",      texture_setPixel      },
 	{ "setBlendColor", texture_setBlendColor },
+	{ "save",          texture_save          },
 	{ "__gc",          texture_unload        },
 	{NULL, NULL}
 };
