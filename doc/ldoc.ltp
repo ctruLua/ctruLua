@@ -5,9 +5,9 @@
 # -- Typical usage: ldoc . --template ./ --ext sublime-completions --dir ./sublimetext/
 #
 # local scope = "source.lua"
-# local function e(str) return str:gsub("\"", "\\\"") end -- escape json string ("str")
+# local function e(str) return (str or ""):gsub("\"", "\\\"") end -- escape json string ("str")
 # local function indent(indentation, str) -- indent str (except first line) with indentation
-# 	return str:gsub("(.-)\n", indentation.."%1\n"):gsub("\n([^\n]*)$", "\n"..indentation.."%1"):gsub("^"..indentation, "")
+# 	return (str or ""):gsub("(.-)\n", indentation.."%1\n"):gsub("\n([^\n]*)$", "\n"..indentation.."%1"):gsub("^"..indentation, "")
 # end
 # local function displayName(item) return item.type == "function" and item.name..item.args or item.name end -- nice name
 # local function autocompleteName(item) -- ST-autocomplete name

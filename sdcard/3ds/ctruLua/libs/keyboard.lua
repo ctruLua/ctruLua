@@ -1,10 +1,8 @@
-local ctr = require("ctr")
 local hid = require("ctr.hid")
 local gfx = require("ctr.gfx")
 local hex = gfx.color.hex
 
 -- Options
-
 local config = {}
 loadfile(ctr.root .. "config/keyboard.cfg", nil, config)()
 
