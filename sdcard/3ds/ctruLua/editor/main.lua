@@ -4,19 +4,23 @@ local gfx = require("ctr.gfx")
 
 -- Open libs
 local keyboard = require("keyboard")
-local openfile = require("openfile")
+local filepicker = require("filepicker")
 local color = dofile("color.lua")
 local syntax = dofile("syntax.lua")
 
 -- Load data
-local font = gfx.font.load("VeraMono.ttf")
+local font = gfx.font.load(ctr.root .. "resources/VeraMono.ttf")
 
 -- Open file
-local path, status = openfile("Choose a file to edit", nil, nil, "any")
-if not path then return end
+local path, binding, mode, key = filepicker(nil, {__default = {
+		a = {filepicker.openFile, "Open"},
+		y = {filepicker.newFile, "New File"}
+	}
+})
+if not mode then return end
 local lineEnding
 local lines = {}
-if status == "exist" then
+if mode == "open" then
 	for line in io.lines(path, "L") do
 		if not lineEnding then lineEnding = line:match("([\n\r]+)$") end
 		table.insert(lines, line:match("^(.-)[\n\r]*$"))
@@ -110,7 +114,7 @@ while ctr.run() do
 	-- Keyboard input
 	local input = keyboard.read()
 	if input then
-		if input == "BACK" then
+		if input == "\b" then
 			if cursorX > utf8.len(lines[cursorY])+1 then cursorX = utf8.len(lines[cursorY])+1 end
 			if cursorX > 1 then
 				lines[cursorY] = lines[cursorY]:sub(1, utf8.offset(lines[cursorY], cursorX-1)-1)..
@@ -173,7 +177,7 @@ while ctr.run() do
 
 		gfx.text(3, 3, "FPS: "..math.ceil(gfx.getFPS()))
 		
-		keyboard.draw(5, 115)
+		keyboard.draw(4, 115)
 		
 	gfx.stop()
 
