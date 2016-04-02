@@ -1,3 +1,4 @@
+local ctr = require("ctr")
 local hid = require("ctr.hid")
 local gfx = require("ctr.gfx")
 local hex = gfx.color.hex
