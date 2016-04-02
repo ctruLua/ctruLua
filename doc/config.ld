@@ -11,7 +11,7 @@ format = "markdown"
 plain = true
 
 -- Input files
-topics = "../README.md"
+topics = {"../README.md", "filepicker.md"}
 file = "../source/"
 examples = "../sdcard/3ds/ctruLua/examples/"
 manual_url = "file://../libs/lua-5.3.1/doc/manual.html"

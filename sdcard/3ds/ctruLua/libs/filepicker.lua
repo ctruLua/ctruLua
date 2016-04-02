@@ -1,12 +1,13 @@
--- LSH version 0.1
--- ctrµLua official shell
+local ctr = require('ctr')
+local keyboard = require('keyboard')
 
-local ctr = require("ctr")
-local gfx = require("ctr.gfx")
+local gfx = ctr.gfx
 
-local function saveGraphicsState()
+local externalConfig
+
+local function gfxPrepare()
 	local old = {gfx.get3D(), gfx.color.getDefault(), gfx.color.getBackground(),
-		gfx.font.getDefault()}
+		gfx.font.getDefault(), gfx.getTextSize()}
 
 	local mono = gfx.font.load(ctr.root .. "resources/VeraMono.ttf")
 
@@ -14,186 +15,304 @@ local function saveGraphicsState()
 	gfx.color.setDefault(0xFFFDFDFD)
 	gfx.color.setBackground(0xFF333333)
 	gfx.font.setDefault(mono)
+	gfx.setTextSize(12)
 
 	return old
 end
 
-local function restoreGraphicsState(state)
+local function gfxRestore(state)
 	gfx.set3D(state[1])
 	gfx.color.setDefault(state[2])
 	gfx.color.setBackground(state[3])
 	gfx.font.setDefault(state[4])
+	gfx.setTextSize(state[5])
 end
 
-local function getExtension(sel, bindings)
-	for _, ext in ipairs(bindings) do
-		if ext.ext == sel:match("%..+$") then
-			return ext
+local function systemBindings(bindings)
+	bindings.__default.up = {
+		function(_, selected, ...)
+			if selected.inList > 1 then
+				selected.inList = selected.inList - 1
+				if selected.inList == selected.offset then
+					selected.offset = selected.offset - 1
+				end
+			end
 		end
-	end
-end
+	}
 
-local function getFilelist(cur)
-	local files = ctr.fs.list(cur)
-
-	if cur ~= "/" and cur ~= "sdmc:/" then
-		table.insert(files, {name = "..", isDirectory = true})
-	end
-
-	-- Stealy stealing code from original openfile.lua
-	table.sort(files, function(i, j)
-		if i.isDirectory and not j.isDirectory then
-			return true
-		elseif i.isDirectory == j.isDirectory then
-			return string.lower(i.name) < string.lower(j.name)
+	bindings.__default.down = {
+		function(externalConfig, selected, ...)
+			if selected.inList < #externalConfig.fileList then
+				selected.inList = selected.inList + 1
+				if selected.inList - selected.offset >= 16 then
+					selected.offset = selected.offset + 1
+				end
+			end
 		end
-	end)
+	}
 
-	return files
+	bindings.__default.left = {
+		function(_, selected, ...)
+			selected.inList, selected.offset = 1, 0
+		end 
+	}
+
+	bindings.__default.right = {
+		function(externalConfig, selected, ...)
+			selected.inList = #externalConfig.fileList
+			if #externalConfig.fileList > 15 then
+				selected.offset = #externalConfig.fileList - 16
+			end
+		end 
+	}
 end
 
-local function drawBottom(cur, selFile, bindings)
-	local ext = getExtension(selFile.name, bindings)
+local function getFileList(workingDirectory)
+  local fileList = ctr.fs.list(workingDirectory)
 
+  if workingDirectory ~= "/" and workingDirectory ~= "sdmc:/" then
+    table.insert(fileList, {name = "..", isDirectory = true})
+  end
+
+  -- Stealy stealing code from original openfile.lua
+  table.sort(fileList, function(i, j)
+    if i.isDirectory and not j.isDirectory then
+      return true
+    elseif i.isDirectory == j.isDirectory then
+      return string.lower(i.name) < string.lower(j.name)
+    end
+  end)
+
+  return fileList
+end
+
+local function getBinding(selectedFile, bindings)
+	if selectedFile.isDirectory then
+		return bindings.__directory, "__directory"
+	end
+  for pattern, values in pairs(bindings) do
+    if selectedFile.name:match(pattern) then
+      return values, pattern
+    end
+  end
+  return bindings.__default, "__default"
+end
+
+local function drawBottom(externalConfig, workingDirectoryScroll, selected)
+	local workingDirectory = externalConfig.workingDirectory
+	local bindings = externalConfig.bindings
+	local selectedFile = externalConfig.fileList[selected.inList]
 	gfx.start(gfx.BOTTOM)
 		gfx.rectangle(0, 0, gfx.BOTTOM_WIDTH, 16, 0, 0xFF0000B3)
-		gfx.text(1, 0, cur, 12)
-		gfx.text(1, 15, selFile.name, 12)
-		if not selFile.isDirectory then
-			gfx.text(1, 45, selFile.fileSize, 12)
+		gfx.text(1 - workingDirectoryScroll.value, 0, workingDirectory)
+		if gfx.font.getDefault():width(workingDirectory) > gfx.BOTTOM_WIDTH - 2 then
+			workingDirectoryScroll.value = workingDirectoryScroll.value + workingDirectoryScroll.phase
+			if workingDirectoryScroll.value == (gfx.BOTTOM_WIDTH - 2) - gfx.font.getDefault():width(workingDirectory) or
+			workingDirectoryScroll.value == 0 then
+				workingDirectoryScroll.phase = - workingDirectoryScroll.phase
+			end
 		end
 
-		local keys = {"X: Quit/Cancel"}
-		if selFile.isDirectory then 
-			gfx.text(1, 30, "Directory", 12, 0xFF727272)
-			gfx.text(1, gfx.BOTTOM_HEIGHT - 30, "A: Open", 12)
-			gfx.text(1, gfx.BOTTOM_HEIGHT - 15, keys[1], 12)
-		elseif ext then
-			local lines = 1
+		gfx.text(1, 15, selectedFile.name, 12)
+		if not selectedFile.isDirectory then
+			gfx.text(1, 45, tostring(selectedFile.fileSize) .. "B", 12, 0xFF727272)
+		end
 
-			-- Keys
-			if ext.y then
-				lines = lines + 1
-				table.insert(keys, "Y: " .. ext.y)
-			end
-			if ext.a then
-				lines = lines + 1
-				table.insert(keys, "A: " .. ext.a)
-			end
-
-			-- Drawing
-			for i=lines, 1, -1 do
-				gfx.text(1, gfx.BOTTOM_HEIGHT - 15*i, keys[i], 12)
-			end
-			gfx.text(1, 30, ext.name, 12, 0xFF727272)
-			gfx.text(1, 45, tostring(selFile.fileSize) .. "B", 12, 0xFF727272)
+		local binding, pattern = getBinding(selectedFile, bindings)
+		if selectedFile.isDirectory then
+			gfx.text(1, 30, bindings.__directory.__name, 12, 0xFF727272)
 		else
-			gfx.text(1, 30, "File", 12, 0xFF727272)
-			gfx.text(1, 45, tostring(selFile.fileSize) .. "B", 12, 0xFF727272)
-			gfx.text(1, gfx.BOTTOM_HEIGHT - 15, keys[1], 12)
+			gfx.text(1, 30, binding.__name, 12, 0xFF727272)
 		end
+
+		local bindingNames = {
+			{"start", "Start"},         {"select", "Select"},
+			{"x", "X"},                 {"y", "Y"},
+			{"b", "B"},                 {"a", "A"},
+			{"r", "R"},                 {"l", "L"},
+			{"zr", "ZR"},               {"zl", "ZL"},
+			{"cstickDown", "C Down"},   {"cstickUp", "C Up"},
+			{"cstickRight", "C Right"}, {"cstickLeft", "C Left"}
+		}
+		
+		local j = 0
+
+		for i, v in ipairs(bindingNames) do
+			if binding[v[1]] and binding[v[1]][2] then
+				j = j + 1
+				gfx.text(1, gfx.BOTTOM_HEIGHT - 15*j, v[2] .. ": " .. binding[v[1]][2])
+			end
+		end
+
+		externalConfig.callbacks.drawBottom(externalConfig, selected)
 	gfx.stop()
 end
 
-local function drawTop(files, sel, scr)
-	gfx.start(gfx.TOP)
-		gfx.rectangle(0, (sel-scr-1)*15, gfx.TOP_WIDTH, 16, 0, 0xFF0000B3)
-		local over = #files - scr >= 16 and 16 or #files - scr
-		for i=scr+1, scr+over do
-			local color = files[i].isDirectory and 0xFF727272 or 0xFFFDFDFD
-			gfx.text(1, (i-scr-1)*15+1, files[i].name or "", 12, color)
+local function drawTop(externalConfig, selected)
+  gfx.start(gfx.TOP)
+    gfx.rectangle(0, (selected.inList-selected.offset-1)*15, gfx.TOP_WIDTH, 16, 0, 0xFF0000B9)
+    local over = #externalConfig.fileList - selected.offset >= 16 and 16 or #externalConfig.fileList - selected.offset
+    for i=selected.offset+1, selected.offset+over do
+      local color = externalConfig.fileList[i].isDirectory and 0xFF727272 or 0xFFFDFDFD
+      gfx.text(1, (i-selected.offset-1)*15+1, externalConfig.fileList[i].name or "", 12, color)
+    end
+    externalConfig.callbacks.drawTop(externalConfig, selected)
+  gfx.stop()
+end
+
+local function eventHandler(externalConfig, selected)
+	externalConfig.callbacks.eventHandler(externalConfig, selected)
+	ctr.hid.read()
+	local state = ctr.hid.keys()
+	local binding, pattern = getBinding(externalConfig.fileList[selected.inList], externalConfig.bindings)
+	for k, v in pairs(binding) do
+		if k ~= "__name" and state.down[k] then
+			local a, b, c, key = v[1](externalConfig, selected, pattern, k)
+			if key then return a, b, c, key 
+			else return end
 		end
-	gfx.stop()
-end
-
-local function runA(cur, selFile, bindings)
-	if not selFile.isDirectory then
-		local ext = getExtension(selFile.name, bindings)
-		if not ext then return end
-		if ext.a then return cur .. selFile.name, ext.ext end
+	end
+	for k, v in pairs(externalConfig.bindings.__default) do
+		if k ~= "__name" and state.down[k] then
+			local a, b, c, key = v[1](externalConfig, selected, pattern, k)
+			if key then return a, b, c, key 
+			else break end
+		end
 	end
 end
 
-local function runY(cur, selFile, bindings)
-	if not selFile.isDirectory then
-		local ext = getExtension(selFile.name, bindings)
-		if not ext then return end
-		if ext.y then return cur .. selFile.name, ext.ext end
+local function nothing(externalConfig, selected, bindingName, bindingKey)
+	-- externalConfig = {workingDirectory=string, bindings=table, callbacks=table, additionalArguments=table, fileList=table}
+	-- selected = {file=string, inList=number, offset=number}
+	-- bindings = {__default/__directory/[regex] = {__name, [keyName] = {(handlingFunction), (name)}}}
+	-- callbacks = {drawTop, drawBottom, eventHandler}
+end
+
+local function changeDirectory(externalConfig, selected, bindingName, bindingKey)
+	if externalConfig.fileList[selected.inList].isDirectory then
+		if externalConfig.fileList[selected.inList].name == ".." then
+			externalConfig.workingDirectory = externalConfig.workingDirectory:gsub("[^/]+/$", "")
+		else
+			externalConfig.workingDirectory = externalConfig.workingDirectory .. externalConfig.fileList[selected.inList].name .. "/"
+		end
+		externalConfig.fileList = getFileList(externalConfig.workingDirectory)
+		selected.inList, selected.offset = 1, 0
 	end
 end
 
---- Open a file browser to allow the user to select a file.
--- It will save current graphical settings and set them back after ending. Press up or down to move one element at a time, and press left or right to go at the beginning or at the end of the list. This function is the return result of requiring filepicker.lua
--- @name filePicker
--- @param bindings A table of the extensions the user can select in the format {{name, ext, a, y},...}, name will show up instead of "File" or "Directory" on the bottom screen, a and y set the action names for those keys on the bottom screen (and also enable them, so if there's neither a or y, the file will have a custom type name but won't be effectively selectable), and ext is the extension to search for, dot included. Everything must be strings.
--- @param workdir Optional, current working directory will be used if not specified, otherwise, sets the path at which the file browser first shows up, a string.
--- @returns The absolute path to the file, nil in case no file was picked.
--- @returns The extension of the file, this might be helpful in cases were multiple file types could be expected, nil in case no file was picked.
--- @returns The "mode", which indicates which key was used to select the file, "A" or "Y". "X" in case no file was picked.
-return function(bindings, workdir)
-	-- Initialization
-	local old = saveGraphicsState()
-	local cur = workdir or ctr.fs.getDirectory()
-	if cur:sub(-1) ~= "/" then
-		cur = cur .. "/"
-	end
-	local bindings = bindings or {}
-
-	local files = getFilelist(cur) or {{name = "- Empty -"}}
-	local sel = 1
-	local scr = 0
-
+local function newFile(externalConfig, selected, bindingName, bindingKey)
+	local name = ""
 	while ctr.run() do
-		drawBottom(cur, files[sel], bindings)
-		drawTop(files, sel, scr)
+		gfx.start(gfx.BOTTOM)
+			gfx.rectangle(0, 0, gfx.BOTTOM_WIDTH, 16, 0, 0xFF0000B3)
+			gfx.text(1, 0, externalConfig.workingDirectory)
+			keyboard.draw(4, 115)
+		gfx.stop()
+
+		gfx.start(gfx.TOP)
+			gfx.rectangle(0, 0, gfx.TOP_WIDTH, 16, 0, 0xFF0000B3)
+			gfx.text(1, 0, "Creating new file")
+			gfx.rectangle(4, gfx.TOP_HEIGHT // 2 - 15, gfx.TOP_WIDTH - 8, 30, 0, 0xFF727272)
+			gfx.text(5, gfx.TOP_HEIGHT // 2 - 6, name, 12)
+		gfx.stop()
 		gfx.render()
 
+		local char = (keyboard.read() or ""):gsub("[\t%/%?%<%>%\\%:%*%|%”%^]", "")
 		ctr.hid.read()
-		local state = ctr.hid.keys()
-		if (state.down.dDown or state.down.cpadDown) and sel < #files then
-			sel = sel + 1
-			if sel - scr >= 16 then
-				scr = scr + 1
-			end
-		elseif (state.down.dUp or state.down.cpadUp) and sel > 1 then
-			sel = sel - 1
-			if sel == scr then
-				scr = scr - 1
-			end
-		elseif state.down.dLeft or state.down.cpadLeft then
-			sel = 1
-			scr = 0
-		elseif state.down.dRight or state.down.cpadRight then
-			sel = #files
-			if #files > 15 then
-				scr = #files - 16
-			end
+		local keys = ctr.hid.keys()
 
-		elseif state.down.a then
-			local selFile = files[sel]
-			if selFile.isDirectory then
-				if selFile.name == ".." then
-					cur = cur:gsub("[^/]+/$", "")
-				else
-					cur = cur .. selFile.name .. "/"
-				end
-				files, sel, scr = getFilelist(cur), 1, 0
-			else
-				local file, ext = runA(cur, selFile, bindings)
-				if file then
-					restoreGraphicsState(old)
-					return file, ext, "A"
-				end
-			end
-		elseif state.down.y then
-			local file, ext = runY(cur, files[sel], bindings)
-			if file then
-				restoreGraphicsState(old)
-				return file, ext, "Y"
-			end
-		elseif state.down.x then 
-			restoreGraphicsState(old)
-			return nil, nil, "X" 
+		if char ~= "" and char ~= "\b" and char ~= "\n" then
+			name = name .. char
+		elseif char ~= "" and char == "\b" then
+			name = name:sub(1, (utf8.offset(name, -1) or 0)-1)
+		elseif (char ~= "" and char == "\n" or keys.down.a) and name ~= "" then
+			local b, p = getBinding({name=name}, externalConfig.bindings)
+			return externalConfig.workingDirectory .. name, p, "new", b
+		elseif keys.down.b then
+			break
 		end
 	end
 end
+
+local function openFile(externalConfig, selected, bindingName, bindingKey)
+	return externalConfig.workingDirectory .. externalConfig.fileList[selected.inList].name, 
+		bindingName, "open", bindingKey
+end
+
+local function filePicker(workingDirectory, bindings, callbacks, ...)
+	-- Argument sanitization
+	local additionalArguments = { ... }
+	workingDirectory = workingDirectory or ctr.fs.getDirectory()
+	bindings = bindings or {}
+	callbacks = callbacks or {}
+	for _, v in ipairs({"drawTop", "drawBottom", "eventHandler"}) do
+		if not callbacks[v] then
+			callbacks[v] = function(...) end
+		end
+	end
+
+	if workingDirectory:sub(utf8.offset(workingDirectory, -1) or -1) ~= "/" then
+		workingDirectory = workingDirectory .. "/"
+	end
+
+	-- Default Bindings
+	bindings.__default = bindings.__default or {}
+	bindings.__default.__name = bindings.__default.__name or "File"
+	bindings.__default.x = bindings.__default.x or { 
+		function(externalConfig, ...)
+			return externalConfig.workingDirectory, "__directory", nil, "x"
+		end, "Quit"
+	}
+
+	bindings.__directory = bindings.__directory or {}
+	bindings.__directory.__name = bindings.__directory.__name or "Directory"
+	bindings.__directory.a = bindings.__directory.a or {
+		changeDirectory, "Open"
+	}
+
+	local movementKeys = {
+		"up"    , "down"    , "left"    , "right"    ,
+		"cpadUp", "cpadDown", "cpadLeft", "cpadRight",
+		"dUp"   , "dDown"   , "dLeft"   , "dRight"
+	}
+
+	for k, v in pairs(bindings) do
+		if k ~= "__default" then
+			setmetatable(bindings[k], {__index = bindings.__default})
+		end
+
+		for _, w in ipairs(movementKeys) do
+			if v[w] then bindings[k][w] = nil end
+		end
+	end
+
+	systemBindings(bindings)
+
+	-- Other Initialization
+	local selected = {inList = 1, offset = 0}
+	local workingDirectoryScroll = { value = 0, phase = -1 }
+	local gfxState = gfxPrepare()
+
+	-- Main Loop
+	externalConfig = {workingDirectory=workingDirectory, bindings=bindings,
+			callbacks=callbacks, additionalArguments=additionalArguments, 
+			fileList=getFileList(workingDirectory)}
+	while ctr.run() do
+		drawBottom(externalConfig, workingDirectoryScroll, selected)
+		drawTop(externalConfig, selected)
+		gfx.render()
+
+		local file, binding, mode, key = eventHandler(externalConfig, selected)
+
+		if key then
+			gfxRestore(gfxState)
+			return file, binding, mode, key
+		end
+	end
+end
+
+local returnTable = {filePicker = filePicker, openFile = openFile, 
+	newFile = newFile, changeDirectory = changeDirectory}
+setmetatable(returnTable, {__call = function(self, ...) return self.filePicker(...) end})
+
+return returnTable
