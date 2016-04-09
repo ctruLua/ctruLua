@@ -28,6 +28,7 @@ The `ctr.news` module.
 @see ctr.news
 */
 void load_news_lib(lua_State *L);
+void unload_news_lib(lua_State *L);
 
 /***
 The `ctr.ptm` module.
@@ -35,6 +36,7 @@ The `ctr.ptm` module.
 @see ctr.ptm
 */
 void load_ptm_lib(lua_State *L);
+void unload_ptm_lib(lua_State *L);
 
 /***
 The `ctr.hid` module.
@@ -80,6 +82,7 @@ The `ctr.cfgu` module.
 @see ctr.cfgu
 */
 void load_cfgu_lib(lua_State *L);
+void unload_cfgu_lib(lua_State *L);
 
 /***
 The `ctr.socket` module.
@@ -109,6 +112,7 @@ The `ctr.apt` module.
 @see ctr.apt
 */
 void load_apt_lib(lua_State *L);
+void unload_apt_lib(lua_State *L);
 
 /***
 The `ctr.mic` module.
@@ -168,18 +172,18 @@ static const struct luaL_Reg ctr_lib[] = {
 // Subtables
 struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); } ctr_libs[] = {
 	{ "gfx",    load_gfx_lib,    unload_gfx_lib   },
-	{ "news",   load_news_lib,   NULL             },
-	{ "ptm",    load_ptm_lib,    NULL             },
+	{ "news",   load_news_lib,   unload_news_lib  },
+	{ "ptm",    load_ptm_lib,    unload_ptm_lib   },
 	{ "hid",    load_hid_lib,    unload_hid_lib   },
 	{ "ir",     load_ir_lib,     NULL             },
 	{ "fs",     load_fs_lib,     unload_fs_lib    },
 	{ "httpc",  load_httpc_lib,  unload_httpc_lib },
 	{ "qtm",    load_qtm_lib,    NULL             },
-	{ "cfgu",   load_cfgu_lib,   NULL             },
+	{ "cfgu",   load_cfgu_lib,   unload_cfgu_lib  },
 	{ "socket", load_socket_lib, NULL             },
 	{ "cam",    load_cam_lib,    NULL             },
 	{ "audio",  load_audio_lib,  unload_audio_lib },
-	{ "apt",    load_apt_lib,    NULL             },
+	{ "apt",    load_apt_lib,    unload_apt_lib   },
 	{ "mic",    load_mic_lib,    NULL             },
 	{ "thread", load_thread_lib, NULL             },
 	{ NULL, NULL, NULL }

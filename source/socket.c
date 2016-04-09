@@ -8,6 +8,7 @@ The UDP part is only without connection.
 #include <3ds.h>
 #include <3ds/types.h>
 #include <3ds/services/soc.h>
+#include <3ds/services/sslc.h>
 
 #include <lapi.h>
 #include <lauxlib.h>
@@ -15,7 +16,9 @@ The UDP part is only without connection.
 #include <malloc.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
@@ -26,7 +29,13 @@ typedef struct {
 	int socket;
 	struct sockaddr_in addr;
 	struct hostent *host; // only used for client sockets
+	sslcContext sslContext;
+	bool isSSL;
 } socket_userdata;
+
+bool initStateSocket = false;
+
+u32 rootCertChain = 0;
 
 /***
 Initialize the socket module
@@ -34,13 +43,44 @@ Initialize the socket module
 @tparam[opt=0x100000] number buffer size (in bytes), must be a multiple of 0x1000
 */
 static int socket_init(lua_State *L) {
-	u32 size = luaL_optinteger(L, 1, 0x100000);
-	Result ret = socInit((u32*)memalign(0x1000, size), size);
+	if (!initStateSocket) {
+		u32 size = luaL_optinteger(L, 1, 0x100000);
+		if (size%0x1000 != 0) {
+			lua_pushboolean(L, false);
+			lua_pushstring(L, "Not a multiple of 0x1000");
+			return 2;
+		}
+		
+		u32* mem = (u32*)memalign(0x1000, size);
+		if (mem == NULL) {
+			lua_pushboolean(L, false);
+			lua_pushstring(L, "Failed to allocate memory");
+			return 2;
+		}
+		
+		Result ret = socInit(mem, size);
 	
-	if (ret) {
-		lua_pushboolean(L, false);
-		lua_pushinteger(L, ret);
-		return 2;
+		if (ret) {
+			lua_pushboolean(L, false);
+			lua_pushinteger(L, ret);
+			return 2;
+		}
+		
+		ret = sslcInit(0);
+		if (R_FAILED(ret)) {
+			lua_pushboolean(L, false);
+			lua_pushinteger(L, ret);
+			return 2;
+		}
+		
+		sslcCreateRootCertChain(&rootCertChain);
+		sslcRootCertChainAddDefaultCert(rootCertChain, SSLC_DefaultRootCert_CyberTrust, NULL);
+		sslcRootCertChainAddDefaultCert(rootCertChain, SSLC_DefaultRootCert_AddTrust_External_CA, NULL);
+		sslcRootCertChainAddDefaultCert(rootCertChain, SSLC_DefaultRootCert_COMODO, NULL);
+		sslcRootCertChainAddDefaultCert(rootCertChain, SSLC_DefaultRootCert_USERTrust, NULL);
+		sslcRootCertChainAddDefaultCert(rootCertChain, SSLC_DefaultRootCert_DigiCert_EV, NULL);
+		
+		initStateSocket = true;
 	}
 	
 	lua_pushboolean(L, true);
@@ -52,8 +92,11 @@ Disable the socket module. Must be called before exiting ctrµLua.
 @function shutdown
 */
 static int socket_shutdown(lua_State *L) {
+	sslcDestroyRootCertChain(rootCertChain);
+	sslcExit();
 	socExit();
 	
+	initStateSocket = false;
 	return 0;
 }
 
@@ -76,6 +119,8 @@ static int socket_tcp(lua_State *L) {
 	
 	userdata->addr.sin_family = AF_INET;
 	
+	userdata->isSSL = false;
+	
 	return 1;
 }
 
@@ -92,12 +137,33 @@ static int socket_udp(lua_State *L) {
 	userdata->socket = socket(AF_INET, SOCK_DGRAM, 0);
 	if (userdata->socket < 0) {
 		lua_pushnil(L);
-		lua_pushstring(L, "Failed to create a TCP socket");
+		lua_pushstring(L, strerror(errno));
 		return 2;
 	}
+	fcntl(userdata->socket, F_SETFL, O_NONBLOCK);
 	
 	userdata->addr.sin_family = AF_INET;
 	
+	return 1;
+}
+
+/***
+Add a trusted root CA to the certChain.
+@function addTrustedRootCA
+@tparam string cert DER cert
+*/
+static int socket_addTrustedRootCA(lua_State *L) {
+	size_t size = 0;
+	const char* cert = luaL_checklstring(L, 1, &size);
+	
+	Result ret = sslcAddTrustedRootCA(rootCertChain, (u8*)cert, size, NULL);
+	if (R_FAILED(ret)) {
+		lua_pushnil(L);
+		lua_pushinteger(L, ret);
+		return 2;
+	}
+	
+	lua_pushboolean(L, true);
 	return 1;
 }
 
@@ -130,6 +196,10 @@ Close an existing socket.
 static int socket_close(lua_State *L) {
 	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
 	
+	if (userdata->isSSL) {
+		sslcDestroyContext(&userdata->sslContext);
+	}
+	
 	closesocket(userdata->socket);
 	
 	return 0;
@@ -158,6 +228,7 @@ static int socket_accept(lua_State *L) {
 		lua_pushnil(L);
 		return 1;
 	}
+	fcntl(client->socket, F_SETFL, O_NONBLOCK);
 	
 	return 1;
 }
@@ -167,6 +238,7 @@ Connect a socket to a server. The TCP object becomes a TCPClient object.
 @function :connect
 @tparam string host address of the host
 @tparam number port port of the server
+@tparam[opt=false] boolean ssl use SSL if `true`
 @treturn[1] boolean true if success
 @treturn[2] boolean false if failed
 @treturn[2] string error string
@@ -175,11 +247,12 @@ static int socket_connect(lua_State *L) {
 	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
 	char *addr = (char*)luaL_checkstring(L, 2);
 	int port = luaL_checkinteger(L, 3);
+	bool ssl = lua_toboolean(L, 4);
 	
 	userdata->host = gethostbyname(addr);
 	if (userdata->host == NULL) {
 		lua_pushnil(L);
-		lua_pushstring(L, "No such host");
+		lua_pushstring(L, strerror(errno));
 		return 2;
 	}
 	
@@ -188,9 +261,22 @@ static int socket_connect(lua_State *L) {
 	
 	if (connect(userdata->socket, (const struct sockaddr*)&userdata->addr, sizeof(userdata->addr)) < 0) {
 		lua_pushnil(L);
-		lua_pushstring(L, "Connection failed");
+		lua_pushstring(L, strerror(errno));
 		return 2;
 	}
+	
+	if (ssl) { // SSL context setup
+		sslcCreateContext(&userdata->sslContext, userdata->socket, SSLCOPT_Default, addr);
+		sslcContextSetRootCertChain(&userdata->sslContext, rootCertChain);
+		if (R_FAILED(sslcStartConnection(&userdata->sslContext, NULL, NULL))) {
+			sslcDestroyContext(&userdata->sslContext);
+			lua_pushnil(L);
+			lua_pushstring(L, "SSL connection failed");
+			return 2;
+		}
+		userdata->isSSL = true;
+	}
+	fcntl(userdata->socket, F_SETFL, O_NONBLOCK);
 	
 	lua_pushboolean(L, 1);
 	return 1;
@@ -237,7 +323,11 @@ static int socket_receive(lua_State *L) {
 			luaL_buffinit(L, &b);
 
 			char buff;
-			while (recv(userdata->socket, &buff, 1, flags) > 0 && buff != '\n') luaL_addchar(&b, buff);
+			if (!userdata->isSSL) {
+				while (recv(userdata->socket, &buff, 1, flags) > 0 && buff != '\n') luaL_addchar(&b, buff);
+			} else {
+				while (!R_FAILED(sslcRead(&userdata->sslContext, &buff, 1, false)) && buff != '\n') luaL_addchar(&b, buff);
+			}
 
 			luaL_pushresult(&b);
 			return 1;
@@ -247,7 +337,11 @@ static int socket_receive(lua_State *L) {
 			luaL_buffinit(L, &b);
 
 			char buff;
-			while (buff != '\n' && recv(userdata->socket, &buff, 1, flags) > 0) luaL_addchar(&b, buff);
+			if (!userdata->isSSL) {
+				while (buff != '\n' && recv(userdata->socket, &buff, 1, flags) > 0) luaL_addchar(&b, buff);
+			} else {
+				while (buff != '\n' && !R_FAILED(sslcRead(&userdata->sslContext, &buff, 1, false))) luaL_addchar(&b, buff);
+			}
 
 			luaL_pushresult(&b);
 			return 1;
@@ -258,7 +352,17 @@ static int socket_receive(lua_State *L) {
 	}
 	
 	char *buff = malloc(count+1);
-	int len = recv(userdata->socket, buff, count, flags);
+	int len;
+	if (!userdata->isSSL) {
+		len = recv(userdata->socket, buff, count, flags);
+	} else {
+		len = sslcRead(&userdata->sslContext, buff, count, false);
+		if (R_FAILED(len)) {
+			lua_pushnil(L);
+			lua_pushinteger(L, len);
+			return 2;
+		}
+	}
 	*(buff+len) = 0x0; // text end
 	
 	lua_pushstring(L, buff);
@@ -276,10 +380,66 @@ static int socket_send(lua_State *L) {
 	size_t size = 0;
 	char *data = (char*)luaL_checklstring(L, 2, &size);
 	
-	size_t sent = send(userdata->socket, data, size, 0);
+	size_t sent;
+	if (!userdata->isSSL) {
+		sent = send(userdata->socket, data, size, 0);
+	} else {
+		sent = sslcWrite(&userdata->sslContext, data, size);
+		if (R_FAILED(sent)) {
+			lua_pushnil(L);
+			lua_pushinteger(L, sent);
+			return 2;
+		}
+	}
+	
+	if (sent < 0) {
+		lua_pushnil(L);
+		lua_pushstring(L, strerror(errno));
+		return 2;
+	}
 	
 	lua_pushinteger(L, sent);
 	return 1;
+}
+
+/***
+Get some informations from a socket.
+@function :getpeername
+@treturn string IP
+@treturn number port
+*/
+static int socket_getpeername(lua_State *L) {
+	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
+	
+	struct sockaddr_in addr;
+	socklen_t addrSize = sizeof(addr);
+	
+	getpeername(userdata->socket, (struct sockaddr*)&addr, &addrSize);
+	
+	lua_pushstring(L, inet_ntoa(addr.sin_addr));
+	lua_pushinteger(L, ntohs(addr.sin_port));
+	
+	return 2;
+}
+
+/***
+Get some local informations from a socket.
+@function :getsockname
+@treturn string IP
+@treturn number port
+*/
+static int socket_getsockname(lua_State *L) {
+	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
+	
+	struct sockaddr_in addr;
+	socklen_t addrSize = sizeof(addr);
+	
+	getsockname(userdata->socket, (struct sockaddr*)&addr, &addrSize);
+	
+	lua_pushstring(L, inet_ntoa(addr.sin_addr));
+	lua_pushinteger(L, ntohs(addr.sin_port));
+	
+	return 2;
 }
 
 /***
@@ -360,10 +520,11 @@ static int socket_sendto(lua_State *L) {
 
 // module functions
 static const struct luaL_Reg socket_functions[] = {
-	{"init",     socket_init    },
-	{"shutdown", socket_shutdown},
-	{"tcp",      socket_tcp     },
-	{"udp",      socket_udp     },
+	{"init",             socket_init            },
+	{"shutdown",         socket_shutdown        },
+	{"tcp",              socket_tcp             },
+	{"udp",              socket_udp             },
+	{"addTrustedRootCA", socket_addTrustedRootCA},
 	{NULL, NULL}
 };
 
@@ -379,6 +540,8 @@ static const struct luaL_Reg socket_methods[] = {
 	{"receivefrom", socket_receivefrom},
 	{"send",        socket_send       },
 	{"sendto",      socket_sendto     },
+	{"getpeername", socket_getpeername},
+	{"getsockname", socket_getsockname},
 	{NULL, NULL}
 };
 

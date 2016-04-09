@@ -9,6 +9,7 @@ The `httpc` module.
 #include <3ds.h>
 #include <3ds/types.h>
 #include <3ds/services/httpc.h>
+#include <3ds/services/sslc.h>
 
 #include <lapi.h>
 #include <lauxlib.h>
@@ -239,6 +240,25 @@ static int httpc_addTrustedRootCA(lua_State *L) {
 	return 1;
 }
 
+/***
+Set SSL options for a context.
+@function :setSSLOptions
+@tparam boolean disableVerify disable server certificate verification if `true`
+@tparam[opt=false] boolean tlsv10 use TLS v1.0 if `true`
+*/
+static int httpc_setSSLOptions(lua_State *L) {
+	httpcContext *context = lua_touserdata(L, 1);
+	
+	bool disVer = lua_toboolean(L, 2);
+	bool tsl10 = false;
+	if (lua_isboolean(L, 3))
+		tsl10 = lua_toboolean(L, 3);
+	
+	httpcSetSSLOpt(context, (disVer?SSLCOPT_DisableVerify:0)|(tsl10?SSLCOPT_TLSv10:0));
+	
+	return 0;
+}
+
 // object
 static const struct luaL_Reg httpc_methods[] = {
 	{"open",                  httpc_open                 },
@@ -252,6 +272,7 @@ static const struct luaL_Reg httpc_methods[] = {
 	{"addPostData",           httpc_addPostData          },
 	{"getResponseHeader",     httpc_getResponseHeader    },
 	{"addTrustedRootCA",      httpc_addTrustedRootCA     },
+	{"setSSLOptions",         httpc_setSSLOptions        },
 	{NULL, NULL}
 };
 

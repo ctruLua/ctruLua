@@ -14,13 +14,17 @@ Used to get some user config.
 #include <lua.h>
 #include <lauxlib.h>
 
+bool initStateCFGU = false;
+
 /***
 Initialize the CFGU module.
 @function init
 */
 static int cfgu_init(lua_State *L) {
-	cfguInit();
-	
+	if (!initStateCFGU) {
+		cfguInit();
+		initStateCFGU = true;
+	}
 	return 0;
 }
 
@@ -29,8 +33,10 @@ Disable the CFGU module.
 @function shutdown
 */
 static int cfgu_shutdown(lua_State *L) {
-	cfguExit();
-	
+	if (initStateCFGU) {
+		cfguExit();
+		initStateCFGU = false;
+	}
 	return 0;
 }
 
@@ -308,4 +314,11 @@ int luaopen_cfgu_lib(lua_State *L) {
 
 void load_cfgu_lib(lua_State *L) {
 	luaL_requiref(L, "ctr.cfgu", luaopen_cfgu_lib, false);
+}
+
+void unload_cfgu_lib(lua_State *L) {
+	if (initStateCFGU) {
+		initStateCFGU = false;
+		cfguExit();
+	}
 }

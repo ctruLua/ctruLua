@@ -13,13 +13,17 @@ The `news` module.
 #include <stdlib.h>
 #include <string.h>
 
+bool initStateNews = false;
+
 /***
 Initialize the news module.
 @function init
 */
 static int news_init(lua_State *L) {
-	newsInit();
-		
+	if (!initStateNews) {
+		newsInit();
+		initStateNews = true;
+	}
 	return 0;
 }
 
@@ -63,8 +67,10 @@ Disable the news module.
 @function shutdown
 */
 static int news_shutdown(lua_State *L) {
-	newsExit();
-	
+	if (initStateNews) {
+		newsExit();
+		initStateNews = false;
+	}
 	return 0;
 }
 
@@ -82,4 +88,11 @@ int luaopen_news_lib(lua_State *L) {
 
 void load_news_lib(lua_State *L) {
 	luaL_requiref(L, "ctr.news", luaopen_news_lib, 0);
+}
+
+void unload_news_lib(lua_State *L) {
+	if (initStateNews) {
+		newsExit();
+		initStateNews = false;
+	}
 }

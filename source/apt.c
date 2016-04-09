@@ -14,30 +14,6 @@ Used to manage the applets and application status.
 #include <lauxlib.h>
 
 /***
-Initialize the APT module. Useless.
-@function init
-*/
-static int apt_init(lua_State *L) {
-	Result ret = aptInit();
-	if (ret!=0) {
-		lua_pushboolean(L, false);
-		lua_pushinteger(L, ret);
-		return 2;
-	}
-	lua_pushboolean(L, true);
-	return 1;
-}
-
-/***
-Shutdown the APT module. Useless, don't use it.
-@function shutdown
-*/
-static int apt_shutdown(lua_State *L) {
-	aptExit();
-	return 0;
-}
-
-/***
 Open an APT session. Should only work if you don't use the homebrew menu.
 @function openSession
 */
@@ -132,8 +108,6 @@ static int apt_getMenuAppID(lua_State *L) {
 }
 
 static const struct luaL_Reg apt_lib[] = {
-	{"init",                apt_init               },
-	{"shutdown",            apt_shutdown           },
 	{"openSession",         apt_openSession        },
 	{"closeSession",        apt_closeSession       },
 	{"setStatus",           apt_setStatus          },
@@ -327,6 +301,8 @@ struct { char *name; int value; } apt_constants[] = {
 };
 
 int luaopen_apt_lib(lua_State *L) {
+	aptInit();
+	
 	luaL_newlib(L, apt_lib);
 	
 	for (int i = 0; apt_constants[i].name; i++) {
@@ -339,4 +315,8 @@ int luaopen_apt_lib(lua_State *L) {
 
 void load_apt_lib(lua_State *L) {
 	luaL_requiref(L, "ctr.apt", luaopen_apt_lib, false);
+}
+
+void unload_apt_lib(lua_State *L) {
+	aptExit();
 }

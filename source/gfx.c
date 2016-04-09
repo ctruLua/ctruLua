@@ -12,6 +12,7 @@ The `gfx` module.
 
 //#include <3ds/vram.h>
 //#include <3ds/services/gsp.h>
+#include <3ds/console.h>
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -524,6 +525,51 @@ static int gfx_target___index(lua_State *L) {
 	return 1;
 }
 
+/***
+Initialize the console. You can print on it using print(), or any function that normally outputs to stdout.
+Warning: you can't use a screen for both a console and drawing, you have to disable the console first.
+@function console
+@tparam[opt=gfx.TOP] number screen screen to draw the console on.
+@tparam[opt=true] boolean debug enable stderr output on the console
+*/
+u8 consoleScreen = GFX_TOP;
+static int gfx_console(lua_State *L) {
+	consoleScreen = luaL_optinteger(L, 1, GFX_TOP);
+	bool err = false;
+	if (lua_isboolean(L, 2)) {
+		err = lua_toboolean(L, 2);
+	}
+	
+	consoleInit(consoleScreen, NULL);
+	if (err)
+		consoleDebugInit(debugDevice_CONSOLE);
+	
+	return 0;
+}
+
+/***
+Clear the console.
+@function clearConsole
+*/
+static int gfx_clearConsole(lua_State *L) {
+	consoleClear();
+	
+	return 0;
+}
+
+/***
+Disable the console.
+@function disableConsole
+*/
+static int gfx_disableConsole(lua_State *L) {
+	gfxSetScreenFormat(consoleScreen, GSP_BGR8_OES);
+	gfxSetDoubleBuffering(consoleScreen, true);
+	gfxSwapBuffersGpu();
+	gspWaitForVBlank();
+	
+	return 0;
+}
+
 // Functions
 static const struct luaL_Reg gfx_lib[] = {
 	{ "start",           gfx_start           },
@@ -546,6 +592,9 @@ static const struct luaL_Reg gfx_lib[] = {
 	{ "getTextSize",     gfx_getTextSize     },
 	{ "scissor",         gfx_scissor         },
 	{ "target",          gfx_target          },
+	{ "console",         gfx_console         },
+	{ "clearConsole",    gfx_clearConsole    },
+	{ "disableConsole",  gfx_disableConsole  },
 	{ NULL, NULL }
 };
 

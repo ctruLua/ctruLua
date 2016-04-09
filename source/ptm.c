@@ -10,13 +10,19 @@ The `ptm` module.
 #include <lua.h>
 #include <lauxlib.h>
 
+bool initStatePTM = false;
+
 /***
 Initialize the PTM module.
 @function init
 */
 static int ptm_init(lua_State *L) {
-	ptmuInit();
-	ptmSysmInit();
+	if (!initStatePTM) {
+		ptmuInit();
+		ptmSysmInit();
+	
+		initStatePTM = true;
+	}
 	
 	return 0;
 }
@@ -26,8 +32,12 @@ Disable the PTM module.
 @function shutdown
 */
 static int ptm_shutdown(lua_State *L) {
-	ptmuExit();
-	ptmSysmExit();
+	if (initStatePTM) {
+		ptmuExit();
+		ptmSysmExit();
+	
+		initStatePTM = false;
+	}
 	
 	return 0;
 }
@@ -145,4 +155,11 @@ int luaopen_ptm_lib(lua_State *L) {
 
 void load_ptm_lib(lua_State *L) {
 	luaL_requiref(L, "ctr.ptm", luaopen_ptm_lib, 0);
+}
+
+void unload_ptm_lib(lua_State *L) {
+	if (initStatePTM) {
+		ptmuExit();
+		ptmSysmExit();
+	}
 }

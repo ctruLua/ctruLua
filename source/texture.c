@@ -280,23 +280,10 @@ static int texture_save(lua_State *L) {
 	const char* path = luaL_checkstring(L, 2);
 	u8 type = luaL_optinteger(L, 3, 0);
 
-	u32* buff = malloc(texture->texture->width * texture->texture->height * 4);
-	if (buff == NULL) {
-		lua_pushnil(L);
-		lua_pushstring(L, "Failed to allocate buffer");
-		return 2;
-	}
-	for (int y=0;y<texture->texture->height;y++) {
-		for (int x=0;x<texture->texture->width;x++) {
-			buff[x+(y*texture->texture->width)] = __builtin_bswap32(sf2d_get_pixel(texture->texture, x, y));
-		}
-	}
-
 	int result = 0;
 	if (type == 0) { // PNG
 		FILE* file = fopen(path, "wb");
 		if (file == NULL) {
-			free(buff);
 			lua_pushnil(L);
 			lua_pushstring(L, "Can open file");
 			return 2;
@@ -313,7 +300,7 @@ static int texture_save(lua_State *L) {
 
 		for(int y=0;y<texture->texture->height;y++) {
 			for (int x=0;x<texture->texture->width;x++) {
-				((u32*)row)[x] = buff[x+(y*texture->texture->width)];
+				((u32*)row)[x] = __builtin_bswap32(sf2d_get_pixel(texture->texture, x, y));
 			}
 			png_write_row(png, row);
 		}
@@ -328,14 +315,25 @@ static int texture_save(lua_State *L) {
 		result = 1;
 
 	} else if (type == 2) { // BMP
+		u32* buff = malloc(texture->texture->width * texture->texture->height * 4);
+		if (buff == NULL) {
+			lua_pushnil(L);
+			lua_pushstring(L, "Failed to allocate buffer");
+			return 2;
+		}
+		for (int y=0;y<texture->texture->height;y++) {
+			for (int x=0;x<texture->texture->width;x++) {
+				buff[x+(y*texture->texture->width)] = __builtin_bswap32(sf2d_get_pixel(texture->texture, x, y));
+			}
+		}
 		result = stbi_write_bmp(path, texture->texture->width, texture->texture->height, 4, buff);
-	} else {
 		free(buff);
+	
+	} else {
 		lua_pushnil(L);
 		lua_pushstring(L, "Not a valid type");
 		return 2;
 	}
-	free(buff);
 
 	if (result == 0) {
 		lua_pushnil(L);
