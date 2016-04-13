@@ -215,7 +215,8 @@ int luaopen_ctr_lib(lua_State *L) {
 	@field root
 	*/
 	#ifdef ROMFS
-	char* buff = "romfs:";
+	char* buff = "romfs:/";
+	chdir(buff);
 	#else
 	char* buff = malloc(1024);
 	getcwd(buff, 1024);

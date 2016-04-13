@@ -36,7 +36,23 @@ void error(const char *error) {
 // Main loop
 int main(int argc, char** argv) {
 	// Default arguments
+	#ifdef ROMFS
+	char* mainFile = "romfs:/main.lua";
+	#else
 	char* mainFile = "main.lua";
+	#endif
+	
+	// Init Lua
+	lua_State *L = luaL_newstate();
+	if (L == NULL) {
+		error("Memory allocation error while creating a new Lua state");
+		return 0;
+	}
+
+	// Load libs
+	luaL_openlibs(L);
+	load_ctr_lib(L);
+	isGfxInitialized = true;
 	
 	// Parse arguments
 	for (int i=0;i<argc;i++) {
@@ -60,18 +76,6 @@ int main(int argc, char** argv) {
 		}
 	}
 	
-	// Init Lua
-	lua_State *L = luaL_newstate();
-	if (L == NULL) {
-		error("Memory allocation error while creating a new Lua state");
-		return 0;
-	}
-
-	// Load libs
-	luaL_openlibs(L);
-	load_ctr_lib(L);
-	isGfxInitialized = true;
-
 	// Do the actual thing
 	if (luaL_dofile(L, mainFile)) error(luaL_checkstring(L, -1));
 

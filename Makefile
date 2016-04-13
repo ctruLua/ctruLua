@@ -51,6 +51,9 @@ CFLAGS	:=	-g -Wall -O2 -mword-relocations -std=gnu11 \
 			$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS -DCTR_VERSION=\"$(APP_VERSION)\" -DCTR_BUILD=\"$(LASTCOMMIT)\"
+ifneq ($(ROMFS),)
+	CFLAGS += -DROMFS
+endif
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
@@ -132,7 +135,6 @@ endif
 
 ifneq ($(ROMFS),)
 	export _3DSXFLAGS += --romfs=$(CURDIR)/$(ROMFS)
-	CFLAGS += -DROMFS
 endif
 
 .PHONY: $(BUILD) clean all

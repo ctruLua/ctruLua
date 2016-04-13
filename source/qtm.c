@@ -59,7 +59,7 @@ static int qtm_checkInitialized(lua_State *L) {
 
 /***
 Return informations about the headtracking
-@function getHeadTrackingInfo
+@function getHeadtrackingInfo
 @treturn qtmInfos QTM informations
 */
 static int qtm_getHeadtrackingInfo(lua_State *L) {

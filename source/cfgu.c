@@ -109,9 +109,13 @@ static int cfgu_getUsername(lua_State *L) {
 	
 	CFGU_GetConfigInfoBlk2(0x1C, 0xA0000, (u8*)block);
 	u8 *name = malloc(0x14);
-	utf16_to_utf8(name, block, 0x14);
+	ssize_t len = utf16_to_utf8(name, block, 0x14);
+	if (len < 0) {
+		lua_pushstring(L, "");
+		return 1;
+	}
 	
-	lua_pushlstring(L, (const char *)name, 0x14); // The username is only 0x14 characters long.
+	lua_pushlstring(L, (const char *)name, len); // The username is only 0x14 characters long.
 	return 1;
 }
 

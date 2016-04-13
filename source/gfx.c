@@ -526,11 +526,16 @@ static int gfx_target___index(lua_State *L) {
 }
 
 /***
+Console
+@section console
+*/
+
+/***
 Initialize the console. You can print on it using print(), or any function that normally outputs to stdout.
 Warning: you can't use a screen for both a console and drawing, you have to disable the console first.
 @function console
 @tparam[opt=gfx.TOP] number screen screen to draw the console on.
-@tparam[opt=true] boolean debug enable stderr output on the console
+@tparam[opt=false] boolean debug enable stderr output on the console
 */
 u8 consoleScreen = GFX_TOP;
 static int gfx_console(lua_State *L) {

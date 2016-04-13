@@ -1,6 +1,7 @@
 /***
 The `socket` module. Almost like luasocket, but for the TCP part only.
 The UDP part is only without connection.
+All sockets are not blocking by default.
 @module ctr.socket
 @usage local socket = require("ctr.socket")
 */
@@ -41,6 +42,9 @@ u32 rootCertChain = 0;
 Initialize the socket module
 @function init
 @tparam[opt=0x100000] number buffer size (in bytes), must be a multiple of 0x1000
+@treturn[1] boolean `true` if everything went fine
+@treturn[2] boolean `false` in case of error
+@treturn[2] number/string error code/message
 */
 static int socket_init(lua_State *L) {
 	if (!initStateSocket) {
@@ -60,7 +64,7 @@ static int socket_init(lua_State *L) {
 		
 		Result ret = socInit(mem, size);
 	
-		if (ret) {
+		if (R_FAILED(ret)) {
 			lua_pushboolean(L, false);
 			lua_pushinteger(L, ret);
 			return 2;
@@ -92,11 +96,13 @@ Disable the socket module. Must be called before exiting ctrµLua.
 @function shutdown
 */
 static int socket_shutdown(lua_State *L) {
-	sslcDestroyRootCertChain(rootCertChain);
-	sslcExit();
-	socExit();
+	if (initStateSocket) {
+		sslcDestroyRootCertChain(rootCertChain);
+		sslcExit();
+		socExit();
+		initStateSocket = false;
+	}
 	
-	initStateSocket = false;
 	return 0;
 }
 
@@ -120,6 +126,7 @@ static int socket_tcp(lua_State *L) {
 	userdata->addr.sin_family = AF_INET;
 	
 	userdata->isSSL = false;
+	fcntl(userdata->socket, F_SETFL, fcntl(userdata->socket, F_GETFL, 0)|O_NONBLOCK);
 	
 	return 1;
 }
@@ -140,9 +147,9 @@ static int socket_udp(lua_State *L) {
 		lua_pushstring(L, strerror(errno));
 		return 2;
 	}
-	fcntl(userdata->socket, F_SETFL, O_NONBLOCK);
 	
 	userdata->addr.sin_family = AF_INET;
+	fcntl(userdata->socket, F_SETFL, fcntl(userdata->socket, F_GETFL, 0)|O_NONBLOCK);
 	
 	return 1;
 }
@@ -151,6 +158,9 @@ static int socket_udp(lua_State *L) {
 Add a trusted root CA to the certChain.
 @function addTrustedRootCA
 @tparam string cert DER cert
+@treturn[1] boolean `true` if everything went fine
+@treturn[2] nil in case of error
+@treturn[2] number error code
 */
 static int socket_addTrustedRootCA(lua_State *L) {
 	size_t size = 0;
@@ -181,7 +191,7 @@ static int socket_bind(lua_State *L) {
 	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
 	int port = luaL_checkinteger(L, 2);
 	
-	userdata->addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	userdata->addr.sin_addr.s_addr = gethostid();
 	userdata->addr.sin_port = htons(port);
 	
 	bind(userdata->socket, (struct sockaddr*)&userdata->addr, sizeof(userdata->addr));
@@ -206,6 +216,64 @@ static int socket_close(lua_State *L) {
 }
 
 /***
+Get some informations from a socket.
+@function :getpeername
+@treturn string IP
+@treturn number port
+*/
+static int socket_getpeername(lua_State *L) {
+	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
+	
+	struct sockaddr_in addr;
+	socklen_t addrSize = sizeof(addr);
+	
+	getpeername(userdata->socket, (struct sockaddr*)&addr, &addrSize);
+	
+	lua_pushstring(L, inet_ntoa(addr.sin_addr));
+	lua_pushinteger(L, ntohs(addr.sin_port));
+	
+	return 2;
+}
+
+/***
+Get some local informations from a socket.
+@function :getsockname
+@treturn string IP
+@treturn number port
+*/
+static int socket_getsockname(lua_State *L) {
+	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
+	
+	struct sockaddr_in addr;
+	socklen_t addrSize = sizeof(addr);
+	
+	getsockname(userdata->socket, (struct sockaddr*)&addr, &addrSize);
+	
+	lua_pushstring(L, inet_ntoa(addr.sin_addr));
+	lua_pushinteger(L, ntohs(addr.sin_port));
+	
+	return 2;
+}
+
+/***
+Set if the socket should be blocking.
+@function :setBlocking
+@tparam[opt=true] boolean block if `false`, the socket won't block
+*/
+static int socket_setBlocking(lua_State *L) {
+	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
+	bool block = true;
+	if (lua_isboolean(L, 2))
+		block = lua_toboolean(L, 2);
+	
+	int flags = fcntl(userdata->socket, F_GETFL, 0);
+	flags = block?(flags&~O_NONBLOCK):(flags|O_NONBLOCK);
+	fcntl(userdata->socket, F_SETFL, flags);
+	
+	return 0;
+}
+
+/***
 TCP Sockets
 @section TCP
 */
@@ -221,6 +289,7 @@ static int socket_accept(lua_State *L) {
 	socket_userdata *client = lua_newuserdata(L, sizeof(*client));
 	luaL_getmetatable(L, "LSocket");
 	lua_setmetatable(L, -2);
+	client->isSSL = false;
 	
 	socklen_t addrSize = sizeof(client->addr);
 	client->socket = accept(userdata->socket, (struct sockaddr*)&client->addr, &addrSize);
@@ -228,7 +297,6 @@ static int socket_accept(lua_State *L) {
 		lua_pushnil(L);
 		return 1;
 	}
-	fcntl(client->socket, F_SETFL, O_NONBLOCK);
 	
 	return 1;
 }
@@ -276,7 +344,6 @@ static int socket_connect(lua_State *L) {
 		}
 		userdata->isSSL = true;
 	}
-	fcntl(userdata->socket, F_SETFL, O_NONBLOCK);
 	
 	lua_pushboolean(L, 1);
 	return 1;
@@ -403,46 +470,6 @@ static int socket_send(lua_State *L) {
 }
 
 /***
-Get some informations from a socket.
-@function :getpeername
-@treturn string IP
-@treturn number port
-*/
-static int socket_getpeername(lua_State *L) {
-	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
-	
-	struct sockaddr_in addr;
-	socklen_t addrSize = sizeof(addr);
-	
-	getpeername(userdata->socket, (struct sockaddr*)&addr, &addrSize);
-	
-	lua_pushstring(L, inet_ntoa(addr.sin_addr));
-	lua_pushinteger(L, ntohs(addr.sin_port));
-	
-	return 2;
-}
-
-/***
-Get some local informations from a socket.
-@function :getsockname
-@treturn string IP
-@treturn number port
-*/
-static int socket_getsockname(lua_State *L) {
-	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
-	
-	struct sockaddr_in addr;
-	socklen_t addrSize = sizeof(addr);
-	
-	getsockname(userdata->socket, (struct sockaddr*)&addr, &addrSize);
-	
-	lua_pushstring(L, inet_ntoa(addr.sin_addr));
-	lua_pushinteger(L, ntohs(addr.sin_port));
-	
-	return 2;
-}
-
-/***
 UDP sockets
 @section UDP
 */
@@ -533,6 +560,7 @@ static const struct luaL_Reg socket_methods[] = {
 	{"accept",      socket_accept     },
 	{"bind",        socket_bind       },
 	{"close",       socket_close      },
+	{"setBlocking", socket_setBlocking},
 	{"__gc",        socket_close      },
 	{"connect",     socket_connect    },
 	{"listen",      socket_listen     },

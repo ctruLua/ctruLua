@@ -25,12 +25,12 @@ while ctr.run() do
 	local keys = hid.keys()
 	if keys.down.start then break end
 	
-	local infos = qtm.getHeadTrackingInfo()
+	local infos = qtm.getHeadtrackingInfo()
 	
 	gfx.start(gfx.TOP)
 		if infos:checkHeadFullyDetected() then
 			for i=1, 4 do
-				gfx.point(infos:convertCoordToScreen(1, 400, 240))
+				gfx.point(infos:convertCoordToScreen(i, 400, 240))
 			end
 		end
 	gfx.stop()
