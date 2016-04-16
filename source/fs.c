@@ -3,24 +3,23 @@ The `fs` module.
 @module ctr.fs
 @usage local fs = require("ctr.fs")
 */
+#include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <dirent.h>
 
 #include <3ds/types.h>
 #include <3ds/util/utf.h>
 #include <3ds/services/fs.h>
+#include <3ds/sdmc.h>
+#include <3ds/romfs.h>
 
 #include <lua.h>
 #include <lauxlib.h>
 
 bool isFsInitialized = false;
-
-Handle *fsuHandle;
-FS_Archive sdmcArchive;
-#ifdef ROMFS
-FS_Archive romfsArchive;
-#endif
 
 /***
 The `ctr.fs.lzlib` module.
@@ -57,81 +56,76 @@ Lists a directory contents (unsorted).
 `
 	{
 		name = "Item name.txt",
-		shortName = "ITEM~",
-		shortExt = "TXT",
 		isDirectory = false,
-		isHidden = false,
-		isArchive = false,
-		isReadOnly = false,
 		fileSize = 321 -- (integer) in bytes
 	}
 `
 */
 static int fs_list(lua_State *L) {
-	const char *path = prefix_path(luaL_checkstring(L, 1));
+	const char* basepath = prefix_path(luaL_checkstring(L, 1));
+	char* path;
+	bool shouldFreePath = false;
+	if (basepath[strlen(basepath)-1] != '/') {
+		path = malloc(strlen(basepath)+2);
+		strcpy(path, basepath);
+		strcat(path, "/");
+		shouldFreePath = true;
+	} else {
+		path = (char*)basepath;
+	}
 
 	lua_newtable(L);
 	int i = 1; // table index
-
-	// Get default archive
-	#ifdef ROMFS
-	FS_Archive archive = romfsArchive;
-	#else
-	FS_Archive archive = sdmcArchive;
-	#endif
-	// Archive path override (and skip path prefix)
-	if (strncmp(path, "sdmc:", 5) == 0) {
-		path += 5;
-		archive = sdmcArchive;
-	#ifdef ROMFS
-	} else if (strncmp(path, "romfs:", 6) == 0) {
-		path += 6;
-		archive = romfsArchive;
-	#endif
+	
+	DIR* dir = opendir(path);
+	if (dir == NULL) {
+		if (shouldFreePath) free(path);
+		lua_pushboolean(L, false);
+		lua_pushstring(L, strerror(errno));
+		return 2;
 	}
-
-	FS_Path dirPath = fsMakePath(PATH_ASCII, path);
-
-	Handle dirHandle;
-	FSUSER_OpenDirectory(&dirHandle, archive, dirPath);
-
-	u32 entriesRead = 0;
-	do {
-		FS_DirectoryEntry buffer;
-
-		FSDIR_Read(dirHandle, &entriesRead, 1, &buffer);
-
-		if (!entriesRead) break;
-
-		uint8_t name[0x106+1]; // utf8 file name
-		size_t size = utf16_to_utf8(name, buffer.name, 0x106);
-		*(name+size) = 0x0; // mark text end
-
-		lua_createtable(L, 0, 8);
-
-		lua_pushstring(L, (const char *)name);
+	errno = 0;
+	struct dirent *entry;
+	while (((entry = readdir(dir)) != NULL) && !errno) {
+		lua_createtable(L, 0, 3);
+		
+		lua_pushstring(L, (const char*)entry->d_name);
 		lua_setfield(L, -2, "name");
-		lua_pushstring(L, (const char *)buffer.shortName);
-		lua_setfield(L, -2, "shortName");
-		lua_pushstring(L, (const char *)buffer.shortExt);
-		lua_setfield(L, -2, "shortExt");
-		lua_pushboolean(L, buffer.attributes&FS_ATTRIBUTE_DIRECTORY);
+		lua_pushboolean(L, entry->d_type==DT_DIR);
 		lua_setfield(L, -2, "isDirectory");
-		lua_pushboolean(L, buffer.attributes&FS_ATTRIBUTE_HIDDEN);
-		lua_setfield(L, -2, "isHidden");
-		lua_pushboolean(L, buffer.attributes&FS_ATTRIBUTE_ARCHIVE);
-		lua_setfield(L, -2, "isArchive");
-		lua_pushboolean(L, buffer.attributes&FS_ATTRIBUTE_READ_ONLY);
-		lua_setfield(L, -2, "isReadOnly");
-		lua_pushinteger(L, buffer.fileSize);
+		
+		if (entry->d_type==DT_REG) { // Regular files: check size
+			char* filepath = malloc(strlen(path)+strlen(entry->d_name)+1);
+			if (filepath == NULL) {
+				luaL_error(L, "Memory allocation error");
+			}
+			memset(filepath, 0, strlen(path)+strlen(entry->d_name)+1);
+			
+			strcpy(filepath, path);
+			strcat(filepath, entry->d_name);
+			struct stat stats;
+			if (stat(filepath, &stats)) {
+				free(filepath);
+				if (shouldFreePath) free(path);
+				luaL_error(L, "Stat error: %s (%d)", strerror(errno), errno);
+				lua_pushboolean(L, false);
+				lua_pushstring(L, strerror(errno));
+				return 2;
+			} else {
+				lua_pushinteger(L, stats.st_size);
+			}
+			free(filepath);
+		} else { // Everything else: 0 bytes
+			lua_pushinteger(L, 0);
+		}
 		lua_setfield(L, -2, "fileSize");
 
 		lua_seti(L, -2, i);
 		i++;
-
-	} while (entriesRead > 0);
-
-	FSDIR_Close(dirHandle);
+	}
+	
+	closedir(dir);
+	if (shouldFreePath) free(path);
 
 	return 1;
 }
@@ -214,16 +208,9 @@ int luaopen_fs_lib(lua_State *L) {
 
 void load_fs_lib(lua_State *L) {
 	if (!isFsInitialized) {
-		fsInit();
-
-		fsuHandle = fsGetSessionHandle();
-		FSUSER_Initialize(*fsuHandle);
-
-		sdmcArchive = (FS_Archive){ARCHIVE_SDMC, fsMakePath(PATH_EMPTY, "")};
-		FSUSER_OpenArchive(&sdmcArchive);
+		sdmcInit();
 		#ifdef ROMFS
-		romfsArchive = (FS_Archive){ARCHIVE_ROMFS, fsMakePath(PATH_EMPTY, "")};
-		FSUSER_OpenArchive(&romfsArchive);
+		romfsInit();
 		#endif
 		isFsInitialized = true;
 	}
@@ -232,11 +219,8 @@ void load_fs_lib(lua_State *L) {
 }
 
 void unload_fs_lib(lua_State *L) {
-	FSUSER_CloseArchive(&sdmcArchive);
+	sdmcExit();
 	#ifdef ROMFS
-	FSUSER_CloseArchive(&romfsArchive);
+	romfsExit();
 	#endif
-
-	fsExit();
 }
-

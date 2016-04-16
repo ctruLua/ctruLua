@@ -95,7 +95,7 @@ static int font_object_width(lua_State *L) {
 	len = mbstowcs(wtext, text, len);
 	*(wtext+len) = 0x0; // text end
 
-	lua_pushinteger(L, sftd_width_wtext(font->font, size, wtext));
+	lua_pushinteger(L, sftd_get_wtext_width(font->font, size, wtext));
 
 	return 1;
 }
