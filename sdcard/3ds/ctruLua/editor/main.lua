@@ -35,12 +35,13 @@ local coloredLines = syntax(lines, color)
 
 -- Variables
 local lineHeight = 10
+local fontSize = 9
 local cursorX, cursorY = 1, 1
 local scrollX, scrollY = 0, 0
 
 -- Helper functions
 local function displayedText(text)
-	return text:gsub("\t", "    ")
+	return text:gsub("\t", "    "), nil
 end
 
 -- Set defaults
@@ -48,6 +49,7 @@ gfx.set3D(false)
 gfx.color.setDefault(color.default)
 gfx.color.setBackground(color.background)
 gfx.font.setDefault(font)
+gfx.font.setSize(fontSize)
 
 while ctr.run() do
 	hid.read()
@@ -157,11 +159,7 @@ while ctr.run() do
 
 			for _,colored in ipairs(coloredLines[i]) do
 				local str = displayedText(colored[1])
-
-				gfx.color.setDefault(colored[2])
-				gfx.text(x, y, str)
-				gfx.color.setDefault(color.default)
-
+				gfx.text(x, y, str, fontSize, colored[2])
 				x = x + font:width(str)
 			end
 		end

@@ -5,4 +5,6 @@ typedef struct {
 	sftd_font *font;
 } font_userdata;
 
+extern u32 textSize;
+
 #endif

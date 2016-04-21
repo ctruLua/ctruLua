@@ -12,7 +12,7 @@ local function displayError(err, trace)
 	gfx.set3D(false)
 	gfx.color.setBackground(0xFF0000B3)
 	gfx.color.setDefault(0xFFFDFDFD)
-	gfx.setTextSize(12)
+	gfx.font.setSize(12)
 	gfx.font.setDefault(gfx.font.load(ctr.root .. "resources/VeraMono.ttf"))
 
 	while ctr.run() do

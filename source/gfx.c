@@ -26,7 +26,6 @@ typedef struct {
 
 bool isGfxInitialized = false;
 bool is3DEnabled = false; //TODO: add a function for this in the ctrulib/sf2dlib.
-u32 textSize = 9;
 
 /***
 The `ctr.gfx.color` module.
@@ -374,26 +373,6 @@ static int gfx_calcBoundingBox(lua_State *L) {
 }
 
 /***
-Set the default text size.
-@function setTextSize
-@tparam number size new default text size
-*/
-static int gfx_setTextSize(lua_State *L) {
-	textSize = luaL_checkinteger(L, 1);
-	return 0;
-}
-
-/***
-Return the default text size.
-@function getTextSize
-@treturn number the default text size
-*/
-static int gfx_getTextSize(lua_State *L) {
-	lua_pushinteger(L, textSize);
-	return 1;
-}
-
-/***
 Enables or disable the scissor test.
 When the scissor test is enabled, the drawing area will be limited to a specific rectangle, every pixel drawn outside will be discarded.
 Calls this function without argument to disable the scissor test.
@@ -593,8 +572,6 @@ static const struct luaL_Reg gfx_lib[] = {
 	{ "text",            gfx_text            },
 	{ "wrappedText",     gfx_wrappedText     },
 	{ "calcBoundingBox", gfx_calcBoundingBox },
-	{ "setTextSize",     gfx_setTextSize     },
-	{ "getTextSize",     gfx_getTextSize     },
 	{ "scissor",         gfx_scissor         },
 	{ "target",          gfx_target          },
 	{ "console",         gfx_console         },

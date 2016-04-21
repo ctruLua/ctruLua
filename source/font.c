@@ -15,6 +15,8 @@ The `font` module
 
 #include "font.h"
 
+u32 textSize = 9;
+
 /***
 Load a TTF font.
 @function load
@@ -71,6 +73,28 @@ static int font_getDefault(lua_State *L) {
 }
 
 /***
+Set the default text size.
+@function setSize
+@tparam number size new default text size
+*/
+static int font_setSize(lua_State *L) {
+	textSize = luaL_checkinteger(L, 1);
+
+	return 0;
+}
+
+/***
+Return the default text size.
+@function getSize
+@treturn number the default text size
+*/
+static int font_getSize(lua_State *L) {
+	lua_pushinteger(L, textSize);
+
+	return 1;
+}
+
+/***
 font object
 @section Methods
 */
@@ -79,6 +103,7 @@ font object
 Return the width of a string with a font.
 @function :width
 @tparam string text the text to test
+@tparam[opt=default size] integer font size, in pixels
 @treturn number the width of the text (in pixels)
 */
 static int font_object_width(lua_State *L) {
@@ -127,6 +152,8 @@ static const struct luaL_Reg font_lib[] = {
 	{ "load",       font_load       },
 	{ "setDefault", font_setDefault },
 	{ "getDefault", font_getDefault },
+	{ "setSize",    font_setSize    },
+	{ "getSize",    font_getSize    },
 	{ NULL, NULL }
 };
 

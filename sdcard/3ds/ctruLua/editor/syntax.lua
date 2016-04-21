@@ -50,7 +50,7 @@ local syntax = {
 return function(lines, color)
 	local ret = {}
 
-	for _,line in ipairs(lines) do
+	for _, line in ipairs(lines) do
 		local colored = { { line, color.default } }
 
 		for _, patterns in ipairs(syntax) do
