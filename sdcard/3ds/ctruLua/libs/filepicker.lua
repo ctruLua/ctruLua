@@ -7,7 +7,7 @@ local externalConfig
 
 local function gfxPrepare()
 	local old = {gfx.get3D(), gfx.color.getDefault(), gfx.color.getBackground(),
-		gfx.font.getDefault(), gfx.getTextSize()}
+		gfx.font.getDefault(), gfx.font.getSize()}
 
 	local mono = gfx.font.load(ctr.root .. "resources/VeraMono.ttf")
 
@@ -15,7 +15,7 @@ local function gfxPrepare()
 	gfx.color.setDefault(0xFFFDFDFD)
 	gfx.color.setBackground(0xFF333333)
 	gfx.font.setDefault(mono)
-	gfx.setTextSize(12)
+	gfx.font.setSize(12)
 
 	return old
 end
@@ -25,7 +25,7 @@ local function gfxRestore(state)
 	gfx.color.setDefault(state[2])
 	gfx.color.setBackground(state[3])
 	gfx.font.setDefault(state[4])
-	gfx.setTextSize(state[5])
+	gfx.font.setSize(state[5])
 end
 
 local function systemBindings(bindings)

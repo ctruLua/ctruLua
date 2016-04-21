@@ -38,6 +38,7 @@ local lineHeight = 10
 local fontSize = 9
 local cursorX, cursorY = 1, 1
 local scrollX, scrollY = 0, 0
+local fileModified = false
 
 -- Helper functions
 local function displayedText(text)
@@ -56,7 +57,30 @@ while ctr.run() do
 	local keys = hid.keys()
 	
 	-- Keys input
-	if keys.down.start then return end
+	if keys.down.start then
+		local exit = not fileModified
+		if fileModified then
+			while ctr.run() do
+				hid.read()
+				local keys = hid.keys()
+				if keys.down.b then
+					exit = false
+					break
+				elseif keys.down.a then
+					exit = true
+					break
+				end
+				gfx.start(gfx.TOP)
+					gfx.text(3, 3, "The file was modified but not saved!")
+					gfx.text(3, 3 + lineHeight, "Are you sure you want to exit without saving?")
+					gfx.text(3, 3 + lineHeight*2, "Press A to exit and discard the modified file")
+					gfx.text(3, 3 + lineHeight*3, "Press B to return to the editor")
+				gfx.stop()
+				gfx.render()
+			end
+		end
+		if exit then break end
+	end
 	
 	if keys.down.dRight then
 		cursorX = cursorX + 1
@@ -101,15 +125,16 @@ while ctr.run() do
 			for i = 1, #lines, 1 do
 				file:write(lines[i]..lineEnding)
 				gfx.start(gfx.TOP)
-				gfx.rectangle(0, 0, math.ceil(i/#lines*gfx.TOP_WIDTH), gfx.TOP_HEIGHT, 0, 0xFFFFFFFF)
-				gfx.color.setDefault(color.background)
-				gfx.text(gfx.TOP_WIDTH/2, gfx.TOP_HEIGHT/2, math.ceil(i/#lines*100).."%")
-				gfx.color.setDefault(color.default)
+					gfx.rectangle(0, 0, math.ceil(i/#lines*gfx.TOP_WIDTH), gfx.TOP_HEIGHT, 0, 0xFFFFFFFF)
+					gfx.color.setDefault(color.background)
+					gfx.text(gfx.TOP_WIDTH/2, gfx.TOP_HEIGHT/2, math.ceil(i/#lines*100).."%")
+					gfx.color.setDefault(color.default)
 				gfx.stop()
 				gfx.render()
 			end 
 			file:flush()
 			file:close()
+			fileModified = false
 		end
 	end
 	
@@ -126,21 +151,30 @@ while ctr.run() do
 				cursorX, cursorY = utf8.len(lines[cursorY-1])+1, cursorY - 1
 				lines[cursorY] = lines[cursorY]..lines[cursorY+1]
 				table.remove(lines, cursorY+1)
+				table.remove(coloredLines, cursorY+1)
 			end
+
+			coloredLines[cursorY] = syntax(lines[cursorY], color)
+
 		elseif input == "\n" then
 			local newline = lines[cursorY]:sub(utf8.offset(lines[cursorY], cursorX), -1)
 			local whitespace = lines[cursorY]:match("^%s+")
 			if whitespace then newline = whitespace .. newline end
 			
 			lines[cursorY] = lines[cursorY]:sub(1, utf8.offset(lines[cursorY], cursorX)-1)
+			coloredLines[cursorY] = syntax(lines[cursorY], color)
 			table.insert(lines, cursorY + 1, newline)
+			table.insert(coloredLines, cursorY + 1, syntax(newline, color))
 			
 			cursorX, cursorY = whitespace and #whitespace+1 or 1, cursorY + 1
+
 		else
 			lines[cursorY] = lines[cursorY]:sub(1, utf8.offset(lines[cursorY], cursorX)-1)..input..
 			                 lines[cursorY]:sub(utf8.offset(lines[cursorY], cursorX), -1)
+			coloredLines[cursorY] = syntax(lines[cursorY], color)
 			cursorX = cursorX + 1
 		end
+		fileModified = true
 	end
 	
 	-- Draw
@@ -174,6 +208,8 @@ while ctr.run() do
 	gfx.start(gfx.BOTTOM)
 
 		gfx.text(3, 3, "FPS: "..math.ceil(gfx.getFPS()))
+		gfx.text(3, 3 + lineHeight, "Press select to save.")
+		gfx.text(3, 3 + lineHeight*2, "Press start to exit.")
 		
 		keyboard.draw(4, 115)
 		

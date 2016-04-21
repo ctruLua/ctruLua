@@ -50,7 +50,7 @@ local syntax = {
 return function(lines, color)
 	local ret = {}
 
-	for _, line in ipairs(lines) do
+	for _, line in ipairs(type(lines) == "table" and lines or {lines}) do
 		local colored = { { line, color.default } }
 
 		for _, patterns in ipairs(syntax) do
@@ -86,5 +86,5 @@ return function(lines, color)
 		table.insert(ret, colored)
 	end
 
-	return ret
+	return type(lines) == "table" and ret or ret[1]
 end
