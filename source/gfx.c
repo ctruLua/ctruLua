@@ -17,6 +17,7 @@ The `gfx` module.
 #include <lua.h>
 #include <lauxlib.h>
 
+#include "gfx.h"
 #include "font.h"
 #include "texture.h"
 
@@ -26,6 +27,13 @@ typedef struct {
 
 bool isGfxInitialized = false;
 bool is3DEnabled = false; //TODO: add a function for this in the ctrulib/sf2dlib.
+
+// The scissor-test state, as defined in Lua code. When you apply a new scissor in C, remember to get back to this state to avoid unexpected behaviour.
+scissor_state lua_scissor = {
+	GPU_SCISSOR_DISABLE,
+	0, 0,
+	0, 0
+};
 
 /***
 The `ctr.gfx.color` module.
@@ -385,16 +393,20 @@ Calls this function without argument to disable the scissor test.
 */
 static int gfx_scissor(lua_State *L) {
 	if (lua_gettop(L) == 0) {
-		sf2d_set_scissor_test(GPU_SCISSOR_DISABLE, 0, 0, 0, 0);
+		lua_scissor.mode = GPU_SCISSOR_DISABLE;
+		lua_scissor.x = 0;
+		lua_scissor.y = 0;
+		lua_scissor.width = 0;
+		lua_scissor.height = 0;
 	} else {
-		int x = luaL_checkinteger(L, 1);
-		int y = luaL_checkinteger(L, 2);
-		int width = luaL_checkinteger(L, 3);
-		int height = luaL_checkinteger(L, 4);
-		bool invert = lua_toboolean(L, 5);
-
-		sf2d_set_scissor_test(invert ? GPU_SCISSOR_INVERT : GPU_SCISSOR_NORMAL, x, y, width, height);
+		lua_scissor.x = luaL_checkinteger(L, 1);
+		lua_scissor.y = luaL_checkinteger(L, 2);
+		lua_scissor.width = luaL_checkinteger(L, 3);
+		lua_scissor.height = luaL_checkinteger(L, 4);
+		lua_scissor.mode = lua_toboolean(L, 5) ? GPU_SCISSOR_INVERT : GPU_SCISSOR_NORMAL;
 	}
+
+	sf2d_set_scissor_test(lua_scissor.mode, lua_scissor.x, lua_scissor.y, lua_scissor.width, lua_scissor.height);
 
 	return 0;
 }

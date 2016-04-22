@@ -13,7 +13,9 @@ Tile coordinates start at x=0,y=0.
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
+#include "gfx.h"
 #include "texture.h"
 
 typedef struct {
@@ -59,7 +61,16 @@ static int map_load(lua_State *L) {
 	map_userdata *map = lua_newuserdata(L, sizeof(map_userdata));
 	luaL_getmetatable(L, "LMap");
 	lua_setmetatable(L, -2);
-	
+
+	// Block GC of the texture by keeping a reference to it in the registry
+	// registry[map_userdata] = texture_userdata
+	lua_pushnil(L);
+	lua_copy(L, -2, -1); // map_userdata
+	lua_pushnil(L);
+	lua_copy(L, 2, -1); // texture_userdata
+	lua_settable(L, LUA_REGISTRYINDEX);
+
+	// Init userdata fields
 	map->texture = texture;
 	map->tileSizeX = tileSizeX;
 	map->tileSizeY = tileSizeY;
@@ -158,49 +169,80 @@ Map object
 */
 
 /***
-Draw a map.
+Draw (a part of) the map on the screen.
 @function :draw
-@tparam number x X position
-@tparam number y Y position
-@within Methods
+@tparam integer x X top-left coordinate to draw the map on the screen (pixels)
+@tparam integer y Y top-left coordinate to draw the map on the screen (pixels)
+@tparam[opt=0] integer offsetX drawn area X start coordinate on the map (pixels) (x=0,y=0 correspond to the first tile top-left corner)
+@tparam[opt=0] integer offsetY drawn area Y start coordinate on the map (pixels)
+@tparam[opt=400] integer width width of the drawn area on the map (pixels)
+@tparam[opt=240] integer height height of the drawn area on the map (pixels)
+@usage
+-- This will draw on the screen at x=5,y=5 a part of the map. The part is the rectangle on the map starting at x=16,y=16 and width=32,height=48.
+-- For example, if you use 16x16 pixel tiles, this will draw the tiles from 1,1 (top-left corner of the rectangle) to 2,3 (bottom-right corner).
+map:draw(5, 5, 16, 16, 32, 48)
 */
 static int map_draw(lua_State *L) {
 	map_userdata *map = luaL_checkudata(L, 1, "LMap");
 	int x = luaL_checkinteger(L, 2);
 	int y = luaL_checkinteger(L, 3);
+	int offsetX = luaL_optinteger(L, 4, 0);
+	int offsetY = luaL_optinteger(L, 5, 0);
+	int width = luaL_optinteger(L, 6, 400);
+	int height = luaL_optinteger(L, 7, 240);
+
+	int xI = fmax(floor((double)offsetX / map->tileSizeX), 0); // initial tile X
+	int xF = fmin(ceil((double)(offsetX + width) / map->tileSizeX), map->width); // final tile X
+
+	int yI = fmax(floor((double)offsetY / map->tileSizeY), 0); // initial tile Y
+	int yF = fmin(ceil((double)(offsetY + height) / map->tileSizeY), map->height); // final tile Y
+
+	if (sf2d_get_current_screen() == GFX_TOP)
+		sf2d_set_scissor_test(GPU_SCISSOR_NORMAL, x, y, fmin(width, 400 - x), fmin(height, 240 - y)); // Scissor test doesn't work when x/y + width > screenWidth/Height
+	else
+		sf2d_set_scissor_test(GPU_SCISSOR_NORMAL, x, y, fmin(width, 320 - x), fmin(height, 240 - y));
+
 	int texX = 0;
 	int texY = 0;
-	
+
 	if (map->texture->blendColor == 0xffffffff) {
-		for (int xp=0; xp<map->width; xp++) {
-			for (int yp=0; yp<map->height; yp++) {
+		for (int xp = xI; xp < xF; xp++) {
+			for (int yp = yI; yp < yF; yp++) {
 				u16 tile = getTile(map, xp, yp);
 				getTilePos(map, tile, &texX, &texY);
-				sf2d_draw_texture_part(map->texture->texture, (x+(map->tileSizeX*xp)+(xp*map->spaceX)), (y+(map->tileSizeY*yp)+(yp*map->spaceY)), texX, texY, map->tileSizeX, map->tileSizeY);
+				sf2d_draw_texture_part(map->texture->texture, x+(map->tileSizeX*xp)+(xp*map->spaceX)-offsetX, y+(map->tileSizeY*yp)+(yp*map->spaceY)-offsetY, texX, texY, map->tileSizeX, map->tileSizeY);
 			}
 		}
 	} else {
-		for (int xp=0; xp<map->width; xp++) {
-			for (int yp=0; yp<map->height; yp++) {
+		for (int xp = xI; xp < xF; xp++) {
+			for (int yp = yI; yp < yF; yp++) {
 				u16 tile = getTile(map, xp, yp);
 				getTilePos(map, tile, &texX, &texY);
-				sf2d_draw_texture_part_blend(map->texture->texture, (x+(map->tileSizeX*xp)+(xp*map->spaceX)), (y+(map->tileSizeY*yp)+(yp*map->spaceY)), texX, texY, map->tileSizeX, map->tileSizeY, map->texture->blendColor);
+				sf2d_draw_texture_part_blend(map->texture->texture, x+(map->tileSizeX*xp)+(xp*map->spaceX)-offsetX, y+(map->tileSizeY*yp)+(yp*map->spaceY)-offsetY, texX, texY, map->tileSizeX, map->tileSizeY, map->texture->blendColor);
 			}
 		}
 	}
-	
+
+	sf2d_set_scissor_test(lua_scissor.mode, lua_scissor.x, lua_scissor.y, lua_scissor.width, lua_scissor.height);
+
 	return 0;
 }
 
 /***
 Unload a map.
 @function :unload
-@within Methods
 */
 static int map_unload(lua_State *L) {
 	map_userdata *map = luaL_checkudata(L, 1, "LMap");
 
 	free(map->data);
+
+	// Remove the reference to the texture in the registry
+	// registry[map_userdata] = nil
+	lua_pushnil(L);
+	lua_copy(L, 1, -1); // map_userdata
+	lua_pushnil(L);
+	lua_settable(L, LUA_REGISTRYINDEX);
 
 	return 0;
 }
@@ -210,7 +252,6 @@ Return the size of a map.
 @function :getSize
 @treturn number width of the map, in tiles
 @treturn number height of the map, in tiles
-@within Methods
 */
 static int map_getSize(lua_State *L) {
 	map_userdata *map = luaL_checkudata(L, 1, "LMap");
@@ -227,7 +268,6 @@ Return the value of a tile.
 @tparam number x X position of the tile (in tiles)
 @tparam number y Y position of the tile (in tiles)
 @treturn number value of the tile
-@within Methods
 */
 static int map_getTile(lua_State *L) {
 	map_userdata *map = luaL_checkudata(L, 1, "LMap");
@@ -245,7 +285,6 @@ Set the value of a tile.
 @tparam number x X position of the tile (in tiles)
 @tparam number y Y position of the tile (in tiles)
 @tparam number value new value for the tile
-@within Methods
 */
 static int map_setTile(lua_State *L) {
 	map_userdata *map = luaL_checkudata(L, 1, "LMap");
