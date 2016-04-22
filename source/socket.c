@@ -109,7 +109,9 @@ static int socket_shutdown(lua_State *L) {
 /***
 Return a TCP socket.
 @function tcp
-@treturn TCPMaster TCP socket
+@treturn[1] TCPMaster TCP socket
+@treturn[2] nil in case of error
+@treturn[2] string error message
 */
 static int socket_tcp(lua_State *L) {
 	socket_userdata *userdata = lua_newuserdata(L, sizeof(*userdata));
@@ -134,7 +136,9 @@ static int socket_tcp(lua_State *L) {
 /***
 Return an UDP socket.
 @function udp
-@treturn UDPMaster UDP socket
+@treturn[1] UDPMaster UDP socket
+@treturn[2] nil in case of error
+@treturn[2] string error message
 */
 static int socket_udp(lua_State *L) {
 	socket_userdata *userdata = lua_newuserdata(L, sizeof(*userdata));
@@ -371,7 +375,9 @@ If no data is avaible, it returns an empty string (non-blocking).
 							   "a" to receive everything,
 							   "l" to receive the next line, skipping the end of line,
 							   "L" to receive the next line, keeping the end of line.
-@treturn string data
+@treturn[1] string data
+@treturn[2] nil in case of error
+@treturn[2] integer error code
 */
 static int socket_receive(lua_State *L) {
 	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
@@ -440,7 +446,9 @@ static int socket_receive(lua_State *L) {
 Send some data over the TCP socket.
 @function :send
 @tparam string data data to send
-@treturn number amount of data sent
+@treturn[1] number amount of data sent
+@treturn[2] nil in case of error
+@treturn[2] integer/string error code/message
 */
 static int socket_send(lua_State *L) {
 	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");

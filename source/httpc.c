@@ -40,6 +40,9 @@ Open an url in the context.
 @function :open
 @tparam string url the url to open
 @tparam[opt="GET"] string method method to use; can be `"GET"`, `"POST"`, `"HEAD"`, `"PUT"` or `"DELETE"`
+@treturn[1] boolean `true` if everything went fine
+@treturn[2] boolean `false` in case of error
+@treturn[2] integer error code
 */
 static int httpc_open(lua_State *L) {
 	httpcContext *context = lua_touserdata(L, 1);
@@ -59,7 +62,7 @@ static int httpc_open(lua_State *L) {
 	
 	ret = httpcOpenContext(context, method, url, 0);
 	if (ret != 0) {
-		lua_pushnil(L);
+		lua_pushboolean(L, false);
 		lua_pushinteger(L, ret);
 		return 2;
 	}
@@ -72,6 +75,9 @@ Add a field in the request header.
 @function :addRequestHeaderField
 @tparam string name Name of the field
 @tparam string value Value of the field
+@treturn[1] boolean `true` if everything went fine
+@treturn[2] boolean `false` in case of error
+@treturn[2] integer error code
 */
 static int httpc_addRequestHeaderField(lua_State *L) {
 	httpcContext *context = lua_touserdata(L, 1);
@@ -80,7 +86,7 @@ static int httpc_addRequestHeaderField(lua_State *L) {
 	
 	Result ret = httpcAddRequestHeaderField(context, name ,value);
 	if (ret != 0) {
-		lua_pushnil(L);
+		lua_pushboolean(L, false);
 		lua_pushinteger(L, ret);
 		return 2;
 	}
@@ -91,6 +97,9 @@ static int httpc_addRequestHeaderField(lua_State *L) {
 /***
 Begin a request to get the content at the URL.
 @function :beginRequest
+@treturn[1] boolean `true` if everything went fine
+@treturn[2] boolean `false` in case of error
+@treturn[2] integer error code
 */
 static int httpc_beginRequest(lua_State *L) {
 	httpcContext *context = lua_touserdata(L, 1);
@@ -98,7 +107,7 @@ static int httpc_beginRequest(lua_State *L) {
 	
 	ret = httpcBeginRequest(context);
 	if (ret != 0) {
-		lua_pushnil(L);
+		lua_pushboolean(L, false);
 		lua_pushinteger(L, ret);
 		return 2;
 	}
@@ -109,7 +118,9 @@ static int httpc_beginRequest(lua_State *L) {
 /***
 Return the status code returned by the request.
 @function :getStatusCode
-@treturn number the status code
+@treturn[1] integer the status code
+@treturn[2] nil in case of error
+@treturn[2] integer error code
 */
 static int httpc_getStatusCode(lua_State *L) {
 	httpcContext *context = lua_touserdata(L, 1);
@@ -143,7 +154,9 @@ static int httpc_getDownloadSize(lua_State *L) {
 /***
 Download and return the data of the context.
 @function :downloadData
-@treturn string data
+@treturn[1] string data
+@treturn[2] nil in case of error
+@treturn[2] integer error code
 */
 static int httpc_downloadData(lua_State *L) {
 	httpcContext *context = lua_touserdata(L, 1);
@@ -167,9 +180,9 @@ static int httpc_downloadData(lua_State *L) {
 	}
 	
 	lua_pushstring(L, (char*)buff);
-	//free(buff);
-	lua_pushinteger(L, size); // only for test purposes.
-	return 2;
+	//free(buff); FIXME we need to free this buffer at some point ?
+	//lua_pushinteger(L, size); // only for test purposes.
+	return 1;
 }
 
 /***
@@ -223,6 +236,9 @@ static int httpc_getResponseHeader(lua_State *L) {
 Add a trusted RootCA cert to a context.
 @function :addTrustedRootCA
 @tparam string DER certificate
+@treturn[1] boolean `true` if everything went fine
+@treturn[2] boolean `false` in case of error
+@treturn[2] integer error code
 */
 static int httpc_addTrustedRootCA(lua_State *L) {
 	httpcContext *context = lua_touserdata(L, 1);
@@ -231,7 +247,7 @@ static int httpc_addTrustedRootCA(lua_State *L) {
 	
 	Result ret = httpcAddTrustedRootCA(context, cert, certsize);
 	if (ret != 0) {
-		lua_pushnil(L);
+		lua_pushboolean(L, false);
 		lua_pushinteger(L, ret);
 		return 2;
 	}

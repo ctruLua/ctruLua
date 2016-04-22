@@ -44,9 +44,36 @@ local fileModified = false
 local function displayedText(text)
 	return text:gsub("\t", "    "), nil
 end
+local function drawTop(eye)
+	-- Depth multiplicator. Multiply by a positive and add to x to add depth; multiply by a negative and add to x to go out of the screen.
+	local function d(mul) return math.floor(mul * hid.pos3d() * eye) end
+
+	-- Lines
+	local sI = math.floor(scrollY / lineHeight)
+	if sI < 1 then sI = 1 end
+
+	local eI = math.ceil((scrollY + gfx.TOP_HEIGHT) / lineHeight)
+	if eI > #lines then eI = #lines end
+
+	for i = sI, eI, 1 do
+		local x = -scrollX
+		local y = -scrollY+ (i-1)*lineHeight
+
+		for _,colored in ipairs(coloredLines[i]) do
+			local str = displayedText(colored[1])
+			gfx.text(x + d(#(lines[i]:match("^%s+") or "")*3), y, str, fontSize, colored[2])
+			x = x + font:width(str)
+		end
+	end
+
+	-- Cursor
+	local curline = lines[cursorY]
+	gfx.rectangle(-scrollX+ font:width(displayedText(curline:sub(1, (utf8.offset(curline, cursorX) or 0)-1))) + d(#(curline:match("^%s+") or "")*3), 
+	              -scrollY+ (cursorY-1)*lineHeight, 1, lineHeight, 0, color.cursor)
+end
 
 -- Set defaults
-gfx.set3D(false)
+gfx.set3D(true)
 gfx.color.setDefault(color.default)
 gfx.color.setBackground(color.background)
 gfx.font.setDefault(font)
@@ -178,32 +205,17 @@ while ctr.run() do
 	end
 	
 	-- Draw
-	gfx.start(gfx.TOP)
+	local is3D = hid.pos3d() > 0
 
-		-- Lines
-		local sI = math.floor(scrollY / lineHeight)
-		if sI < 1 then sI = 1 end
-		
-		local eI = math.ceil((scrollY + gfx.TOP_HEIGHT) / lineHeight)
-		if eI > #lines then eI = #lines end
-		
-		for i = sI, eI, 1 do
-			local x = -scrollX
-			local y = -scrollY+ (i-1)*lineHeight
-
-			for _,colored in ipairs(coloredLines[i]) do
-				local str = displayedText(colored[1])
-				gfx.text(x, y, str, fontSize, colored[2])
-				x = x + font:width(str)
-			end
-		end
-
-		-- Cursor
-		local curline = lines[cursorY]
-		gfx.rectangle(-scrollX+ font:width(displayedText(curline:sub(1, (utf8.offset(curline, cursorX) or 0)-1))), 
-		              -scrollY+ (cursorY-1)*lineHeight, 1, lineHeight, 0, color.cursor)
-
+	gfx.start(gfx.TOP, gfx.LEFT)
+		drawTop(is3D and 0 or -1)
 	gfx.stop()
+
+	if is3D then
+		gfx.start(gfx.TOP, gfx.RIGHT)
+			drawTop(1)
+		gfx.stop()
+	end
 	
 	gfx.start(gfx.BOTTOM)
 

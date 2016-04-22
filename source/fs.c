@@ -52,14 +52,16 @@ const char* prefix_path(const char* path) {
 Lists a directory contents (unsorted).
 @function list
 @tparam string path the directory we wants to list the content
-@treturn table the item list. Each item is a table like:
+@treturn[1] table the item list. Each item is a table like:
 `
 	{
 		name = "Item name.txt",
 		isDirectory = false,
-		fileSize = 321 -- (integer) in bytes
+		size = 321 -- (integer) item size, in bytes
 	}
 `
+@treturn[2] nil if an error occurred
+@treturn[2] string error message
 */
 static int fs_list(lua_State *L) {
 	const char* basepath = prefix_path(luaL_checkstring(L, 1));
@@ -80,8 +82,8 @@ static int fs_list(lua_State *L) {
 	DIR* dir = opendir(path);
 	if (dir == NULL) {
 		if (shouldFreePath) free(path);
-		lua_pushboolean(L, false);
-		lua_pushstring(L, strerror(errno));
+		lua_pushnil(L);
+		lua_pushfstring(L, "Can't open directory: %s (%s)", strerror(errno), errno);
 		return 2;
 	}
 	errno = 0;
@@ -96,21 +98,17 @@ static int fs_list(lua_State *L) {
 		
 		if (entry->d_type==DT_REG) { // Regular files: check size
 			char* filepath = malloc(strlen(path)+strlen(entry->d_name)+1);
-			if (filepath == NULL) {
+			if (filepath == NULL)
 				luaL_error(L, "Memory allocation error");
-			}
-			memset(filepath, 0, strlen(path)+strlen(entry->d_name)+1);
-			
 			strcpy(filepath, path);
 			strcat(filepath, entry->d_name);
+
 			struct stat stats;
 			if (stat(filepath, &stats)) {
 				free(filepath);
 				if (shouldFreePath) free(path);
 				luaL_error(L, "Stat error: %s (%d)", strerror(errno), errno);
-				lua_pushboolean(L, false);
-				lua_pushstring(L, strerror(errno));
-				return 2;
+				return 0;
 			} else {
 				lua_pushinteger(L, stats.st_size);
 			}
@@ -118,7 +116,7 @@ static int fs_list(lua_State *L) {
 		} else { // Everything else: 0 bytes
 			lua_pushinteger(L, 0);
 		}
-		lua_setfield(L, -2, "fileSize");
+		lua_setfield(L, -2, "size");
 
 		lua_seti(L, -2, i);
 		i++;

@@ -117,7 +117,9 @@ Setup the new 3DS CPU features (overclock, 4 cores ...)
 @newonly
 @function configureNew3DSCPU
 @tparam boolean enable enable the New3DS CPU features
-@treturn boolean `true` if everything went fine
+@treturn[1] boolean `true` if everything went fine
+@treturn[2] boolean `false` in case of error
+@treturn[2] integer error code
 */
 static int ptm_configureNew3DSCPU(lua_State *L) {
 	u8 conf = false;

@@ -115,7 +115,7 @@ local function drawBottom(externalConfig, workingDirectoryScroll, selected)
 
 		gfx.text(1, 15, selectedFile.name, 12)
 		if not selectedFile.isDirectory then
-			gfx.text(1, 45, tostring(selectedFile.fileSize) .. "B", 12, 0xFF727272)
+			gfx.text(1, 45, tostring(selectedFile.size) .. "B", 12, 0xFF727272)
 		end
 
 		local binding, pattern = getBinding(selectedFile, bindings)

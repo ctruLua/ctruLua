@@ -37,6 +37,9 @@ Bitrate codes list (this is not a part of the module, just a reference)
 Initialize the IR module.
 @function init
 @tparam[opt=6] number bitrate bitrate of the IR module (more informations below)
+@treturn[1] boolean `true` if everything went fine
+@treturn[2] boolean `false` in case of error
+@treturn[2] integer error code
 */
 static int ir_init(lua_State *L) {
 	u8 bitrate = luaL_optinteger(L, 1, 6);
@@ -56,6 +59,9 @@ static int ir_init(lua_State *L) {
 /***
 Disable the IR module.
 @function shutdown
+@treturn[1] boolean `true` if everything went fine
+@treturn[2] boolean `false` in case of error
+@treturn[2] integer error code
 */
 static int ir_shutdown(lua_State *L) {
 	Result ret = IRU_Shutdown();
@@ -74,6 +80,9 @@ Send some data over the IR module.
 @function send
 @tparam string data just some data
 @tparam[opt=false] boolean wait set to `true` to wait until the data is sent.
+@treturn[1] boolean `true` if everything went fine
+@treturn[2] boolean `false` in case of error
+@treturn[2] integer error code
 */
 static int ir_send(lua_State *L) {
 	u8 *data = (u8*)luaL_checkstring(L, 1);
@@ -98,7 +107,9 @@ Receive some data from the IR module.
 @function receive
 @tparam number size bytes to receive
 @tparam[opt=false] boolean wait wait until the data is received
-@return string data
+@treturn[1] string data
+@treturn[2] nil in case of error
+@treturn[2] integer error code
 */
 static int ir_receive(lua_State *L) {
 	u32 size = luaL_checkinteger(L, 1);
@@ -108,7 +119,7 @@ static int ir_receive(lua_State *L) {
 	
 	Result ret = iruRecvData(data, size, 0x00, &transfercount, wait);
 	if (ret) {
-		lua_pushboolean(L, false);
+		lua_pushnil(L);
 		lua_pushinteger(L, ret);
 		return 2;
 	}
@@ -122,6 +133,9 @@ static int ir_receive(lua_State *L) {
 Set the bitrate of the communication.
 @function setBitRate
 @tparam number bitrate new bitrate for the communication
+@treturn[1] boolean `true` if everything went fine
+@treturn[2] boolean `false` in case of error
+@treturn[2] integer error code
 */
 static int ir_setBitRate(lua_State *L) {
 	u8 bitrate = luaL_checkinteger(L, 1);
@@ -133,20 +147,24 @@ static int ir_setBitRate(lua_State *L) {
 		return 2;
 	}
 	
-	return 0;
+	lua_pushboolean(L, true);
+
+	return 1;
 }
 
 /***
 Return the actual bitrate of the communication.
 @function getBitRate
-@treturn number actual bitrate
+@treturn[1] number actual bitrate
+@treturn[2] nil in case of error
+@treturn[2] integer error code
 */
 static int ir_getBitRate(lua_State *L) {
 	u8 bitrate = 0;
 	
 	Result ret = IRU_GetBitRate(&bitrate);
 	if (ret) {
-		lua_pushboolean(L, false);
+		lua_pushnil(L);
 		lua_pushinteger(L, ret);
 		return 2;
 	}

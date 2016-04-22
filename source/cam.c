@@ -21,6 +21,9 @@ The `cam` module.
 /***
 Initialize the camera module.
 @function init
+@treturn[1] boolean `true` if everything went fine
+@treturn[2] boolean `false` in case of error
+@treturn[2] integer error code
 */
 static int cam_init(lua_State *L) {
 	Result ret = camInit();

@@ -20,20 +20,23 @@ u32 bufferSize = 0;
 Initialize the mic module.
 @function init
 @tparam[opt=0x50000] number bufferSize size of the buffer (must be a multiple of 0x1000)
+@treturn[1] boolean `true` if everything went fine
+@treturn[2] boolean `false` in case of error
+@treturn[2] integer/string error code/message
 */
 static int mic_init(lua_State *L) {
 	bufferSize = luaL_optinteger(L, 1, 0x50000);
 	
 	buff = memalign(0x1000, bufferSize);
 	if (buff == NULL) {
-		lua_pushnil(L);
+		lua_pushboolean(L, false);
 		lua_pushstring(L, "Couldn't allocate buffer");
 		return 2;
 	}
 	Result ret = micInit(buff, bufferSize);
 	if (ret) {
 		free(buff);
-		lua_pushnil(L);
+		lua_pushboolean(L, false);
 		lua_pushinteger(L, ret);
 		return 2;
 	}

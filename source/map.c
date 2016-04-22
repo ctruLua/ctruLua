@@ -1,5 +1,5 @@
 /***
-The `map` module.
+The `gfx.map` module.
 Tile coordinates start at x=0,y=0.
 @module ctr.gfx.map
 @usage local map = require("ctr.gfx.map")
@@ -47,7 +47,9 @@ Load a map from a file.
 @tparam texture tileset containing the tileset
 @tparam number tileWidth tile width
 @tparam number tileHeight tile height
-@treturn map loaded map object
+@treturn[1] map loaded map object
+@treturn[2] nil in case of error
+@treturn[2] string error message
 */
 static int map_load(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 2, "LTexture");

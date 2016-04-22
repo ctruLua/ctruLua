@@ -22,6 +22,9 @@ static const struct luaL_Reg qtm_methods[];
 /***
 Initialize the QTM module.
 @function init
+@treturn[1] boolean `true` if everything went fine
+@treturn[2] boolean `false` in case of error
+@treturn[2] integer error code
 */
 static int qtm_init(lua_State *L) {
 	Result ret = qtmInit();
@@ -121,8 +124,10 @@ Convert QTM coordinates to screen coordinates
 @tparam number coordinates index
 @tparam[opt=400] number screenWidth specify a screen width
 @tparam[opt=320] number screenHeight specify a screen height
-@treturn number screen X coordinate
-@treturn number screen Y coordinate
+@treturn[1] number screen X coordinate
+@treturn[1] number screen Y coordinate
+@treturn[2] nil in case of error
+@treturn[2] string error message
 */
 static int qtm_convertCoordToScreen(lua_State *L) {
 	qtm_userdata *info = luaL_checkudata(L, 1, "LQTM");
@@ -130,7 +135,7 @@ static int qtm_convertCoordToScreen(lua_State *L) {
 	index = index - 1; // Lua index begins at 1
 	if (index > 3 || index < 0) {
 		lua_pushnil(L);
-		lua_pushnil(L);
+		lua_pushstring(L, "Index must be between 1 and 3");
 		return 2;
 	}
 	float screenWidth = luaL_optnumber(L, 3, 400.0f);

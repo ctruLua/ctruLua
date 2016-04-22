@@ -43,7 +43,9 @@ Load a texture from a file. Supported formats: PNG, JPEG, BMP.
 @tparam string path path to the image file
 @tparam[opt=PLACE_RAM] number place where to put the loaded texture
 @tparam[opt=auto] number type type of the image
-@treturn texture the loaded texture object
+@treturn[1] texture the loaded texture object
+@treturn[2] nil in case of error
+@treturn[2] string error message
 */
 static int texture_load(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
@@ -272,7 +274,7 @@ Save a texture to a file.
 @tparam string filename path to the file to save the texture to
 @tparam[opt=TYPE_PNG] number type type of the image to save. Can be TYPE_PNG or TYPE_BMP
 @treturn[1] boolean true on success
-@treturn[2] nil
+@treturn[2] boolean `false` in case of error
 @treturn[2] string error message
 */
 static int texture_save(lua_State *L) {
@@ -284,7 +286,7 @@ static int texture_save(lua_State *L) {
 	if (type == 0) { // PNG
 		FILE* file = fopen(path, "wb");
 		if (file == NULL) {
-			lua_pushnil(L);
+			lua_pushboolean(L, false);
 			lua_pushstring(L, "Can open file");
 			return 2;
 		}
@@ -317,7 +319,7 @@ static int texture_save(lua_State *L) {
 	} else if (type == 2) { // BMP
 		u32* buff = malloc(texture->texture->width * texture->texture->height * 4);
 		if (buff == NULL) {
-			lua_pushnil(L);
+			lua_pushboolean(L, false);
 			lua_pushstring(L, "Failed to allocate buffer");
 			return 2;
 		}
@@ -330,13 +332,13 @@ static int texture_save(lua_State *L) {
 		free(buff);
 	
 	} else {
-		lua_pushnil(L);
+		lua_pushboolean(L, false);
 		lua_pushstring(L, "Not a valid type");
 		return 2;
 	}
 
 	if (result == 0) {
-		lua_pushnil(L);
+		lua_pushboolean(L, false);
 		lua_pushstring(L, "Failed to save the texture");
 		return 2;
 	}

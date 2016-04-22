@@ -1,5 +1,5 @@
 /***
-The `font` module
+The `gfx.font` module
 @module ctr.gfx.font
 @usage local font = require("ctr.gfx.font")
 */
@@ -21,7 +21,9 @@ u32 textSize = 9;
 Load a TTF font.
 @function load
 @tparam string path path to the file
-@treturn font the loaded font.
+@treturn[1] font the loaded font.
+@treturn[2] nil if an error occurred
+@treturn[2] string error message
 */
 static int font_load(lua_State *L) {
 	const char *path = luaL_checkstring(L, 1);
