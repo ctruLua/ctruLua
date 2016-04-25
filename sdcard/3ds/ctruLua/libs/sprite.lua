@@ -68,7 +68,7 @@ function mod.new(texture, fsx, fsy)
 		animations = {},
 		currentAnimation = 0,
 		currentFrame = 1,
-		frameTimer = 0,
+		frameTimer = ctr.time(),
 
 		draw = draw,
 		addAnimation = addAnimation,

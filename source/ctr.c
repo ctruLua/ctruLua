@@ -140,11 +140,23 @@ static int ctr_run(lua_State *L) {
 }
 
 /***
-Return the number of milliseconds since 1st Jan 1900 00:00.
+Return the number of milliseconds spent since some point in time.
+This can be used to measure a duration with milliseconds precision; however this can't be used to get the current time or date.
+See Lua's os.date() for this use.
+For various reasons (see the C source), this will actually returns a negative value.
 @function time
 @treturn number milliseconds
+@usage
+-- Measuring a duration:
+local startTime = ctr.time()
+-- do stuff
+local duration = ctr.time() - startTime
 */
 static int ctr_time(lua_State *L) {
+	// osGetTime actually returns the number of seconds elapsed since 1st Jan 1900 00:00.
+	// However, it returns a u64, we build Lua with 32bits numbers, and every number is signed in Lua, so this obvioulsy doesn't work
+	// and actually returns a negative value. It still works for durations however. Because having the date and time with millisecond-presion
+	// doesn't really seem useful and changing ctrµLua's API to work on 64bits numbers will take a long time, we choosed to keep this as-is.
 	lua_pushinteger(L, osGetTime());
 
 	return 1;
