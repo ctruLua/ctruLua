@@ -38,11 +38,11 @@ int getType(const char *name) {
 // module functions
 
 /***
-Load a texture from a file. Supported formats: PNG, JPEG, BMP.
+Load a texture from a file. Supported formats: PNG, JPEG, BMP, GIF, PSD, TGA, HDR, PIC, PNM.
 @function load
 @tparam string path path to the image file
 @tparam[opt=PLACE_RAM] number place where to put the loaded texture
-@tparam[opt=auto] number type type of the image
+@tparam[opt=auto] number type type of the image. This is only used to force loading PNG, JPEG or BMP files with the sfil library; any value between 5 and 250 will force using the stbi library. Leave nil to autodetect the format.
 @treturn[1] texture the loaded texture object
 @treturn[2] nil in case of error
 @treturn[2] string error message
