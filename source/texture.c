@@ -54,10 +54,10 @@ static int texture_load(lua_State *L) {
 
 	texture_userdata *texture;
 	texture = (texture_userdata *)lua_newuserdata(L, sizeof(*texture));
-	
+
 	luaL_getmetatable(L, "LTexture");
 	lua_setmetatable(L, -2);
-	
+
 	if (type==3) type = getType(path);
 	if (type==0) { //PNG
 		texture->texture = sfil_load_PNG_file(path, place);
@@ -76,17 +76,17 @@ static int texture_load(lua_State *L) {
 		texture->texture = sf2d_create_texture_mem_RGBA8(data, w, h, TEXFMT_RGBA8, place);
 		free(data);
 	}
-	
+
 	if (texture->texture == NULL) {
 	  lua_pushnil(L);
 	  lua_pushstring(L, "No such file");
 	  return 2;
 	}
-	
+
 	texture->scaleX = 1.0f;
 	texture->scaleY = 1.0f;
 	texture->blendColor = 0xffffffff;
-	
+
 	return 1;
 }
 
@@ -102,20 +102,20 @@ static int texture_new(lua_State *L) {
 	int w = luaL_checkinteger(L, 1);
 	int h = luaL_checkinteger(L, 2);
 	u8 place = luaL_checkinteger(L, 3);
-	
+
 	texture_userdata *texture;
 	texture = (texture_userdata *)lua_newuserdata(L, sizeof(*texture));
-	
+
 	luaL_getmetatable(L, "LTexture");
 	lua_setmetatable(L, -2);
-	
+
 	texture->texture = sf2d_create_texture(w, h, TEXFMT_RGBA8, place);
 	sf2d_texture_tile32(texture->texture);
-	
+
 	texture->scaleX = 1.0f;
 	texture->scaleY = 1.0f;
 	texture->blendColor = 0xffffffff;
-	
+
 	return 1;
 }
 
@@ -127,35 +127,41 @@ Texture object
 /***
 Draw a texture.
 @function :draw
-@tparam number x X position
-@tparam number y Y position
-@tparam[opt=0.0] number rad rotation of the texture (in radians)
+@tparam integer x X position
+@tparam integer y Y position
+@tparam[opt=0.0] number rad rotation of the texture around the hotspot (in radians)
+@tparam[opt=0.0] number hotspotX the hostpot X coordinate
+@tparam[opt=0.0] number hotspotY the hostpot Y coordinate
 */
 static int texture_draw(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 	int x = luaL_checkinteger(L, 2);
 	int y = luaL_checkinteger(L, 3);
 	float rad = luaL_optnumber(L, 4, 0.0f);
-	
+	float hotspotX = luaL_optnumber(L, 5, 0.0f);
+	float hotspotY = luaL_optnumber(L, 6, 0.0f);
+
 	if (rad == 0.0f && texture->scaleX == 1.0f && texture->scaleY == 1.0f && texture->blendColor == 0xffffffff) {
-		sf2d_draw_texture(texture->texture, x, y);
+		sf2d_draw_texture(texture->texture, x - hotspotX, y - hotspotY);
 	} else {
-		sf2d_draw_texture_part_rotate_scale_blend(texture->texture, x, y, rad, 0, 0, texture->texture->width, texture->texture->height, texture->scaleX, texture->scaleY, texture->blendColor);
+		sf2d_draw_texture_rotate_scale_hotspot_blend(texture->texture, x, y, rad, texture->scaleX, texture->scaleY, hotspotX, hotspotY, texture->blendColor);
 	}
-	
+
 	return 0;
 }
 
 /***
 Draw a part of the texture
 @function :drawPart
-@tparam number x X position
-@tparam number y Y position
-@tparam number sx X position of the beginning of the part
-@tparam number sy Y position of the beginning of the part
-@tparam number w width of the part
-@tparam number h height of the part
-@tparam[opt=0.0] number rad rotation of the part (in radians)
+@tparam integer x X position
+@tparam integer y Y position
+@tparam integer sx X position of the beginning of the part
+@tparam integer sy Y position of the beginning of the part
+@tparam integer w width of the part
+@tparam integer h height of the part
+@tparam[opt=0.0] number rad rotation of the part around the hotspot (in radians)
+@tparam[opt=0.0] number hotspotX the hostpot X coordinate
+@tparam[opt=0.0] number hotspotY the hostpot Y coordinate
 */
 static int texture_drawPart(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
@@ -166,9 +172,11 @@ static int texture_drawPart(lua_State *L) {
 	int w = luaL_checkinteger(L, 6);
 	int h = luaL_checkinteger(L, 7);
 	int rad = luaL_optnumber(L, 8, 0.0f);
-	
-	sf2d_draw_texture_part_rotate_scale_blend(texture->texture, x, y, rad, sx, sy, w, h, texture->scaleX, texture->scaleY, texture->blendColor);
-	
+	float hotspotX = luaL_optnumber(L, 9, 0.0f);
+	float hotspotY = luaL_optnumber(L, 10, 0.0f);
+
+	sf2d_draw_texture_part_rotate_scale_hotspot_blend(texture->texture, x, y, rad, sx, sy, w, h, texture->scaleX, texture->scaleY, hotspotX, hotspotY, texture->blendColor);
+
 	return 0;
 }
 
@@ -193,12 +201,12 @@ Unload a texture.
 */
 static int texture_unload(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
-	
+
 	if (texture->texture == NULL) return 0;
 
 	sf2d_free_texture(texture->texture);
 	texture->texture = NULL;
-	
+
 	return 0;
 }
 
@@ -206,16 +214,16 @@ static int texture_unload(lua_State *L) {
 Rescale the texture. The default scale is `1.0`.
 @function :scale
 @tparam number scaleX new scale of the width
-@tparam number scaleY new scale of the height
+@tparam[opt=scaleX] number scaleY new scale of the height
 */
 static int texture_scale(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 	float sx = luaL_checknumber(L, 2);
-	float sy = luaL_checknumber(L, 3);
-	
+	float sy = luaL_optnumber(L, 3, sx);
+
 	texture->scaleX = sx;
 	texture->scaleY = sy;
-	
+
 	return 0;
 }
 
@@ -230,9 +238,9 @@ static int texture_getPixel(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 	int x = luaL_checkinteger(L, 2);
 	int y = luaL_checkinteger(L, 3);
-	
+
 	lua_pushinteger(L, sf2d_get_pixel(texture->texture, x, y));
-	
+
 	return 1;
 }
 
@@ -248,9 +256,9 @@ static int texture_setPixel(lua_State *L) {
 	int x = luaL_checkinteger(L, 2);
 	int y = luaL_checkinteger(L, 3);
 	u32 color = luaL_checkinteger(L, 4);
-	
+
 	sf2d_set_pixel(texture->texture, x, y, color);
-	
+
 	return 0;
 }
 
@@ -262,10 +270,23 @@ Set the blend color of the texture.
 static int texture_setBlendColor(lua_State *L) {
 	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
 	u32 color = luaL_checkinteger(L, 2);
-	
+
 	texture->blendColor = color;
-	
+
 	return 0;
+}
+
+/***
+Get the blend color of the texture.
+@function :getBlendColor
+@treturn number the blend color
+*/
+static int texture_getBlendColor(lua_State *L) {
+	texture_userdata *texture = luaL_checkudata(L, 1, "LTexture");
+
+	lua_pushinteger(L, texture->blendColor);
+
+	return 1;
 }
 
 /***
@@ -357,6 +378,7 @@ static const struct luaL_Reg texture_methods[] = {
 	{ "getPixel",      texture_getPixel      },
 	{ "setPixel",      texture_setPixel      },
 	{ "setBlendColor", texture_setBlendColor },
+	{ "getBlendColor", texture_getBlendColor },
 	{ "save",          texture_save          },
 	{ "__gc",          texture_unload        },
 	{NULL, NULL}

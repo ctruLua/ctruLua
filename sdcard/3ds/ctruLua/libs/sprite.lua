@@ -26,7 +26,7 @@ local function draw(self, x, y, rad)
 	local tsx, tsy = self.texture:getSize()
 
 	local sx, sy = getBox(tsx, tsy, frame, self.frameSizeX, self.frameSizeY)
-	self.texture:drawPart(x, y, sx, sy, self.frameSizeX, self.frameSizeY, rad)
+	self.texture:drawPart(x, y, sx, sy, self.frameSizeX, self.frameSizeY, rad, self.offsetX, self.offsetY)
 
 	return frame
 end
@@ -52,12 +52,19 @@ local function resetTimer(self)
 	self.frameTimer = ctr.time()
 end
 
+local function setOffset(self, x, y)
+	self.offsetX = x or 0
+	self.offsetY = y or self.offsetX
+end
+
 -- Sprite object constructor
 function mod.new(texture, fsx, fsy)
 	return {
 		texture = texture,
 		frameSizeX = fsx,
 		frameSizeY = fsy,
+		offsetX = 0,
+		offsetY = 0,
 		animations = {},
 		currentAnimation = 0,
 		currentFrame = 1,
@@ -66,6 +73,7 @@ function mod.new(texture, fsx, fsy)
 		draw = draw,
 		addAnimation = addAnimation,
 		setAnimation = setAnimation,
+		setOffset = setOffset,
 		resetTimer = resetTimer,
 	}
 end

@@ -599,18 +599,18 @@ void sf2d_draw_texture_part_scale_blend(const sf2d_texture *texture, float x, fl
 	sf2d_draw_texture_part_scale_generic(texture, x, y, tex_x, tex_y, tex_w, tex_h, x_scale, y_scale);
 }
 
-static inline void sf2d_draw_texture_part_rotate_scale_generic(const sf2d_texture *texture, int x, int y, float rad, int tex_x, int tex_y, int tex_w, int tex_h, float x_scale, float y_scale)
+static inline void sf2d_draw_texture_part_rotate_scale_hotspot_generic(const sf2d_texture *texture, int x, int y, float rad, int tex_x, int tex_y, int tex_w, int tex_h, float x_scale, float y_scale, float center_x, float center_y)
 {
 	sf2d_vertex_pos_tex *vertices = sf2d_pool_memalign(4 * sizeof(sf2d_vertex_pos_tex), 8);
 	if (!vertices) return;
 
-	int w2 = (tex_w * x_scale)/2.0f;
-	int h2 = (tex_h * y_scale)/2.0f;
+	int w = tex_w;
+	int h = tex_h;
 
-	vertices[0].position = (sf2d_vector_3f){(float)-w2, (float)-h2, SF2D_DEFAULT_DEPTH};
-	vertices[1].position = (sf2d_vector_3f){(float) w2, (float)-h2, SF2D_DEFAULT_DEPTH};
-	vertices[2].position = (sf2d_vector_3f){(float)-w2, (float) h2, SF2D_DEFAULT_DEPTH};
-	vertices[3].position = (sf2d_vector_3f){(float) w2, (float) h2, SF2D_DEFAULT_DEPTH};
+	vertices[0].position = (sf2d_vector_3f){(float)-center_x * x_scale, (float)-center_y * y_scale, SF2D_DEFAULT_DEPTH};
+	vertices[1].position = (sf2d_vector_3f){(float) (w - center_x) * x_scale, (float)-center_y * y_scale, SF2D_DEFAULT_DEPTH};
+	vertices[2].position = (sf2d_vector_3f){(float)-center_x * x_scale, (float) (h - center_y) * y_scale, SF2D_DEFAULT_DEPTH};
+	vertices[3].position = (sf2d_vector_3f){(float) (w - center_x) * x_scale, (float) h - center_y * y_scale, SF2D_DEFAULT_DEPTH};
 
 	float u0 = tex_x/(float)texture->pow2_w;
 	float v0 = tex_y/(float)texture->pow2_h;
@@ -650,13 +650,19 @@ static inline void sf2d_draw_texture_part_rotate_scale_generic(const sf2d_textur
 void sf2d_draw_texture_part_rotate_scale(const sf2d_texture *texture, int x, int y, float rad, int tex_x, int tex_y, int tex_w, int tex_h, float x_scale, float y_scale)
 {
 	sf2d_bind_texture(texture, GPU_TEXUNIT0);
-	sf2d_draw_texture_part_rotate_scale_generic(texture, x, y, rad, tex_x, tex_y, tex_w, tex_h, x_scale, y_scale);
+	sf2d_draw_texture_part_rotate_scale_hotspot_generic(texture, x, y, rad, tex_x, tex_y, tex_w, tex_h, x_scale, y_scale, tex_w/2.0f, tex_h/2.0f);
 }
 
 void sf2d_draw_texture_part_rotate_scale_blend(const sf2d_texture *texture, int x, int y, float rad, int tex_x, int tex_y, int tex_w, int tex_h, float x_scale, float y_scale, u32 color)
 {
 	sf2d_bind_texture_color(texture, GPU_TEXUNIT0, color);
-	sf2d_draw_texture_part_rotate_scale_generic(texture, x, y, rad, tex_x, tex_y, tex_w, tex_h, x_scale, y_scale);
+	sf2d_draw_texture_part_rotate_scale_hotspot_generic(texture, x, y, rad, tex_x, tex_y, tex_w, tex_h, x_scale, y_scale, tex_w/2.0f, tex_h/2.0f);
+}
+
+void sf2d_draw_texture_part_rotate_scale_hotspot_blend(const sf2d_texture *texture, int x, int y, float rad, int tex_x, int tex_y, int tex_w, int tex_h, float x_scale, float y_scale, float center_x, float center_y, u32 color)
+{
+	sf2d_bind_texture_color(texture, GPU_TEXUNIT0, color);
+	sf2d_draw_texture_part_rotate_scale_hotspot_generic(texture, x, y, rad, tex_x, tex_y, tex_w, tex_h, x_scale, y_scale, center_x, center_y);
 }
 
 static inline void sf2d_draw_texture_depth_generic(const sf2d_texture *texture, int x, int y, signed short z)

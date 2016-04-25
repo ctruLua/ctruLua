@@ -589,6 +589,24 @@ void sf2d_draw_texture_part_rotate_scale(const sf2d_texture *texture, int x, int
 void sf2d_draw_texture_part_rotate_scale_blend(const sf2d_texture *texture, int x, int y, float rad, int tex_x, int tex_y, int tex_w, int tex_h, float x_scale, float y_scale, u32 color);
 
 /**
+ * @brief Draws a part of a texture, with rotation, scaling, color and hotspot
+ * @param texture the texture to draw
+ * @param x the x coordinate to draw the texture to
+ * @param y the y coordinate to draw the texture to
+ * @param rad rotation (in radians) to draw the texture
+ * @param tex_x the starting point (x coordinate) where to start drawing
+ * @param tex_y the starting point (y coordinate) where to start drawing
+ * @param tex_w the width to draw from the starting point
+ * @param tex_h the height to draw from the starting point
+ * @param x_scale the x scale
+ * @param y_scale the y scale
+ * @param center_x the x position of the hotspot
+ * @param center_y the y position of the hotspot
+ * @param color the color to blend with the texture
+ */
+void sf2d_draw_texture_part_rotate_scale_hotspot_blend(const sf2d_texture *texture, int x, int y, float rad, int tex_x, int tex_y, int tex_w, int tex_h, float x_scale, float y_scale, float center_x, float center_y, u32 color);
+
+/**
  * @brief Draws a texture blended in a certain depth
  * @param texture the texture to draw
  * @param x the x coordinate to draw the texture to
