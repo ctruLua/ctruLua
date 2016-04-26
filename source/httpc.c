@@ -275,6 +275,22 @@ static int httpc_setSSLOptions(lua_State *L) {
 	return 0;
 }
 
+/***
+Add all the default certificates to the context.
+@function addDefaultCert
+*/
+static int httpc_addDefaultCert(lua_State *L) {
+	httpcContext *context = lua_touserdata(L, 1);
+	
+	httpcAddDefaultCert(context, SSLC_DefaultRootCert_CyberTrust);
+	httpcAddDefaultCert(context, SSLC_DefaultRootCert_AddTrust_External_CA);
+	httpcAddDefaultCert(context, SSLC_DefaultRootCert_COMODO);
+	httpcAddDefaultCert(context, SSLC_DefaultRootCert_USERTrust);
+	httpcAddDefaultCert(context, SSLC_DefaultRootCert_DigiCert_EV);
+	
+	return 0;
+}
+
 // object
 static const struct luaL_Reg httpc_methods[] = {
 	{"open",                  httpc_open                 },
@@ -289,6 +305,7 @@ static const struct luaL_Reg httpc_methods[] = {
 	{"getResponseHeader",     httpc_getResponseHeader    },
 	{"addTrustedRootCA",      httpc_addTrustedRootCA     },
 	{"setSSLOptions",         httpc_setSSLOptions        },
+	{"addDefaultCert",        httpc_addDefaultCert       },
 	{NULL, NULL}
 };
 

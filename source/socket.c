@@ -92,7 +92,7 @@ static int socket_init(lua_State *L) {
 }
 
 /***
-Disable the socket module. Must be called before exiting ctrµLua.
+Disable the socket module.
 @function shutdown
 */
 static int socket_shutdown(lua_State *L) {

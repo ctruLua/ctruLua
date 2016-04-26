@@ -129,6 +129,14 @@ The `ctr.thread` module.
 void load_thread_lib(lua_State *L);
 
 /***
+The `ctr.uds` module.
+@table uds
+@see ctr.uds
+*/
+void load_uds_lib(lua_State *L);
+void unload_uds_lib(lua_State *L);
+
+/***
 Return whether or not the program should continue.
 @function run
 @treturn boolean `false` if the program should exist or `true` if it can continue
@@ -198,6 +206,7 @@ struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); }
 	{ "apt",    load_apt_lib,    unload_apt_lib   },
 	{ "mic",    load_mic_lib,    NULL             },
 	{ "thread", load_thread_lib, NULL             },
+	{ "uds",    load_uds_lib,    unload_uds_lib   },
 	{ NULL, NULL, NULL }
 };
 
