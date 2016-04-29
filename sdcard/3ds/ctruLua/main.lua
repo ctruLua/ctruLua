@@ -14,6 +14,7 @@ local function displayError(err, trace)
 	gfx.color.setDefault(0xFFFDFDFD)
 	gfx.font.setSize(12)
 	gfx.font.setDefault(gfx.font.load(ctr.root .. "resources/VeraMono.ttf"))
+	gfx.disableConsole()
 
 	while ctr.run() do
 		gfx.start(gfx.BOTTOM)

@@ -35,6 +35,14 @@ scissor_state lua_scissor = {
 	0, 0
 };
 
+// Rotate a point (x,y) around the center (cx,cy) by angle radians.
+void rotatePoint(int x, int y, int cx, int cy, float angle, int* outx, int* outy) {
+	float s = sin(angle), c = cos(angle);
+	int tx = x - cx, ty = y - cy;
+	*outx = round(tx * c - ty * s) + cx;
+	*outy = round(tx * s + ty * c) + cy;
+}
+
 /***
 The `ctr.gfx.color` module.
 @table color
@@ -227,7 +235,7 @@ static int gfx_point(lua_State *L) {
 }
 
 /***
-Draw a rectangle on the current screen.
+Draw a filled rectangle on the current screen.
 @function rectangle
 @tparam integer x rectangle origin horizontal coordinate, in pixels
 @tparam integer y rectangle origin vertical coordinate, in pixels
@@ -254,7 +262,51 @@ static int gfx_rectangle(lua_State *L) {
 }
 
 /***
-Draw a circle on the current screen.
+Draw a rectangle outline on the current screen.
+@function linedRectangle
+@tparam integer x rectangle origin horizontal coordinate, in pixels
+@tparam integer y rectangle origin vertical coordinate, in pixels
+@tparam integer width rectangle width, in pixels
+@tparam integer height rectangle height, in pixels
+@tparam[opt=1] integer lineWidth line's thickness, in pixels
+@tparam[opt=0] number angle rectangle rotation, in radians
+@tparam[opt=default color] integer color drawing color
+*/
+static int gfx_linedRectangle(lua_State *L) {
+	int x = luaL_checkinteger(L, 1);
+	int y = luaL_checkinteger(L, 2);
+	int width = luaL_checkinteger(L, 3);
+	int height = luaL_checkinteger(L, 4);
+	float lineWidth = luaL_optnumber(L, 5, 1.0f);
+
+	float angle = luaL_optnumber(L, 6, 0);
+	u32 color = luaL_optinteger(L, 7, color_default);
+
+	// Corner coordinates
+	int x2 = x + width, y2 = y;
+	int x3 = x2, y3 = y + height;
+	int x4 = x, y4 = y3;
+
+	// Rotate corners
+	if (angle != 0) {
+		int cx = x + width/2, cy = y + height/2;
+		rotatePoint(x,  y,  cx, cy, angle, &x,  &y );
+		rotatePoint(x2, y2, cx, cy, angle, &x2, &y2);
+		rotatePoint(x3, y3, cx, cy, angle, &x3, &y3);
+		rotatePoint(x4, y4, cx, cy, angle, &x4, &y4);
+	}
+
+	// Draw lines
+	sf2d_draw_line(x,  y,  x2, y2, lineWidth, color);
+	sf2d_draw_line(x2, y2, x3, y3, lineWidth, color);
+	sf2d_draw_line(x3, y3, x4, y4, lineWidth, color);
+	sf2d_draw_line(x4, y4, x,  y,  lineWidth, color);
+
+	return 0;
+}
+
+/***
+Draw a filled circle on the current screen.
 @function circle
 @tparam integer x circle center horizontal coordinate, in pixels
 @tparam integer y circle center vertical coordinate, in pixels
@@ -269,6 +321,56 @@ static int gfx_circle(lua_State *L) {
 	u32 color = luaL_optinteger(L, 4, color_default);
 	
 	sf2d_draw_fill_circle(x, y, radius, color);
+
+	return 0;
+}
+
+/***
+Draw a circle outline on the current screen.
+@function linedCircle
+@tparam integer x circle center horizontal coordinate, in pixels
+@tparam integer y circle center vertical coordinate, in pixels
+@tparam integer radius circle radius, in pixels
+@tparam[opt=1] integer width line's thickness, in pixels
+@tparam[opt=default color] integer color drawing color
+*/
+static int gfx_linedCircle(lua_State *L) {
+	int x0 = luaL_checkinteger(L, 1);
+	int y0 = luaL_checkinteger(L, 2);
+	int radius = luaL_checkinteger(L, 3);
+	float width = luaL_optnumber(L, 4, 1.0f);
+
+	u32 color = luaL_optinteger(L, 5, color_default);
+
+	for (int r = ceil(radius - width/2), maxr = ceil(radius + width/2)-1; r <= maxr; r++) {
+		// Implementatin of the Andres circle algorithm.
+		int x = 0;
+		int y = r;
+		int d = r - 1;
+		while (y >= x) {
+			// Best way to draw a lot of points, 10/10
+			sf2d_draw_rectangle(x0 + x , y0 + y, 1, 1, color);
+			sf2d_draw_rectangle(x0 + y , y0 + x, 1, 1, color);
+			sf2d_draw_rectangle(x0 - x , y0 + y, 1, 1, color);
+			sf2d_draw_rectangle(x0 - y , y0 + x, 1, 1, color);
+			sf2d_draw_rectangle(x0 + x , y0 - y, 1, 1, color);
+			sf2d_draw_rectangle(x0 + y , y0 - x, 1, 1, color);
+			sf2d_draw_rectangle(x0 - x , y0 - y, 1, 1, color);
+			sf2d_draw_rectangle(x0 - y , y0 - x, 1, 1, color);
+
+			if (d >= 2*x) {
+				d -= 2*x + 1;
+				x++;
+			} else if (d < 2*(r-y)) {
+				d += 2*y - 1;
+				y--;
+			} else {
+				d += 2*(y - x - 1);
+				y--;
+				x++;
+			}
+		}
+	}
 
 	return 0;
 }
@@ -580,7 +682,9 @@ static const struct luaL_Reg gfx_lib[] = {
 	{ "line",            gfx_line            },
 	{ "point",           gfx_point           },
 	{ "rectangle",       gfx_rectangle       },
+	{ "linedRectangle",  gfx_linedRectangle  },
 	{ "circle",          gfx_circle          },
+	{ "linedCircle",     gfx_linedCircle     },
 	{ "text",            gfx_text            },
 	{ "wrappedText",     gfx_wrappedText     },
 	{ "calcBoundingBox", gfx_calcBoundingBox },
