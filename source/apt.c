@@ -107,6 +107,30 @@ static int apt_getMenuAppID(lua_State *L) {
 	return 1;
 }
 
+/***
+Allow or not the system to enter sleep mode.
+@function setSleepAllowed
+@tparam boolean allowed `true` to allow, `false` to disallow
+*/
+static int apt_setSleepAllowed(lua_State *L) {
+	bool allowed = lua_toboolean(L, 1);
+	
+	aptSetSleepAllowed(allowed);
+	
+	return 0;
+}
+
+/***
+Check if sleep mode is allowed.
+@function isSleepAllowed
+@treturn boolean `true` is allowed, false if not.
+*/
+static int apt_isSleepAllowed(lua_State *L) {
+	lua_pushboolean(L, aptIsSleepAllowed());
+	
+	return 1;
+}
+
 static const struct luaL_Reg apt_lib[] = {
 	{"openSession",         apt_openSession        },
 	{"closeSession",        apt_closeSession       },
@@ -117,6 +141,8 @@ static const struct luaL_Reg apt_lib[] = {
 	{"setStatusPower",      apt_setStatusPower     },
 	{"signalReadyForSleep", apt_signalReadyForSleep},
 	{"getMenuAppID",        apt_getMenuAppID       },
+	{"setSleepAllowed",     apt_setSleepAllowed    },
+	{"isSleepAllowed",      apt_isSleepAllowed     },
 	{NULL, NULL}
 };
 

@@ -174,13 +174,14 @@ static int httpc_downloadData(lua_State *L) {
 	
 	ret = httpcDownloadData(context, buff, size, NULL);
 	if (ret != 0) {
+		free(buff);
 		lua_pushnil(L);
 		lua_pushinteger(L, ret);
 		return 2;
 	}
 	
 	lua_pushstring(L, (char*)buff);
-	//free(buff); FIXME we need to free this buffer at some point ?
+	free(buff);
 	//lua_pushinteger(L, size); // only for test purposes.
 	return 1;
 }

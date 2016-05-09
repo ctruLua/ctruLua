@@ -45,13 +45,13 @@ static int ptm_shutdown(lua_State *L) {
 /***
 Return the shell state.
 @function getShellState
-@treturn number shell state
+@treturn boolean shell state, `true` if open, `false` if closed.
 */
 static int ptm_getShellState(lua_State *L) {
 	u8 out = 0;
 	PTMU_GetShellState(&out);
 	
-	lua_pushinteger(L, out);
+	lua_pushboolean(L, out);
 	
 	return 1;
 }

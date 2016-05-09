@@ -189,4 +189,6 @@ void unload_font_lib(lua_State *L) {
 
 	if (luaL_testudata(L, -1, "LFont") != NULL)
 		sftd_free_font(((font_userdata *)lua_touserdata(L, -1))->font); // Unload current font
+	
+	lua_pop(L, 1);
 }
