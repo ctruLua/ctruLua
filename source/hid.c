@@ -1,11 +1,12 @@
 /***
 The `hid` module.
-The circle pad pro is supported, it's keys replace de "3ds only" keys
+The circle pad pro is supported, it's keys replace the "3ds only" keys
 @module ctr.hid
 @usage local hid = require("ctr.hid")
 */
 #include <3ds/types.h>
 #include <3ds/services/hid.h>
+#include <3ds/services/irrst.h>
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -176,6 +177,25 @@ static int hid_circle(lua_State *L) {
 }
 
 /***
+Return the C-stick position.
+`0,0` is the center position, and the stick should return to it if not touched (95% of the time).
+Range is from `-146` to `146` on both X and Y, but these are hard to reach.
+@newonly
+@function cstick
+@treturn number X position
+@treturn number Y position
+*/
+static int hid_cstick(lua_State *L) {
+	circlePosition pos;
+	irrstCstickRead(&pos);
+	
+	lua_pushinteger(L, pos.dx);
+	lua_pushinteger(L, pos.dy);
+	
+	return 2;
+}
+
+/***
 Return the accelerometer vector
 @function accel
 @treturn number X acceleration
@@ -243,6 +263,7 @@ static const struct luaL_Reg hid_lib[] = {
 	{ "keys",   hid_keys   },
 	{ "touch",  hid_touch  },
 	{ "circle", hid_circle },
+	{ "cstick", hid_cstick },
 	{ "accel",  hid_accel  },
 	{ "gyro",   hid_gyro   },
 	{ "volume", hid_volume },
