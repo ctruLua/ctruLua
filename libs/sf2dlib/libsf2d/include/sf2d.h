@@ -67,6 +67,14 @@ typedef enum {
 	TEXFMT_ETC1A4 = 13
 } sf2d_texfmt;
 
+/**
+ * @brief Represents a direction for drawing a gradient
+ */
+
+typedef enum {
+    SF2D_TOP_TO_BOTTOM,
+    SF2D_LEFT_TO_RIGHT
+} sf2d_gradient_dir;
 
 /**
  * @brief Data allocated on the RAM or VRAM
@@ -265,6 +273,18 @@ void sf2d_set_clear_color(u32 color);
 void sf2d_draw_rectangle(int x, int y, int w, int h, u32 color);
 
 /**
+ * @brief Draws a triangle
+ * @param x1 x coordinate of a vertex of the triangle
+ * @param y1 y coordinate of a vertex of the triangle
+ * @param x2 x coordinate of a vertex of the triangle
+ * @param y2 y coordinate of a vertex of the triangle
+ * @param x3 x coordinate of a vertex of the triangle
+ * @param y3 y coordinate of a vertex of the triangle
+ * @param color the color to draw the triangle
+ */
+void sf2d_draw_triangle(float x1, float y1, float x2, float y2, float x3, float y3, u32 color);
+
+/**
  * @brief Draws a rotated rectangle
  * @param x x coordinate of the top left corner of the rectangle
  * @param y y coordinate of the top left corner of the rectangle
@@ -274,6 +294,31 @@ void sf2d_draw_rectangle(int x, int y, int w, int h, u32 color);
  * @param rad rotation (in radians) to draw the rectangle
  */
 void sf2d_draw_rectangle_rotate(int x, int y, int w, int h, u32 color, float rad);
+
+/**
+ * @brief Draws a rectangle
+ * @param x x coordinate of the top left corner of the rectangle
+ * @param y y coordinate of the top left corner of the rectangle
+ * @param w rectangle width
+ * @param h rectangle height
+ * @param color1 the color at the start of the gradient
+ * @param color2 the color at the end of the gradient
+ * @param left_to_right determines which direction the gradient is in
+ */
+void sf2d_draw_rectangle_gradient(int x, int y, int w, int h, u32 color1, u32 color2, sf2d_gradient_dir direction);
+
+/**
+ * @brief Draws a rotated rectangle
+ * @param x x coordinate of the top left corner of the rectangle
+ * @param y y coordinate of the top left corner of the rectangle
+ * @param w rectangle width
+ * @param h rectangle height
+ * @param color1 the color at the start of the gradient
+ * @param color2 the color at the end of the gradient
+ * @param left_to_right determines which direction the gradient is in
+ * @param rad rotation (in radians) to draw the rectangle
+ */
+void sf2d_draw_rectangle_gradient_rotate(int x, int y, int w, int h, u32 color1, u32 color2, sf2d_gradient_dir direction, float rad);
 
 /**
  * @brief Draws a filled circle

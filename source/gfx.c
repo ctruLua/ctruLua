@@ -193,6 +193,24 @@ static int gfx_vramSpaceFree(lua_State *L) {
 }
 
 /***
+Draw a point, a single pixel, on the current screen.
+@function point
+@tparam integer x point horizontal coordinate, in pixels
+@tparam integer y point vertical coordinate, in pixels
+@tparam[opt=default color] integer color drawing color
+*/
+static int gfx_point(lua_State *L) {
+	int x = luaL_checkinteger(L, 1);
+	int y = luaL_checkinteger(L, 2);
+
+	u32 color = luaL_optinteger(L, 3, color_default);
+
+	sf2d_draw_rectangle(x, y, 1, 1, color); // well, it looks like a point
+
+	return 0;
+}
+
+/***
 Draw a line on the current screen.
 @function line
 @tparam integer x1 line's starting point horizontal coordinate, in pixels
@@ -217,19 +235,57 @@ static int gfx_line(lua_State *L) {
 }
 
 /***
-Draw a point, a single pixel, on the current screen.
-@function point
-@tparam integer x point horizontal coordinate, in pixels
-@tparam integer y point vertical coordinate, in pixels
+Draw a triangle on the current screen.
+@function triangle
+@tparam integer x1 horizontal coordinate of a vertex of the triangle, in pixels
+@tparam integer y1 vertical coordinate of a vertex of the triangle, in pixels
+@tparam integer x2 horizontal coordinate of a vertex of the triangle, in pixels
+@tparam integer y2 vertical coordinate of a vertex of the triangle, in pixels
+@tparam integer x3 horizontal coordinate of a vertex of the triangle, in pixels
+@tparam integer y3 vertical coordinate of a vertex of the triangle, in pixels
 @tparam[opt=default color] integer color drawing color
 */
-static int gfx_point(lua_State *L) {
-	int x = luaL_checkinteger(L, 1);
-	int y = luaL_checkinteger(L, 2);
+static int gfx_triangle(lua_State *L) {
+	int x1 = luaL_checkinteger(L, 1);
+	int y1 = luaL_checkinteger(L, 2);
+	int x2 = luaL_checkinteger(L, 3);
+	int y2 = luaL_checkinteger(L, 4);
+	int x3 = luaL_checkinteger(L, 5);
+	int y3 = luaL_checkinteger(L, 6);
 	
-	u32 color = luaL_optinteger(L, 3, color_default);
+	u32 color = luaL_optinteger(L, 7, color_default);
 	
-	sf2d_draw_rectangle(x, y, 1, 1, color); // well, it looks like a point
+	sf2d_draw_triangle(x1, y1, x2, y2, x3, y3, color);
+
+	return 0;
+}
+
+/***
+Draw a triangle on the current screen.
+@function triangle
+@tparam integer x1 horizontal coordinate of a vertex of the triangle, in pixels
+@tparam integer y1 vertical coordinate of a vertex of the triangle, in pixels
+@tparam integer x2 horizontal coordinate of a vertex of the triangle, in pixels
+@tparam integer y2 vertical coordinate of a vertex of the triangle, in pixels
+@tparam integer x3 horizontal coordinate of a vertex of the triangle, in pixels
+@tparam integer y3 vertical coordinate of a vertex of the triangle, in pixels
+@tparam[opt=1] number lineWidth line's thickness, in pixels
+@tparam[opt=default color] integer color drawing color
+*/
+static int gfx_linedTriangle(lua_State *L) {
+	int x1 = luaL_checkinteger(L, 1);
+	int y1 = luaL_checkinteger(L, 2);
+	int x2 = luaL_checkinteger(L, 3);
+	int y2 = luaL_checkinteger(L, 4);
+	int x3 = luaL_checkinteger(L, 5);
+	int y3 = luaL_checkinteger(L, 6);
+	float lineWidth = luaL_optnumber(L, 7, 1.0f);
+
+	u32 color = luaL_optinteger(L, 8, color_default);
+
+	sf2d_draw_line(x1, y1, x2, y2, lineWidth, color);
+	sf2d_draw_line(x2, y2, x3, y3, lineWidth, color);
+	sf2d_draw_line(x3, y3, x1, y1, lineWidth, color);
 
 	return 0;
 }
@@ -243,6 +299,8 @@ Draw a filled rectangle on the current screen.
 @tparam integer height rectangle height, in pixels
 @tparam[opt=0] number angle rectangle rotation, in radians
 @tparam[opt=default color] integer color drawing color
+@tparam[opt] integer color2 Second drawing color ; if the argument is not nil, the rectangle will be filled with a gradient from color to color2
+@tparam[opt] integer direction Gradient drawing direction (`gfx.TOP_TO_BOTTOM` or `gfx.LEFT_TO_RIGHT`). This argument is mandatory if a second color was specified.
 */
 static int gfx_rectangle(lua_State *L) {
 	int x = luaL_checkinteger(L, 1);
@@ -252,11 +310,23 @@ static int gfx_rectangle(lua_State *L) {
 
 	float angle = luaL_optnumber(L, 5, 0);
 	u32 color = luaL_optinteger(L, 6, color_default);
-	
-	if (angle == 0)
-		sf2d_draw_rectangle(x, y, width, height, color);
-	else
-		sf2d_draw_rectangle_rotate(x, y, width, height, color, angle);
+
+	// Not second color : fill with plain color.
+	if (lua_isnoneornil(L, 7)) {
+		if (angle == 0)
+			sf2d_draw_rectangle(x, y, width, height, color);
+		else
+			sf2d_draw_rectangle_rotate(x, y, width, height, color, angle);
+	// Two colors : fill with a gradient.
+	} else {
+		u32 color2 = luaL_checkinteger(L, 7);
+		u8 direction = luaL_checkinteger(L, 8);
+
+		if (angle == 0)
+			sf2d_draw_rectangle_gradient(x, y, width, height, color, color2, direction);
+		else
+			sf2d_draw_rectangle_gradient_rotate(x, y, width, height, color, color2, direction, angle);
+	}
 
 	return 0;
 }
@@ -679,8 +749,10 @@ static const struct luaL_Reg gfx_lib[] = {
 	{ "setVBlankWait",   gfx_setVBlankWait   },
 	{ "waitForVBlank",   gfx_waitForVBlank   },
 	{ "vramSpaceFree",   gfx_vramSpaceFree   },
-	{ "line",            gfx_line            },
 	{ "point",           gfx_point           },
+	{ "line",            gfx_line            },
+	{ "triangle",        gfx_triangle        },
+	{ "linedTriangle",   gfx_linedTriangle   },
 	{ "rectangle",       gfx_rectangle       },
 	{ "linedRectangle",  gfx_linedRectangle  },
 	{ "circle",          gfx_circle          },
@@ -709,56 +781,65 @@ static const struct luaL_Reg target_methods[] = {
 Constants
 @section constants
 */
-// Constants
 struct { char *name; int value; } gfx_constants[] = {
 	/***
 	Constant used to select the top screen.
 	It is equal to `0`.
 	@field TOP
 	*/
-	{ "TOP",           GFX_TOP    },
+	{ "TOP",           GFX_TOP       },
 	/***
 	Constant used to select the bottom screen.
 	It is equal to `1`.
 	@field BOTTOM
 	*/
-	{ "BOTTOM",        GFX_BOTTOM },
+	{ "BOTTOM",        GFX_BOTTOM         },
 	/***
 	Constant used to select the left eye.
 	It is equal to `0`.
 	@field LEFT
 	*/
-	{ "LEFT",          GFX_LEFT   },
+	{ "LEFT",          GFX_LEFT           },
 	/***
 	Constant used to select the right eye.
 	It is equal to `1`.
 	@field RIGHT
 	*/
-	{ "RIGHT",         GFX_RIGHT  },
+	{ "RIGHT",         GFX_RIGHT          },
 	/***
 	The top screen height, in pixels.
 	It is equal to `240`.
 	@field TOP_HEIGHT
 	*/
-	{ "TOP_HEIGHT",    240        },
+	{ "TOP_HEIGHT",    240                },
 	/***
 	The top screen width, in pixels.
 	It is equal to `400`.
 	@field TOP_WIDTH
 	*/
-	{ "TOP_WIDTH",     400        },
+	{ "TOP_WIDTH",     400                },
 	/***
 	The bottom screen height, in pixels.
 	It is equal to `240`.
 	@field BOTTOM_HEIGHT
 	*/
-	{ "BOTTOM_HEIGHT", 240        },
+	{ "BOTTOM_HEIGHT", 240                },
 	/***
 	The bottom screen width, in pixels.
 	It is equal to `320`.
 	@field BOTTOM_WIDTH
 	*/
-	{ "BOTTOM_WIDTH",  320        },
+	{ "BOTTOM_WIDTH",  320                },
+	/***
+	Represents a vertical gradient drawn from the top (first color) to the bottom (second color).
+	@field TOP_TO_BOTTOM
+	*/
+	{ "TOP_TO_BOTTOM", SF2D_TOP_TO_BOTTOM },
+	/***
+	Represents a horizontal gradient drawn from the left (first color) to the right (second color).
+	@field LEFT_TO_RIGHT
+	*/
+	{ "LEFT_TO_RIGHT", SF2D_LEFT_TO_RIGHT },
 	{ NULL, 0 }
 };
 
