@@ -18,7 +18,8 @@ The `gfx.font` module
 u32 textSize = 9;
 
 /***
-Load a TTF font.
+Load a font. Supported formats: TTF, OTF, TTC, OTC, WOFF, PFA, PFB, PCF, FNT, BDF, PFR, and others.
+ctrµLua support all formats supported by FreeType. See here for a more complete list: http://freetype.org/freetype2/docs/index.html
 @function load
 @tparam string path path to the file
 @treturn[1] font the loaded font.
