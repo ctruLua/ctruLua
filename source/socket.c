@@ -455,7 +455,7 @@ static int socket_send(lua_State *L) {
 	size_t size = 0;
 	char *data = (char*)luaL_checklstring(L, 2, &size);
 	
-	size_t sent;
+	ssize_t sent;
 	if (!userdata->isSSL) {
 		sent = send(userdata->socket, data, size, 0);
 	} else {
@@ -483,101 +483,114 @@ UDP sockets
 */
 
 /***
-Receive some data from a server.
+Receive a datagram from the UDP object.
 @function :receivefrom
-@tparam number count amount of data to receive
-@tparam string host host name
-@tparam number port port
-@treturn string data
+@tparam[opt=8191] number count maximum amount of bytes to receive from the datagram. Must be lower than 8192.
+@treturn[1] string data
+@treturn[1] string IP address of the sender
+@treturn[1] integer port number of the sender
+@treturn[2] nil in case of error or no datagram to receive
+@treturn[2] string error message
 */
 static int socket_receivefrom(lua_State *L) {
 	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
-	int count = luaL_checkinteger(L, 2);
-	size_t namesize = 0;
-	char *hostname = (char*)luaL_optlstring(L, 3, NULL, &namesize);
-	int port = luaL_optinteger(L, 4, 0);
-	
-	struct sockaddr_in from = {0};
-	if (hostname != NULL) { // For a server
-		struct hostent *hostinfo = gethostbyname(hostname);
-		if (hostinfo == NULL) {
-			lua_pushnil(L);
-			return 1;
-		}
-		from.sin_addr = *(struct in_addr*)hostinfo->h_addr;
-		from.sin_port = htons(port);
-		from.sin_family = AF_INET;
+	int count = luaL_optinteger(L, 2, 8191);
+
+	struct sockaddr_in from;
+	socklen_t addr_len;
+
+	char* buffer = calloc(1, count+1);
+	ssize_t n = recvfrom(userdata->socket, buffer, count, 0, (struct sockaddr *)&from, &addr_len);
+
+	if (n == 0) {
+		free(buffer);
+		lua_pushnil(L);
+		lua_pushstring(L, "nothing to receive");
+		return 2;
+
+	} else if (n < 0) {
+		free(buffer);
+		lua_pushnil(L);
+		lua_pushstring(L, strerror(n));
+		return 2;
 	}
-	
-	char* buffer = malloc(count+1);
-	int n = recvfrom(userdata->socket, buffer, count, 0, (struct sockaddr*)&from, NULL);
-	*(buffer+n) = 0x0;
 	
 	lua_pushstring(L, buffer);
-	if (hostname != NULL) {
-		return 1;
-	} else {
-		lua_pushstring(L, inet_ntoa(from.sin_addr));
-		lua_pushinteger(L, ntohs(from.sin_port));
-		return 3;
-	}
+	lua_pushstring(L, inet_ntoa(from.sin_addr));
+	lua_pushinteger(L, ntohs(from.sin_port));
+
+	free(buffer);
+
+	return 3;
 }
 
 /***
-Send some data to a server.
+Send a datagram to the specified IP and port.
 @function :sendto
 @tparam string data data to send
-@tparam string host host name
-@tparam number port port
+@tparam string host IP/hostname of the recipient
+@tparam number port port number of the recipient
+@treturn[1] boolean true in case of success
+@treturn[2] boolean false in case of error
+@treturn[2] string error message
 */
 static int socket_sendto(lua_State *L) {
 	socket_userdata *userdata = luaL_checkudata(L, 1, "LSocket");
-	size_t datasize = 0;
-	char *data = (char*)luaL_checklstring(L, 2, &datasize);
-	size_t namesize = 0;
-	char *hostname = (char*)luaL_checklstring(L, 3, &namesize);
+	size_t datasize;
+	const char *data = luaL_checklstring(L, 2, &datasize);
+	const char *hostname = luaL_checkstring(L, 3);
 	int port = luaL_checkinteger(L, 4);
-	
+
 	struct hostent *hostinfo = gethostbyname(hostname);
 	if (hostinfo == NULL) {
-		lua_pushnil(L);
-		return 1;
+		lua_pushboolean(L, false);
+		lua_pushstring(L, "unknown host");
+		return 2;
 	}
-	struct sockaddr_in to = {0};
-	to.sin_addr = *(struct in_addr*)hostinfo->h_addr;
+
+	struct sockaddr_in to;
+	to.sin_addr = *(struct in_addr *)hostinfo->h_addr;
 	to.sin_port = htons(port);
 	to.sin_family = AF_INET;
-	
-	sendto(userdata->socket, data, datasize, 0, (struct sockaddr*)&to, sizeof(to));
-	
-	return 0;
+
+	ssize_t n = sendto(userdata->socket, data, datasize, 0, (struct sockaddr *)&to, sizeof(to));
+
+	if (n < 0) {
+		lua_pushboolean(L, false);
+		lua_pushstring(L, strerror(n));
+		return 2;
+	}
+
+	lua_pushboolean(L, true);
+
+	return 1;
 }
 
-// module functions
+// Module functions
 static const struct luaL_Reg socket_functions[] = {
-	{"init",             socket_init            },
-	{"shutdown",         socket_shutdown        },
-	{"tcp",              socket_tcp             },
-	{"udp",              socket_udp             },
-	{"addTrustedRootCA", socket_addTrustedRootCA},
+	{ "init",             socket_init             },
+	{ "shutdown",         socket_shutdown         },
+	{ "tcp",              socket_tcp              },
+	{ "udp",              socket_udp              },
+	{ "addTrustedRootCA", socket_addTrustedRootCA },
 	{NULL, NULL}
 };
 
-// object
+// Object methods
 static const struct luaL_Reg socket_methods[] = {
-	{"accept",      socket_accept     },
-	{"bind",        socket_bind       },
-	{"close",       socket_close      },
-	{"setBlocking", socket_setBlocking},
-	{"__gc",        socket_close      },
-	{"connect",     socket_connect    },
-	{"listen",      socket_listen     },
-	{"receive",     socket_receive    },
-	{"receivefrom", socket_receivefrom},
-	{"send",        socket_send       },
-	{"sendto",      socket_sendto     },
-	{"getpeername", socket_getpeername},
-	{"getsockname", socket_getsockname},
+	{ "accept",      socket_accept      },
+	{ "bind",        socket_bind        },
+	{ "close",       socket_close       },
+	{ "setBlocking", socket_setBlocking },
+	{ "__gc",        socket_close       },
+	{ "connect",     socket_connect     },
+	{ "listen",      socket_listen      },
+	{ "receive",     socket_receive     },
+	{ "receivefrom", socket_receivefrom },
+	{ "send",        socket_send        },
+	{ "sendto",      socket_sendto      },
+	{ "getpeername", socket_getpeername },
+	{ "getsockname", socket_getsockname },
 	{NULL, NULL}
 };
 
