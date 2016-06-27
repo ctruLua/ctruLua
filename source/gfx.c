@@ -235,7 +235,7 @@ static int gfx_line(lua_State *L) {
 }
 
 /***
-Draw a triangle on the current screen.
+Draw a filled triangle on the current screen.
 @function triangle
 @tparam integer x1 horizontal coordinate of a vertex of the triangle, in pixels
 @tparam integer y1 vertical coordinate of a vertex of the triangle, in pixels
@@ -261,8 +261,8 @@ static int gfx_triangle(lua_State *L) {
 }
 
 /***
-Draw a triangle on the current screen.
-@function triangle
+Draw a triangle outline on the current screen.
+@function linedTriangle
 @tparam integer x1 horizontal coordinate of a vertex of the triangle, in pixels
 @tparam integer y1 vertical coordinate of a vertex of the triangle, in pixels
 @tparam integer x2 horizontal coordinate of a vertex of the triangle, in pixels
@@ -770,10 +770,10 @@ static const struct luaL_Reg gfx_lib[] = {
 
 // Render target
 static const struct luaL_Reg target_methods[] = {
-	{ "__index", gfx_target___index },
-	{"clear",    gfx_target_clear   },
-	{"destroy",  gfx_target_destroy },
-	{"__gc",     gfx_target_destroy },
+	{ "__index",  gfx_target___index },
+	{ "clear",    gfx_target_clear   },
+	{ "destroy",  gfx_target_destroy },
+	{ "__gc",     gfx_target_destroy },
 	{ NULL, NULL }
 };
 
@@ -787,7 +787,7 @@ struct { char *name; int value; } gfx_constants[] = {
 	It is equal to `0`.
 	@field TOP
 	*/
-	{ "TOP",           GFX_TOP       },
+	{ "TOP",           GFX_TOP            },
 	/***
 	Constant used to select the bottom screen.
 	It is equal to `1`.
