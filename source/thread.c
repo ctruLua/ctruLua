@@ -8,6 +8,7 @@ The `thread` module.
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include <3ds/svc.h>
 #include <3ds/types.h>
 #include <3ds/thread.h>
 #include <3ds/services/apt.h>	
