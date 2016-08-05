@@ -64,7 +64,7 @@ int texture_atlas_insert(texture_atlas *atlas, unsigned int character, const voi
 		}
 	}
 
-	GSPGPU_FlushDataCache(atlas->tex->data, atlas->tex->data_size);
+	GSPGPU_FlushDataCache(atlas->tex->tex.data, atlas->tex->tex.size);
 
 	return 1;
 }

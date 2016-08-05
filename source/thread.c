@@ -22,6 +22,8 @@ typedef struct {
 	Thread thread;
 	const char *code;
 	char *error;
+	void* pool;
+	int poolSize; // in bytes
 } thread_userdata;
 
 void entryPoint(void *thread) {

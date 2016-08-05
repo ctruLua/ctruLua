@@ -24,13 +24,16 @@ INCLUDES	:=	include
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard
+ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 
-CFLAGS	:=	-g -Wall -O2\
-		$(ARCH)
+CFLAGS	:=	-g -Wall -Werror -O2 -mword-relocations \
+			-ffunction-sections -fno-strict-aliasing \
+			-fomit-frame-pointer \
+			$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
+
+CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
 ASFLAGS	:=	-g $(ARCH)
 
@@ -40,7 +43,8 @@ ASFLAGS	:=	-g $(ARCH)
 #---------------------------------------------------------------------------------
 LIBDIRS	:=	$(CTRULIB) $(PORTLIBS) \
 			$(CURDIR)/../../3ds_portlibs/build \
-			$(CURDIR)/../../sf2dlib/libsf2d
+			$(CURDIR)/../../sf2dlib/libsf2d \
+			$(CURDIR)/../../citro3d
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -90,7 +94,7 @@ all: $(BUILD)
 
 lib:
 	@[ -d $@ ] || mkdir -p $@
-	
+
 $(BUILD): lib
 	@[ -d $@ ] || mkdir -p $@
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile

@@ -137,6 +137,13 @@ void load_uds_lib(lua_State *L);
 void unload_uds_lib(lua_State *L);
 
 /***
+The `ctr.swkbd` module.
+@table swkbd
+@see ctr.swkbd
+*/
+void load_swkbd_lib(lua_State *L);
+
+/***
 Return whether or not the program should continue.
 @function run
 @treturn boolean `false` if the program should exist or `true` if it can continue
@@ -207,6 +214,7 @@ struct { char *name; void (*load)(lua_State *L); void (*unload)(lua_State *L); }
 	{ "mic",    load_mic_lib,    NULL             },
 	{ "thread", load_thread_lib, NULL             },
 	{ "uds",    load_uds_lib,    unload_uds_lib   },
+	{ "swkbd",  load_swkbd_lib,  NULL             },
 	{ NULL, NULL, NULL }
 };
 

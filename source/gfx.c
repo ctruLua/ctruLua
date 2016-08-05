@@ -655,26 +655,9 @@ static int gfx_target___index(lua_State *L) {
 		luaL_getmetatable(L, "LTexture");
 		lua_setmetatable(L, -2);
 		
-		texture->texture = &(target->target->texture);
-		texture->scaleX = 1.0f;
-		texture->scaleY = 1.0f;
-		texture->blendColor = 0xffffffff;
+		// TODO: return an usable texture
 		
 		return 1;
-	} else if (strcmp(name, "duck") == 0) {
-		sf2d_rendertarget *target = sf2d_create_rendertarget(64, 64);
-		for(int i=0;;i++) {
-			sf2d_clear_target(target, 0xff000000);
-			sf2d_start_frame_target(target);
-			sf2d_draw_fill_circle(i%380, i%200, 10, 0xff0000ff);
-			sf2d_end_frame();
-			//sf2d_texture_tile32(&target->texture);
-			
-			sf2d_start_frame(GFX_TOP, GFX_LEFT);
-			sf2d_draw_texture(&target->texture, 10, 10);
-			sf2d_end_frame();
-			sf2d_swapbuffers();
-		}
 	} else {
 		for (u8 i=0;target_methods[i].name;i++) {
 			if (strcmp(target_methods[i].name, name) == 0) {

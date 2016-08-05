@@ -175,7 +175,8 @@ static int texture_drawPart(lua_State *L) {
 	float hotspotX = luaL_optnumber(L, 9, 0.0f);
 	float hotspotY = luaL_optnumber(L, 10, 0.0f);
 
-	sf2d_draw_texture_part_rotate_scale_hotspot_blend(texture->texture, x, y, rad, sx, sy, w, h, texture->scaleX, texture->scaleY, hotspotX, hotspotY, texture->blendColor);
+	//sf2d_draw_texture_part_rotate_scale_hotspot_blend(texture->texture, x, y, rad, sx, sy, w, h, texture->scaleX, texture->scaleY, hotspotX, hotspotY, texture->blendColor); // TODO: fix
+	sf2d_draw_texture_part_rotate_scale_blend(texture->texture, x, y, rad, sx, sy, w, h, texture->scaleX, texture->scaleY, texture->blendColor);
 
 	return 0;
 }
@@ -408,11 +409,6 @@ struct { char *name; int value; } texture_constants[] = {
 	@field PLACE_VRAM
 	*/
 	{"PLACE_VRAM", SF2D_PLACE_VRAM},
-	/***
-	Constant used to select a temporary RAM pool. Don't use it.
-	@field PLACE_TEMP
-	*/
-	{"PLACE_TEMP", SF2D_PLACE_TEMP},
 	/***
 	Constant used to select the PNG type.
 	@field TYPE_PNG

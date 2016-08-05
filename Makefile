@@ -60,7 +60,7 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lsfil -ljpeg -lsftd -lfreetype -lpng -lz -lsf2d -lctru -logg -lm
+LIBS	:= -lsfil -ljpeg -lsftd -lfreetype -lpng -lz -lsf2d -lcitro3d -lctru -logg -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -71,7 +71,8 @@ LIBDIRS	:= $(CTRULIB) $(PORTLIBS) \
 			$(CURDIR)/libs/sf2dlib/libsf2d \
 			$(CURDIR)/libs/sftdlib/libsftd \
 			$(CURDIR)/libs/sfillib/libsfil \
-			$(CURDIR)/libs/stb
+			$(CURDIR)/libs/stb \
+			$(CURDIR)/libs/citro3d
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -149,6 +150,9 @@ $(BUILD):
 build-portlibs:
 	@make -C libs/3ds_portlibs zlib freetype libjpeg-turbo libpng libogg
 
+build-citro3d:
+	@make -C libs/citro3d build
+
 build-sf2dlib:
 	@make -C libs/sf2dlib/libsf2d build
 
@@ -161,6 +165,8 @@ build-sfillib:
 build-all:
 	@echo Building 3ds_portlibs...
 	@make build-portlibs
+	@echo Building citro3D
+	@make build-citro3d
 	@echo Building sf2dlib...
 	@make build-sf2dlib
 	@echo Building sftdlib...
@@ -189,6 +195,9 @@ clean:
 clean-portlibs:
 	@make -C libs/3ds_portlibs clean
 
+clean-citro3d:
+	@make -C libs/citro3d clean
+
 clean-sf2dlib:
 	@make -C libs/sf2dlib/libsf2d clean
 
@@ -203,6 +212,8 @@ clean-all:
 	@make clean-portlibs
 	@echo Cleaning sf2dlib...
 	@make clean-sf2dlib
+	@echo Cleaning citro3d...
+	@make clean-citro3d
 	@echo Cleaning sftdlib...
 	@make clean-sftdlib
 	@echo Cleaning sfillib...

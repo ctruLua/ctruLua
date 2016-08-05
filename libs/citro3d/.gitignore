@@ -1,0 +1,10 @@
+*~
+*.3dsx
+*.elf
+*.exe
+*.smdh
+*.tar.bz2
+Thumbs.db
+build/
+lib/
+bin/
