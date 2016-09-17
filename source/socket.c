@@ -130,6 +130,8 @@ static int socket_tcp(lua_State *L) {
 	userdata->isSSL = false;
 	fcntl(userdata->socket, F_SETFL, fcntl(userdata->socket, F_GETFL, 0)|O_NONBLOCK);
 	
+	SOCU_AddGlobalSocket(userdata->socket);
+	
 	return 1;
 }
 
@@ -154,6 +156,8 @@ static int socket_udp(lua_State *L) {
 	
 	userdata->addr.sin_family = AF_INET;
 	fcntl(userdata->socket, F_SETFL, fcntl(userdata->socket, F_GETFL, 0)|O_NONBLOCK);
+	
+	SOCU_AddGlobalSocket(userdata->socket);
 	
 	return 1;
 }

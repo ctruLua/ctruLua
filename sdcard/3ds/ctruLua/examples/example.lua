@@ -39,7 +39,7 @@ while ctr.run() do
 	hid.read()
 	local keys = hid.keys()
 
-	if keys.down.start then return end
+	if keys.down.start then break end
 
 	if keys.held.right then x = x + 1 end
 	if keys.held.left then x = x - 1 end
