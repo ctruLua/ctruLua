@@ -351,9 +351,11 @@ static int pool_set(lua_State *L) {
 				pool[addr+1].type = BOL;
 				pool[addr+1].boolean = lua_toboolean(L, 2);
 				break;
-			default: // including LUA_TNIL
+			case LUA_TNIL: // including LUA_TNIL
 				pool[addr+1].type = NIL;
 				break;
+			default:
+				luaL_error(L, "Unsupported type: %s", lua_typename(L, lua_type(L, 2)));
 		}
 	}
 	return 0;

@@ -29,9 +29,9 @@ include $(DEVKITARM)/3ds_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	ctruLua
 BUILD		:=	build
-SOURCES		:=	source libs/lua-5.3.2/src libs/tremor
+SOURCES		:=	source libs/lua-5.3.3/src libs/tremor
 DATA		:=	data
-INCLUDES	:=	include libs/lua-5.3.2/src libs/lzlib libs/tremor
+INCLUDES	:=	include libs/lua-5.3.3/src libs/lzlib libs/tremor
 #ROMFS		:=	romfs
 
 APP_TITLE		:= ctruLua
