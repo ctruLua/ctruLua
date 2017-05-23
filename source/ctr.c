@@ -10,6 +10,7 @@ The `ctr` module.
 #include <3ds/services/apt.h>
 #include <3ds/os.h>
 #include <3ds/svc.h>
+#include <3ds/services/hb.h>
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -252,6 +253,18 @@ int luaopen_ctr_lib(lua_State *L) {
 	#endif
 	lua_pushstring(L, buff);
 	lua_setfield(L, -2, "root");
+	
+	/***
+	Whether or not ctrµLua has been launched with ninjhax
+	@field hb
+	*/
+	if (!hbInit()) {
+		hbExit();
+		lua_pushboolean(L, true);
+	} else {
+		lua_pushboolean(L, false);
+	}
+	lua_setfield(L, -2, "hb");
 
 	return 1;
 }

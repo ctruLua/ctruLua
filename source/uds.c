@@ -16,6 +16,8 @@ The default wlancommID is 0x637472c2.
 #include <lualib.h>
 #include <lauxlib.h>
 
+#define DEFAULT_WLANCOMMID 0x637472c2
+
 bool initStateUDS = false;
 
 udsBindContext bind = {0};
@@ -73,11 +75,16 @@ Scan for network beacons.
 static int uds_scan(lua_State *L) {
 	static const size_t tmpbuffSize = 0x4000;
 	u32* tmpbuff = malloc(tmpbuffSize);
+	if (tmpbuff == NULL) {
+		lua_pushnil(L);
+		lua_pushstring(L, "Failed to allocated beacon data buffer");
+		return 2;
+	}
 	
 	udsNetworkScanInfo* networks = NULL;
 	size_t totalNetworks = 0;
 	
-	u32 wlanCommID = luaL_optinteger(L, 1, 0x637472c2);
+	u32 wlanCommID = luaL_optinteger(L, 1, DEFAULT_WLANCOMMID);
 	u8 id8 = luaL_optinteger(L, 2, 0);
 	
 	// MAC address conversion
@@ -117,7 +124,7 @@ static int uds_scan(lua_State *L) {
 		udsNetworkScanInfo* beacon = lua_newuserdata(L, sizeof(udsNetworkScanInfo));
 		luaL_getmetatable(L, "LUDSBeaconScan");
 		lua_setmetatable(L, -2);
-		memcpy(beacon, &networks[0], sizeof(udsNetworkScanInfo));
+		memcpy(beacon, &networks[i-1], sizeof(udsNetworkScanInfo));
 		lua_seti(L, -3, i);
 	}
 	free(networks);
@@ -294,12 +301,12 @@ static int uds_createNetwork(lua_State *L) {
 	size_t passSize = 0;
 	const char *pass = luaL_optlstring(L, 1, "", &passSize);
 	u8 maxNodes = luaL_optinteger(L, 2, UDS_MAXNODES);
-	u32 commID = luaL_optinteger(L, 3, 0x637472c2);
+	u32 commID = luaL_optinteger(L, 3, DEFAULT_WLANCOMMID);
 	u32 recvBuffSize = luaL_optinteger(L, 4, UDS_DEFAULT_RECVBUFSIZE);
 	u8 dataChannel = luaL_optinteger(L, 5, 1);
 	
 	udsGenerateDefaultNetworkStruct(&network, commID, dataChannel, maxNodes);
-	Result ret = udsCreateNetwork(&network, pass, passSize, &bind, dataChannel, recvBuffSize);
+	Result ret = udsCreateNetwork(&network, pass, passSize+1, &bind, dataChannel, recvBuffSize);
 	if (R_FAILED(ret)) {
 		lua_pushboolean(L, false);
 		lua_pushinteger(L, ret);

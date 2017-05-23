@@ -33,13 +33,19 @@ SOURCES		:=	source libs/lua-5.3.3/src libs/tremor
 DATA		:=	data
 INCLUDES	:=	include libs/lua-5.3.3/src libs/lzlib libs/tremor
 #ROMFS		:=	romfs
+ROOT			:=	sdmc:/3ds/ctruLua/
 
 APP_TITLE		:= ctruLua
 APP_DESCRIPTION	:= Lua for the 3DS. Yes, it works.
-APP_AUTHOR		:= Reuh, Firew0lf and NegiAD
+APP_AUTHOR		:= Reuh,Ihamfp,Nodyn
+APP_PRODUCT_CODE	:= CTR-P-ULUA
+APP_UNIQUE_ID		:= 0xB00B5
+
 ICON 			:= icon.png
+BANNER			:= banner.png
+JINGLE			:= jingle.wav
 APP_VERSION		:= $(shell git describe --abbrev=0 --tags)
-LASTCOMMIT	:= $(shell git rev-parse HEAD)
+LASTCOMMIT		:= $(shell git rev-parse HEAD)
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -53,6 +59,9 @@ CFLAGS	:=	-g -Wall -O2 -mword-relocations -std=gnu11 \
 CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS -DCTR_VERSION=\"$(APP_VERSION)\" -DCTR_BUILD=\"$(LASTCOMMIT)\"
 ifneq ($(ROMFS),)
 	CFLAGS += -DROMFS
+endif
+ifneq ($(ROOT),)
+	CFLAGS += -DROOT=\"$(ROOT)\"
 endif
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
@@ -134,8 +143,14 @@ ifeq ($(strip $(NO_SMDH)),)
 	export _3DSXFLAGS += --smdh=$(CURDIR)/$(TARGET).smdh
 endif
 
+export CIA_ARGS := -DAPP_TITLE=$(APP_TITLE) -DAPP_PRODUCT_CODE=$(APP_PRODUCT_CODE) \
+	-DAPP_UNIQUE_ID=$(APP_UNIQUE_ID) \
+	-elf $(OUTPUT).elf -rsf "$(TOPDIR)/ctrulua.rsf" \
+	-icon $(TOPDIR)/icon.bin -banner $(TOPDIR)/banner.bin -exefslogo -target t
+
 ifneq ($(ROMFS),)
 	export _3DSXFLAGS += --romfs=$(CURDIR)/$(ROMFS)
+	export CIA_ARGS += -DAPP_ROMFS_DIR=$(ROMFS)
 endif
 
 .PHONY: $(BUILD) clean all
@@ -147,8 +162,12 @@ $(BUILD):
 	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
 	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
+$(BUILD)-cia:
+	@[ -d $(BUILD) ] || mkdir -p $(BUILD)
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile $(OUTPUT).cia
+
 build-portlibs:
-	@make -C libs/3ds_portlibs zlib freetype libjpeg-turbo libpng libogg
+	@make -C libs/3ds_portlibs zlib install-zlib freetype libjpeg-turbo libpng libogg install
 
 build-citro3d:
 	@make -C libs/citro3d build
@@ -190,7 +209,7 @@ build-doc-st:
 
 #---------------------------------------------------------------------------------
 clean:
-	@rm -fr $(BUILD) $(TARGET).3dsx $(OUTPUT).smdh $(TARGET).elf
+	@rm -fr $(BUILD) $(TARGET).3dsx $(OUTPUT).smdh $(TARGET).elf banner.bin icon.bin
 
 clean-portlibs:
 	@make -C libs/3ds_portlibs clean
@@ -242,13 +261,26 @@ DEPENDS	:=	$(OFILES:.o=.d)
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
+
+all	:	$(OUTPUT).3dsx $(OUTPUT).cia
+
 ifeq ($(strip $(NO_SMDH)),)
 $(OUTPUT).3dsx	:	$(OUTPUT).elf $(OUTPUT).smdh
 else
 $(OUTPUT).3dsx	:	$(OUTPUT).elf
 endif
 
+icon.bin	:
+	bannertool makesmdh -s $(APP_TITLE) -l $(APP_TITLE) -p $(APP_AUTHOR) -i $(TOPDIR)/$(ICON) -o $(TOPDIR)/icon.bin -f visible allow3d
+
+banner.bin	:
+	bannertool makebanner -i $(TOPDIR)/$(BANNER) -a $(TOPDIR)/$(JINGLE) -o $(TOPDIR)/banner.bin
+
 $(OUTPUT).elf	:	$(OFILES)
+
+$(OUTPUT).cia	:	$(OUTPUT).elf icon.bin banner.bin
+	makerom -f cia -o $(OUTPUT).cia $(CIA_ARGS)
+	
 
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data

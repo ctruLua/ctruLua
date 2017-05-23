@@ -1,9 +1,9 @@
 freetype-*
+jansson-*
 libexif-*
 libjpeg-*
 libpng-*
+libxmp-*
 sqlite-*
+tinyxml2-*
 zlib-*
-libogg-*
-libvorbis-*
-build/

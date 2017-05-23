@@ -1,4 +1,6 @@
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
 #include <3ds.h>
 
@@ -40,6 +42,13 @@ int main(int argc, char** argv) {
 	char* mainFile = "romfs:/main.lua";
 	#else
 	char* mainFile = "main.lua";
+	#endif
+	
+	// Change root dir
+	#ifdef ROOT
+	if(chdir(ROOT)) {
+		error(strerror(errno));
+	}
 	#endif
 	
 	// Init Lua

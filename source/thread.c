@@ -306,13 +306,8 @@ void load_thread_lib(lua_State *L) {
 ////////////////////////////////////////////////////////////////////////////////
 // Pool lib for accessing the pool from the thread                            //
 // Libception                                                                 //
+// Documentation is in thread.pool.doc.c, because LDoc                        //
 ////////////////////////////////////////////////////////////////////////////////
-
-/***
-The `pool` module. Only accessible from a sub-thread.
-@module ctr.thread.pool
-@usage local pool = require("ctr.thread.pool")
-*/
 
 static int pool_set(lua_State *L) {
 	lua_getfield(L, LUA_REGISTRYINDEX, "LThreadSelf");
