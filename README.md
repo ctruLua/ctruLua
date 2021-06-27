@@ -7,7 +7,7 @@ Warning: the 'u' in the repo's name is a 'µ', not a 'u'.
 
 #### How to install
 
-* Download ctruLua.zip from the [releases](https://github.com/ctruLua/ctruLua/releases) (for something stable) or the [CI server](http://ci.reuh.tk/ctrulua) (for more features)
+* Download ctruLua.zip from the [releases](https://github.com/ctruLua/ctruLua/releases) (for something stable) or the [CI server](https://reuh.eu/ctrulua/ci/ctrulua) (for more features)
 * Unzip it on your SD card, in a folder inside your homebrews folder; if you use HBL, extract it in `/3ds/ctrulua/`
 * Put some scripts wherever you want, just remember where
 * Launch CtrµLua from your homebrew launcher
@@ -15,10 +15,10 @@ Warning: the 'u' in the repo's name is a 'µ', not a 'u'.
 
 ### Homebrewers part
 
-#### Builds ![build status](http://ci.reuh.tk/ctrulua.png)
+#### Builds ![build status](https://reuh.eu/ctrulua/ci/ctrulua.png)
 
-* Most recent working build: [ctruLua.3dsx](http://ci.reuh.tk/ctrulua/builds/latest/artifacts/ctruLua.3dsx)
-* See [http://ci.reuh.tk/ctrulua](http://ci.reuh.tk/ctrulua) for all the builds.
+* Most recent working build: [ctruLua.3dsx](https://reuh.eu/ctrulua/ci/ctrulua/builds/latest/artifacts/ctruLua.3dsx)
+* See [https://reuh.eu/ctrulua/ci/ctrulua](https://reuh.eu/ctrulua/ci/ctrulua) for all the builds.
 
 #### Hello world
 
@@ -62,7 +62,7 @@ gfx.disableConsole()
 
 #### Lua API Documentation
 
-* An online version of the documentation can be found [here](http://reuh.tk/ctrulua)
+* An online version of the documentation can be found [here](https://reuh.eu/ctrulua/latest/html/)
 * To build the documentation, run `make build-doc-html` (requires [LDoc](https://github.com/stevedonovan/LDoc)).
 
 ### Developers part
